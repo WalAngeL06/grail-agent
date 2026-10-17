@@ -1,0 +1,16 @@
+{
+  "contract_version": "0.1",
+  "mode": "demo",
+  "agent_name": "GRAIL-01",
+  "coins": ["BTC-USDT", "ETH-USDT", "SOL-USDT", "AVAX-USDT", "OKB-USDT"],
+  "quote": "USDT",
+  "cycle_seconds": 90,
+  "candle_bar": "1H",
+  "lookback_bars": 168,
+  "risk_budget_pct": 10,
+  "max_position_pct": 30,
+  "target_vol_pct": 20,
+  "max_order_usdt": "10",
+  "min_order_usdt": "2",
+  "kill_switch_drawdown_pct": 5
+}

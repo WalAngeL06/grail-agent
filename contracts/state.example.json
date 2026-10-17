@@ -1,0 +1,44 @@
+{
+  "contract_version": "0.1",
+  "generated_at_ms": 1760700090000,
+  "mode": "demo",
+  "agent": { "name": "GRAIL-01", "status": "running", "cycle_id": 12, "next_cycle_at_ms": 1760700180000 },
+  "config": { "coins": ["BTC-USDT", "ETH-USDT", "SOL-USDT", "AVAX-USDT", "OKB-USDT"], "risk_budget_pct": 10, "max_position_pct": 30, "cycle_seconds": 90 },
+  "market": [
+    { "inst_id": "BTC-USDT", "last": "67250.1", "change_24h_pct": 1.8, "at_ms": 1760700000000 }
+  ],
+  "portfolio": {
+    "equity_usdt": "100.00",
+    "cash_usdt": "62.40",
+    "positions": [
+      { "inst_id": "BTC-USDT", "size_base": "0.00037", "value_usdt": "24.88", "weight_pct": 24.9 }
+    ]
+  },
+  "metrics": {
+    "avg_corr": 0.62,
+    "n_assets": 5,
+    "n_eff": 1.44,
+    "sr_single_assumed": 0.5,
+    "sr_portfolio_est": 0.6,
+    "holy_grail_curve": [ { "n": 1, "sr": 0.5 }, { "n": 5, "sr": 0.6 }, { "n": 10, "sr": 0.62 } ],
+    "corr_matrix": { "labels": ["BTC-USDT", "ETH-USDT"], "values": [[1, 0.8], [0.8, 1]] },
+    "hrp_weights_pct": { "BTC-USDT": 40, "ETH-USDT": 60 },
+    "portfolio_vol_pct": 18.5,
+    "psr": null
+  },
+  "decisions": [
+    {
+      "cycle_id": 12, "inst_id": "BTC-USDT", "action": "BUY", "size_usdt": "5", "ref_price": "67250.1",
+      "reason": "trend+, n_eff=1.9", "decided_at_ms": 1760700000000,
+      "commit_tx": "0xabc...", "okx_order_id": "1234567890", "order_status": "filled", "fill_price": "67248.0",
+      "reveal_tx": "0xdef...", "verified": true
+    }
+  ],
+  "chain": {
+    "network": "fuji", "chain_id": 43113, "address": "0x...", "explorer": "https://testnet.snowtrace.io",
+    "commits": 12, "reveals": 11, "unrevealed": 1
+  },
+  "errors": [
+    { "code": "ATK_TIMEOUT", "message": "ticker timeout, döngü atlandı", "at_ms": 1760699900000, "where": "agents.market", "context": {} }
+  ]
+}

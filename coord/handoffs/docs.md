@@ -1,20 +1,15 @@
 # Handoff — docs (sadece bu rol yazar)
 
-- Güncelleme zamanı: 17.10 15:20
-- Aktif görev / durum: T-011 (sunum .pptx) / READY_FOR_REVIEW — kart main'de henüz yok; kullanıcı talimatıyla yapıldı
+- Güncelleme zamanı: 17.10 15:45
+- Aktif görev / durum: T-013 (UI metinleri) / READY_FOR_REVIEW — kart main'de henüz yok; kullanıcı talimatıyla yapıldı
 - Oturum: Claude Code · Max (Opus 5.5), durdu
-- Worktree / branch / son commit: `Agentic Hack-wt/docs` / `role/docs` / bu handoff'u içeren commit (`git log -1`); origin/main@4f03d02 merge edildi
+- Worktree / branch / son commit: `Agentic Hack-wt/docs` / `role/docs` / bu handoff'u içeren commit (`git log -1`); origin/main merge edildi
 - contracts okunan sürüm: v0.6
-- Tamamlanan somut davranış:
-  - `docs/pitch/GRAIL-pitch.pptx`: 10 slayt, 16:9, koyu tema (ui-brief paleti), her slaytta konuşmacı notu (EN).
-    Sade dil: sealed envelope = commit-reveal, independent bets = n_eff, fingerprint = hash, practice mode = dry_run, emergency stop = kill switch.
-  - `docs/pitch/build-deck.cjs`: deck üreticisi; gerçek değerler dosyanın başındaki `V` nesnesinde.
-- Kullanılan gerçek değerler (kaynak): agentId 1, GrailLedger 0x1B5fcf6DeFf2F9375338A2C35932224522118851 (STATE r14 + chain.json);
-  limitler $10 / $50 / %5 ve döngü 90 sn (config.example.json v0.6); testler 84 / 78 / 25 (STATE r14, 14:43).
-  `<TBD>`: canlı independent bets (3 yer), togetherness (ρ̄), bugünkü döngü sayısı, yedek video linki.
-- Çalıştırılan kontroller: pptx skill `validate.py` → All validations PASSED; PowerPoint COM ile 10 slayt PNG'ye çevrilip görsel kontrol
-  (taşma/çakışma düzeltildi); 10/10 slaytta not var.
-- Yeniden üretme: `npm i pptxgenjs@3.12.0` (herhangi bir klasörde) → `NODE_PATH=<o klasör>/node_modules node docs/pitch/build-deck.cjs`.
-- Commit edilmemiş / izlenmeyen dosyalar: yok · Devam eden süreçler: yok · Dış eylemler: yok
-- SIRADAKİ İLK ADIM: canlı state gelince `build-deck.cjs` içindeki `V.liveBets`, `V.liveCorr`, `V.cyclesToday`, `V.backupVideo` doldur, testler değiştiyse
-  sayıları güncelle → yeniden üret → commit. Kullanıcı .pptx'i Google Drive'a yükleyip Slides linkini SUBMISSION'a verir.
+- Tamamlanan somut davranış: `docs/ui-copy.md` (EN) — (a) "How it works" 5 kart (başlık + 2 cümle + Lucide ikon adı + glyph yedeği),
+  (b) 21 terimlik sözlük (düz ad + 1 cümle; tooltip için), (c) 4 ekran + Verify sheet için başlık / alt başlık / canlı özet şablonu ({alan}),
+  (d) boş/bekleme/hata metinleri tablosu. Terimler pitch deck ile aynı (independent bets, sealed envelope, fingerprint, practice mode, emergency stop, togetherness).
+- Kaynaklar: docs/ui-brief.md; tasarım zip'i README.md (scratchpad'e açıldı, repoya girmedi); analyst README (llm_flag değerleri).
+- Kontroller: llm_flag değerleri analyst README ile aynı; şablon alanları state.example.json v0.6 ile eşleşti; git diff --check temiz.
+- Açık nokta: tasarım "ikon kütüphanesi yok" diyor → web ya `lucide-react` ekler ya glyph yedeğini kullanır (web'in kararı).
+- Commit edilmemiş dosya: yok · Süreç/port: yok · Dış eylem: yok
+- SIRADAKİ İLK ADIM: web geri bildirimi gelirse ui-copy.md güncelle; yoksa canlı state gelince pitch deck'in <TBD> değerlerini doldur (build-deck.cjs V nesnesi).

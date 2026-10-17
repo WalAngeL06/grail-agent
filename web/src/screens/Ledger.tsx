@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { groupCycles, type Cycle } from "../state";
+import { groupCycles, type Cycle, type Decision } from "../state";
 import type { ScreenProps } from "../App";
 import { AvalancheMark, Card, Empty, ExplorerLink, Hash, ModeTag, PageHead, Term } from "../components/Bits";
 import VerifySheet from "../components/VerifySheet";
-import { readCounts } from "../chain";
+import { readCounts, readLedgerHistory, type ChainCycle } from "../chain";
 import { ago, countdown, dayClock } from "../format";
 
 export default function Ledger({ s, chain, now, demo }: ScreenProps) {
   const c = s.chain;
-  const cycles = useMemo(() => groupCycles(s), [s]);
+  const stateCycles = useMemo(() => groupCycles(s), [s]);
   const [verify, setVerify] = useState<Cycle | null>(null);
 
   // Real addresses come from contracts/chain.json (deploy output); state.json values are the fallback.
@@ -17,6 +17,15 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
   const agentId = c.agent_id ?? chain.agentId;
   const registry = c.identity_registry ?? chain.identityRegistry;
   const onchain = useOnChainCounts(chain, agentId);
+  // Every check-in this agent ever sealed, from GrailLedger event logs. In demo mode the made-up check-ins would collide, so skip.
+  const history = useLedgerHistory(chain, demo ? undefined : agentId);
+  const cycles = useMemo(() => {
+    if (!history) return stateCycles;
+    const known = new Set(stateCycles.map((c) => c.cycle_id));
+    const extra = history.filter((h) => !known.has(h.cycleId)).map(cycleFromChain);
+    return [...stateCycles, ...extra].sort((a, b) => (b.cycle_id ?? -1) - (a.cycle_id ?? -1));
+  }, [stateCycles, history]);
+  const chainOnly = cycles.filter((c) => c.fromChain).length;
 
   const commits = c.commits ?? cycles.filter((x) => x.commit_tx).length;
   const reveals = c.reveals ?? cycles.filter((x) => x.reveal_tx).length;
@@ -112,7 +121,10 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
           </Card>
         </div>
 
-        <Card title="Every check-in, newest first" meta={`${cycles.length} in view`}>
+        <Card
+          title="Every check-in, newest first"
+          meta={`${cycles.length} in view${chainOnly ? ` · ${chainOnly} read straight from Avalanche (not in this agent's state file)` : ""}${history ? "" : " · on-chain history loading…"}`}
+        >
           {cycles.length === 0 ? (
             <Empty title={`Waiting for the first check-in${next ? ` — next in ${next}` : ""}`}>
               Each check-in shows up here the moment it is sealed, with links to the Avalanche explorer (Snowtrace).
@@ -135,14 +147,21 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
                 <tbody>
                   {cycles.map((x) => (
                     <tr key={x.id}>
-                      <td style={{ fontWeight: 600 }}>#{x.id}</td>
+                      <td style={{ fontWeight: 600 }}>
+                        #{x.id}
+                        {x.fromChain && (
+                          <div className="tech" title="Not in this agent's state file; read from GrailLedger events on Avalanche.">
+                            from chain
+                          </div>
+                        )}
+                      </td>
                       <td className="mono muted">{dayClock(x.decided_at_ms)}</td>
                       <td>{x.commit_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.commit_tx} /> : <span style={{ color: "var(--danger)" }}>failed · no trade</span>}</td>
                       <td>{x.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.reveal_tx} /> : x.commit_tx ? <span className="tag open" title="Sealed but not opened yet. It stays visible on chain.">OPEN</span> : "—"}</td>
                       <td>
                         <ModeTag dry={x.dry_run} />
                       </td>
-                      <td>{summary(x.decisions.map((d) => d.action))}</td>
+                      <td>{summary(x.decisions.map((d) => d.action)) || <span className="dim">not opened yet</span>}</td>
                       <td>{x.verified === true ? <span className="mark ok">✓</span> : x.verified === false ? <span className="mark bad">✕</span> : <span className="dim">—</span>}</td>
                       <td className="r">
                         {x.commit_tx && (
@@ -173,6 +192,67 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
       )}
     </>
   );
+}
+
+function useLedgerHistory(chain: ScreenProps["chain"], agentId: string | undefined) {
+  const [v, setV] = useState<ChainCycle[] | null>(null);
+  useEffect(() => {
+    if (!agentId || !chain.ledger) return;
+    let alive = true;
+    const load = () =>
+      readLedgerHistory(chain, agentId).then(
+        (r) => alive && setV(r),
+        () => undefined,
+      );
+    load();
+    const t = window.setInterval(load, 60_000);
+    return () => {
+      alive = false;
+      window.clearInterval(t);
+    };
+  }, [chain, agentId]);
+  return v;
+}
+
+/** A check-in known only from chain events: decisions come from the revealed payload (if opened). */
+function cycleFromChain(h: ChainCycle): Cycle {
+  let p: { decided_at_ms?: unknown; dry_run?: unknown; decisions?: unknown } | null = null;
+  try {
+    p = h.payloadUtf8 ? JSON.parse(h.payloadUtf8) : null;
+  } catch {
+    p = null;
+  }
+  const raw = Array.isArray(p?.decisions) ? (p!.decisions as Record<string, unknown>[]) : [];
+  const str = (v: unknown) => (typeof v === "string" ? v : typeof v === "number" ? String(v) : undefined);
+  const decisions: Decision[] = raw.map((d, i) => ({
+    key: `chain-${h.cycleId}-${i}`,
+    cycle_id: h.cycleId,
+    inst_id: str(d.inst_id),
+    action: str(d.action),
+    size_usdt: str(d.size_usdt),
+    ref_price: str(d.ref_price),
+    reason: str(d.reason),
+    llm_flag: str(d.llm_flag),
+    llm_note: str(d.llm_note),
+    commit_tx: h.commitTx,
+    commit_hash: h.commitHash,
+    reveal_tx: h.revealTx,
+    payload_utf8: h.payloadUtf8,
+  }));
+  return {
+    id: String(h.cycleId),
+    cycle_id: h.cycleId,
+    decisions,
+    decided_at_ms: typeof p?.decided_at_ms === "number" ? p.decided_at_ms : h.committedAt,
+    commit_tx: h.commitTx,
+    reveal_tx: h.revealTx,
+    commit_hash: h.commitHash,
+    payload_utf8: h.payloadUtf8,
+    dry_run: typeof p?.dry_run === "boolean" ? p.dry_run : undefined,
+    trades: decisions.filter((d) => d.action === "BUY" || d.action === "SELL").length,
+    synthetic: false,
+    fromChain: true,
+  };
 }
 
 function useOnChainCounts(chain: ScreenProps["chain"], agentId: string | undefined) {

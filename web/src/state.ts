@@ -215,6 +215,8 @@ export type Cycle = {
   dry_run?: boolean;
   trades: number;
   synthetic: boolean;
+  /** read from GrailLedger event logs, not present in this state file */
+  fromChain?: boolean;
 };
 
 export function groupCycles(s: GrailState): Cycle[] {

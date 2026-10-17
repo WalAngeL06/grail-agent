@@ -147,7 +147,7 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
               mark={phase === "computing" || !usable ? undefined : matchStated}
               note={usable ? (fromChain ? "input read from the reveal transaction on Fuji" : "input taken from state.json") : undefined}
             />
-            <CheckRow title="Fingerprint the agent reported" tech="state.json · commit_hash" value={cycle.commit_hash ?? "—"} />
+            <CheckRow title="Fingerprint the agent reported" tech={cycle.fromChain ? "DecisionCommitted event · commitHash" : "state.json · commit_hash"} value={cycle.commit_hash ?? "—"} />
             <CheckRow
               title="Seal on Avalanche"
               tech={`GrailLedger.decisions(${agentId ?? "?"}, ${cycleNo ?? "?"})`}
@@ -194,7 +194,7 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
                 </b>
                 <p>
                   {verdict === "ok"
-                    ? `All ${cycle.decisions.length} decisions in check-in #${cycle.id}${cycle.decisions.some((d) => d.action === "HOLD") ? ", holds included," : ""} are exactly what was sealed${onchain?.committed ? ` on Avalanche at ${clock(onchain.committedAt * 1000)}` : ""}, before any order was sent.${!onchain ? " (Avalanche could not be read, so this compares with state.json only.)" : ""}`
+                    ? `${cycle.decisions.length === 1 ? "The decision" : `All ${cycle.decisions.length} decisions`} in check-in #${cycle.id}${cycle.decisions.some((d) => d.action === "HOLD") ? ", holds included," : ""} ${cycle.decisions.length === 1 ? "is" : "are"} exactly what was sealed${onchain?.committed ? ` on Avalanche at ${clock(onchain.committedAt * 1000)}` : ""}, before any order was sent.${!onchain ? " (Avalanche could not be read, so this compares with state.json only.)" : ""}`
                     : verdict === "bad"
                       ? tamper
                         ? "The edited decision no longer matches the sealed fingerprint. One changed digit breaks the seal."
@@ -243,7 +243,7 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
                           ) : o.id === "unknown" ? (
                             <span style={{ color: "var(--warn)" }}>unknown — checked later</span>
                           ) : (
-                            o.id
+                            <span title="OKX order id">OKX order {o.id}</span>
                           )}
                         </td>
                       </tr>

@@ -175,7 +175,8 @@ function Proof({ c, explorer }: { c: Cycle; explorer?: string }) {
 
 function Stepper({ c }: { c: Cycle }) {
   const ordered = c.decisions.filter(isTrade);
-  const allIds = ordered.length > 0 && ordered.every((d) => d.okx_order_id);
+  // simulated (practice) and filled orders count as done even without an OKX id
+  const allIds = ordered.length > 0 && ordered.every((d) => d.okx_order_id || d.order_status === "simulated" || d.order_status === "filled");
   const t = (ms?: number) => (ms ? clock(ms) : "");
   type St = { label: string; cls: string; sub: string };
   const steps: St[] = [

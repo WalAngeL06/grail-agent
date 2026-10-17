@@ -1,10 +1,23 @@
 # Handoff — web (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~14:20
-- Aktif görev / durum: T-005 / READY_FOR_REVIEW — v0.5 alanları eklendi (origin/main merge edildi; ui-brief artık main'de). Claude Design çıktısı bekleniyor.
+- Güncelleme zamanı: 2026-10-17 ~15:15
+- Aktif görev / durum: T-005 v2 / READY_FOR_REVIEW — Claude Design uygulandı + sade dil + How it works. contracts v0.6 (origin/main merge).
 - Oturum: Claude Code · Max (Opus 5.5), durdu
 - Worktree / branch / son commit: `Agentic Hack-wt/web` / `role/web` / bu dosyayı içeren son commit (`git log -1`)
-- contracts okunan sürüm: v0.5
+- contracts okunan sürüm: v0.6
+- Tasarım paketi: Downloads/GRAIL Autonomous Trading Dashboard.zip → repo DIŞINDA açıldı (scratchpad), commit edilmedi.
+- v2 somut davranış:
+  - Kabuk: sidebar (altın elmas, "Read-only · no wallet, no orders"), 5. menü "How it works", Settings menüde "Safety limits"; <760 px alt sekme çubuğu; üst bar sarar (taşmaz); kopyala → toast.
+  - Her ekranda büyük tek cümle başlık + state'ten canlı özet; boyut: cevap > kanıt > detay.
+  - Dashboard: 5 adımlı akış şeridi (Market → Decision → Sealed → Order → Revealed, her adım ilgili ekrana link), "Independent bets" hero, sade KPI'lar, "Show the math".
+  - Sade dil: `Term` bileşeni (düz isim + küçük gri teknik isim + "?" ipucu). AI rozeti "AI second opinion: approved / reduced / vetoed / not needed".
+  - Verify sheet (sağdan): payload+salt reveal tx calldata'sından (R-003-1), `GrailLedger.decisions(agentId,cycleId)` eth_call, cycle_id/agent kontrolü (R-003-4), v0.6 okxOrderId coin başına, "Try to cheat". Fuji RPC rate limit → Routescan proxy yedeği. Yeni paket yok (@noble/hashes + elle ABI).
+  - Ledger: chain.json adresleri (GrailLedger 0x1B5f…8851, IdentityRegistry 0x120A…6721, agentId 1, kayıt tx), resmi Avalanche logosu (cryptocurrency-icons, CC0), sözleşmeden canlı commitCount/revealCount. ledger[] yok; decisions[] + state.chain.
+  - İlk ziyaret 3 adımlı tanıtım (localStorage `grail.intro.dismissed`, try/catch).
+  - Demo fixture v0.6: Fuji'deki GERÇEK döngü (agent 1, cycle 1; `fixtures/fuji-cycle-1.json`, reveal calldata'sından) + 4 sentetik döngü (`demo_synthetic: true` → zincirde aranmaz).
+- v2 kontroller: `npm run build` geçti; demo: gerçek döngü #1 Verify → ✅ Match (computed = state = on-chain 0xd906…5a83, cycle 1/GRAIL-01, 5× simulated), "Change one number" → ✕ Mismatch; mock: 5 ekran hata yok, Verify gri "Mock data", Ledger zincirden "1 sealed, 1 opened"; mobil 375 px tüm ekranlarda yatay taşma yok. Ekran görüntüleri `web/docs/screenshots/v2-*`.
+- Not: state.chain.agent_id null olsa da chain.json agentId (1) gösterilir (gerçek adresler chain.json'dan); ikisi de yoksa "NOT REGISTERED".
+
 - v0.5 eklemeleri (bu tur):
   - Decisions: her satırda analist rozeti `AI approved|reduced|vetoed|exempt|skipped` (renkli; title = açıklama + llm_note) ve llm_note metni; bilinmeyen flag gri gösterilir.
   - Settings: "Spend limits" kartı (state.config.max_order_usdt, max_total_deploy_usdt, kill_switch_drawdown_pct; yoksa "—" + "not reported"), salt okunur; Config tablosunda tekrar edilmez.
@@ -36,4 +49,4 @@
   - Engine `reason` metinleri Türkçe ("-> nakit", "hedef"); UI İngilizce. Engine'e istek: reason'ı İngilizce yaz (UI metni olduğu gibi gösterir).
   - Brifte istenen "on-chain 0x…" satırı ABI ile kontrattan okunmuyor; commit tx calldata'sında hash aranıyor (ABI'siz). chain.json gelince `chainHints()` + gerekirse ABI okuması eklenecek.
 - TEKRARLANMAMASI gereken işlem: vite.config'te `new URL(...).pathname` (boşluklu yol → 404) — `fileURLToPath` kullan.
-- SIRADAKİ İLK ADIM: `git merge origin/main`; Claude Design çıktısı gelince farkları uygula; chain.json gelince src/verify.ts `chainHints()` anahtarlarını gerçek şekle göre düzelt; T-006 state yazınca `GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev` ile gerçek veriden ekran görüntüsü al; Claude Design çıktısı gelirse farkları uygula.
+- SIRADAKİ İLK ADIM: `git merge origin/main`; T-006 gerçek state yazınca GRAIL_STATE_PATH ile 5 ekranı ve gerçek bir döngünün Verify'ını dene; chain.json gelince src/verify.ts `chainHints()` anahtarlarını gerçek şekle göre düzelt; T-006 state yazınca `GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev` ile gerçek veriden ekran görüntüsü al; Claude Design çıktısı gelirse farkları uygula.

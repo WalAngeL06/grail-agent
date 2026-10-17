@@ -22,6 +22,14 @@
 - Bir döngüdeki bütün kararlar tek payload'da toplanır: `{ "cycle_id", "agent", "mode", "dry_run", "decided_at_ms", "decisions": [ ... ] }`.
   `dry_run` hash'e girer: zincirde simüle ve canlı kararlar ayırt edilir.
 
+## `target_weight_pct` tabanı (revizyon 0.6.1, R-007-3)
+- Bu açıklama mevcut `engine/decision.py` davranışını tanımlar; hesap/payload biçimini veya geçmiş hash'leri değiştirmez. `target_weight_pct`, gerçekleşen emir veya emir sonrası pozisyon yüzdesi değildir.
+- **Normal, geçerli veri/portföy yolu:** `deploy_base_usdt = min(equity_usdt, max_total_deploy_usdt)`; `target_weight_pct = 100 * w_i` (iki ondalık), burada `w_i` trend filtresi, HRP, volatilite ölçekleme ve pozisyon/risk tavanları sonrasındaki hedef ağırlıktır. Hedef USDT yaklaşık `target_weight_pct / 100 * deploy_base_usdt` (yuvarlama farkıyla). Bu taban normal BUY/SELL ve minimum emir/nakit/bütçe nedeniyle çıkan normal HOLD için de geçerlidir.
+- **Koruma/atlanmış analiz yolu:** kill switch veya coin verisi geçersiz olduğunda HOLD kaydındaki `target_weight_pct` mevcut `100 * position_value_usdt / equity_usdt`'dir (iki ondalık). Equity geçersizse veya genel engine hata fallback'inde `0` olur. Sadece `action=HOLD` bilgisinden taban seçilemez: normal hedef HOLD'u ve koruma HOLD'u farklıdır.
+- `metrics.target_weights_pct` aynı karar değerlerini yansıtır; `metrics.hrp_weights_pct` limit/volatilite öncesi dağılımdır ve gerçek hedef yerine kullanılamaz. Mevcut pozisyon `portfolio.positions[].weight_pct` her zaman toplam equity tabanındadır.
+- UI normal hedefi equity ile karşılaştıracaksa `target_pct_of_equity = target_weight_pct * min(equity_usdt, max_total_deploy_usdt) / equity_usdt`; koruma HOLD'unda mevcut equity yüzdesini tekrar dönüştürmez. Örnek: equity=100, max_deploy=50, normal hedef=20% → hedef 10 USDT → equity'nin %10'u; koruma HOLD'unda 20% → mevcut 20 USDT'dir. Referans tabanı bilinmiyorsa iki çubuğu aynı yüzdeymiş gibi kıyaslama.
+- Bu revizyon `deploy_base_usdt` veya bir taban alanını runtime'a eklemez. T-014 `metrics.signals` eklemesi de bu alanın tabanını/payload anahtarlarını değiştirmez. Alan hash'e girer; semantiği tek tabana dönüştüren bir uygulama değişikliği ayrı görev/onay gerektirir.
+
 ## Opsiyonel analist alanları (T-007, D-011)
 - `llm_note`: tek satır ASCII metin, en çok 160 karakter; analistin gerekçesi veya atlama nedeni.
 - `llm_flag`: `"skipped"` | `"approved"` | `"reduced"` | `"vetoed"` | `"exempt"`.

@@ -1,16 +1,16 @@
 # Handoff — reviewer (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 16:05 Europe/Istanbul
-- Aktif görev / durum: R-004b bitti → APPROVE; **canlı emir GO** (tek coin BTC-USDT, min=max=2 USDT, toplam 10, `--cycles 1`, `runtime/live`, kullanıcı izler; tam komut `coord/reviews/T-006.md` R-004b). Önceki: R-002 (T-002), R-003 (T-003), R-004 (T-006).
+- Güncelleme zamanı: 2026-10-17 15:55 Europe/Istanbul
+- Aktif görev / durum: R-005 (public öncesi güvenlik taraması) bitti → **PUBLIC GO** (origin/main@9acec55 + 7 uzak branch; BLOCKER yok, 4 MINOR). Önceki: R-002, R-003, R-004, R-004b (canlı GO).
 - Oturum: Claude Code · Opus 5.5 (planner'ın açtığı yan oturum), durdu
-- Worktree / branch / son commit: `Agentic Hack-wt/review` / `role/review` / "reviewer: R-004b T-006 fixes + live gate" (git log -1)
+- Worktree / branch / son commit: `Agentic Hack-wt/review` / `role/review` / "reviewer: R-005 public security scan" (git log -1)
 - contracts okunan sürüm: v0.6
-- Tamamlanan somut davranış: T-006.md sonuna R-004b eklendi — R-004-1/2/3 kapandı (2bf5668); canlı CLI kapısı 8/8 ret durumu istemci kurulmadan; blok imleci bozulma/geri sarma analizi fail-closed; yeni R-004b-1 NIT (bozuk `fuji-events.json` → sadece onu sil), R-004b-2 MINOR (5 coin config tek döngüde 5 emir → tek coinli canlı config).
+- Tamamlanan somut davranış: `coord/reviews/R-005-public.md` — 100 commit / 535 blob maskeli desen taraması + gerçek .env ve ~/.okx/config.toml değerleriyle birebir karşılaştırma (sayı-only): özel anahtar, LLM anahtarı, OKX key/secret/passphrase 0 eşleşme; runtime/.env/sqlite geçmişte hiç izlenmemiş; .gitignore sentetik yollarla doğrulandı.
 - Commit edilmemiş / izlenmeyen dosyalar: yok
-- Çalıştırılan kontroller: 2bf5668 `git archive` → scratchpad, `uv run pytest -q --basetemp=<kısa>` → 157 passed; R-004-2 repro 3 döngü birikmesiz; CLI ret matrisi (ATK/Fuji kurulumu yamalı, 8/8 erken ret); tek coin config gerçek engine → BUY 2.00 simulated. Scratchpad temizlendi.
-- Çalıştırılmayan kontroller ve nedeni: canlı koşu (kullanıcının işi, gerçek para); Fuji tx yok.
+- Çalıştırılan kontroller: yukarıdaki iki tarayıcı (scratchpad, ham çıktı silindi); `git ls-remote` kapsam karşılaştırması; `git check-ignore -v --no-index` 26 sentetik yol; pptx iç içe tarama; adres/64-hex sınıflandırması (yerel türetme + salt okunur Fuji RPC).
+- Çalıştırılmayan kontroller ve nedeni: gitleaks/trufflehog kurulu değil (indirme yapılmadı); JPG OCR yok; GitHub sunucu tarafı ref/önbellek yerelden görülemez.
 - Devam eden süreçler / portlar: yok
 - Dış eylemler (emir id, tx hash): yok
-- Açık sorun / denenenler: R-004-4/5/6/7, R-002-3/4 açık (MINOR/NIT). Canlı koşu sonrası ordId/tx gelirse istenirse sadece kanıtı salt okunur doğrula.
-- TEKRARLANMAMASI gereken işlem: `python -m grail_agents smoke/run`, okx komutları, Fuji tx — reviewer asla çalıştırmaz. Agents worktree'de test koşma; `git archive <commit>` → scratchpad + kısa `--basetemp`. Canlı komut metnini Bash heredoc ile dosyaya yazma (izin sınıflandırıcısı engelliyor) → Edit/Write kullan.
+- Açık sorun / denenenler: public'ten önce main yeni commit alırsa R-005 §1–§2 o SHA için tekrar (scratchpad'deki betikler silindi; rapordaki yöntemle yeniden yazılır). MINOR-1 .gitignore sertleştirme (integrator), MINOR-4 yerel claude/* branch'leri push edilmesin.
+- TEKRARLANMAMASI gereken işlem: gizli değeri, ön/son ekini veya uzunluğunu yazdırmak; .env kopyalamak; history rewrite/force-push (reviewer yapmaz). `python -m grail_agents smoke/run`, okx komutları, Fuji tx.
 - SIRADAKİ İLK ADIM: READY_FOR_REVIEW olan dalı STATE.md'den bul; `git fetch && git merge origin/main`; `git diff origin/main...origin/role/<x>`; `coord/reviews/<görev>.md` yaz.

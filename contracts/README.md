@@ -18,6 +18,8 @@ Etkilenen roller bir sonraki görev başında `git merge main` ile alır ve RAPO
 - `state.config`, etkin config'ten `max_order_usdt` ve `max_total_deploy_usdt` (ondalık string) ile `kill_switch_drawdown_pct` (yüzde sayı) taşır.
 - `state.chain.agent_id`: ERC-8004 uint256 kimliği ondalık string; `identity_registry`: 0x ile başlayan registry adresi. Deploy doğrulanana kadar ikisi de `null`; gerçek değerler `contracts/chain.json` çıktısından alınır.
 - Sicil UI'ı `state.decisions[]` kayıtlarını `cycle_id` ile gruplar; ayrı `ledger[]` eklenmez (D-011).
+- Reveal `okxOrderId` döngü başına kanonik `inst_id` → `ordId|simulated|unknown` JSON string'i; emir yoksa boş string. Ayrıntı `decision.md` (D-013).
+- `chain.json.contractVersion` deploy anındaki sözleşme sürümüdür (mevcut Fuji çıktısı 0.5). v0.6 sonuç string'ini tanımlar; ABI, karar payload/hash kuralı ve test vektörü aynı olduğundan yeniden deploy gerekmez (D-013).
 
 ## Dosyalar
 - `config.example.json` — kullanıcı ayarları (engine doğrular).

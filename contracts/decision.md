@@ -1,4 +1,4 @@
-# Karar nesnesi ve hash kuralı (v0.5)
+# Karar nesnesi ve hash kuralı (v0.6)
 
 ## Karar (engine.decide çıktısı, coin başına bir tane)
 ```json
@@ -42,6 +42,15 @@
 
 ## Hash'e GİRMEYENLER
 - `okx_order_id`, dolum fiyatı, emir durumu. Bunlar reveal sonrası sonuç alanlarıdır.
+
+## Reveal `okxOrderId` biçimi (R-003-2, D-013)
+- `revealDecision` çağrısındaki döngü başına tek `okxOrderId` string'i, `inst_id` → emir sonucu eşlemesinin kanonik JSON metnidir:
+  `{"BTC-USDT":"<ordId>|simulated|unknown"}`. `|` seçenekleri gösterir; gerçek değer OKX `ordId` string'i, `"simulated"` veya `"unknown"` olur.
+- Anahtarlar alfabetik sıralı, boşluksuz, `ensure_ascii=True`; payload ile aynı JSON kanonikleştirme kuralı kullanılır.
+  Çok emir örneği: `{"BTC-USDT":"1234567890","ETH-USDT":"unknown"}`; dry_run örneği: `{"BTC-USDT":"simulated"}`.
+- HOLD ve emir gönderilmeyen kararlar eşlemeye eklenmez. Döngüde emir/simülasyon veya sonucu belirsiz emir girişimi yoksa alan tam olarak boş string `""` olur (`"{}"` değil).
+- Emir durumu sorgulandıktan sonra reveal edilir. Belirsiz sonuç ilgili `inst_id` altında `"unknown"` olur; kurtarmada da aynı biçim kullanılır, tüm alan düz `"unknown"` yapılmaz. Reveal tek seferliktir; sonradan emir sonucu değiştirilemez.
+- Bu sonuç string'i karar payload'ına/hash'e girmez. `state.decisions[].okx_order_id` coin başına alan olarak kalır; döngü eşlemesi reveal çağrısında oluşturulur.
 
 ## Döngü sırası
 engine.decide → analyst.review_payload → son payload'ı kanonikleştir ve salt ile diske yaz → commit tx →

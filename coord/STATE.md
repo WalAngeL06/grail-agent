@@ -1,13 +1,13 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r12 · 2026-10-17 14:36 (Europe/Istanbul)
+- Durum revizyonu: r13 · 2026-10-17 14:43 (Europe/Istanbul)
 - Ürün: `coord/BRIEF.md` kesinleşti; Fuji 43113'te dört kontrat + ERC-8004 agentId 1 deploy/kayıt doğrulandı. `contracts/chain.json` adres/ABI/testVector hazır.
 - OKX: `grail` profili bağlı (gerçek para; `dry_run` açık).
-- Entegrasyon: T-001/002/004/005(v0.5)/007/008(taslaklar), R-002 main'de; T-003 (`role/chain@fdd4bf0`, bu kayıtla aynı merge commit'i). Kullanıcı R-003 sürerken merge istedi; inceleme kapanmadı.
-- Son doğrulama: chain dal/main 25 test + Fuji salt okunur RPC + çapraz hash (14:36). Önceki web build/agents 78/engine+analyst 84 test kanıtları aşağıda; uçtan uca döngü / gerçek state-Fuji UI henüz doğrulanmadı.
-- Aktif sözleşme: `contracts/VERSION` = 0.5 (D-011: LLM alanları hash'e, SELL exempt, state limit/kimlik alanları; ledger[] RED; dry_run açık)
+- Entegrasyon: T-001/002/003/004/005(v0.5 UI)/007/008(taslaklar), R-002/R-003 main'de. R-003 (`role/review@a6044d7`) APPROVE koşullu; iki merge koşulu D-013 ile işlendi, yeniden deploy gerekmez.
+- Son doğrulama: birleşmiş main + v0.6: chain 25, agents 78, engine+analyst 84 test ve web build geçti (14:43). Fuji salt okunur RPC + çapraz hash 14:36 kanıtı aynı; uçtan uca döngü / gerçek state-Fuji UI henüz doğrulanmadı.
+- Aktif sözleşme: `contracts/VERSION` = 0.6 (D-013: reveal sonuç eşlemesi; T-006 kalıcı/monoton cycle_id kabulü). D-011 payload/hash ve state alanları aynı; chain.json deploy sürümü 0.5, dry_run açık.
 - Kaynak: Avalanche workshop slaytı (ERC-8004 boilerplate) ve ATK yapılandırması → D-006
-- Sıradaki öncelik: agents temiz worktree'de `git merge main` ile chain.json'u alıp T-006'ya (analist + R-002 koşulları) bağlasın → UI gerçek state/Fuji. R-003 bulguları gelince chain sahibi ele alır. README taşıma kapısı D-012; R-002-1 çözülmeden canlı yok.
+- Sıradaki öncelik: agents temiz worktree'de `git merge main` ile v0.6'yı alıp T-006'yı (analist + R-002-1/2 + R-003-2/3) tamamlasın → UI gerçek state/Fuji. README taşıma kapısı D-012; R-002-1 çözülmeden canlı yok.
 
 ## Zaman kapıları
 | Saat | Kapı | Ölçüt |
@@ -27,14 +27,14 @@
 |---|---|---|---|---|
 | T-001 | Quant engine çekirdeği + golden testler | engine (Claude Code · Max) | INTEGRATED | contracts 0.5 uyumu doğrulandı |
 | T-002 | ATK veri çekme + emir katmanı (dry_run; canlı öncesi R-002-1) | agents (Codex · hesap 1) | INTEGRATED | contracts 0.4; 0.5 ile 78 test |
-| T-003 | ERC-8004 kimlik + GrailLedger + Fuji deploy | chain (Codex · hesap 2) | INTEGRATED (R-003 sürüyor) | contracts 0.5; chain.json hazır |
+| T-003 | ERC-8004 kimlik + GrailLedger + Fuji deploy | chain (Codex · hesap 2) | INTEGRATED (R-003 koşulları işlendi) | deploy contracts 0.5; v0.6 ile ABI/hash uyumlu |
 | T-004 | UI brifi (ekranlar, palet, alan eşlemesi) | docs (Claude · Pro) | INTEGRATED | contracts 0.3 |
 | T-005 | UI v0.5 (LLM not/rozet, limitler, ERC-8004 kimlik) | web (Claude Code · Max) · QA: Antigravity | INTEGRATED (gerçek state/Fuji açık) | T-004; gerçek veri T-003/T-006 |
-| T-006 | Agent döngüsü: decide → analyst review_payload → commit → ATK → reveal → state | agents (Codex · hesap 1) | TODO | T-001, T-002, T-003, T-007; contracts 0.5 |
+| T-006 | Agent döngüsü: decide → analyst review_payload → commit → ATK → reveal → state | agents (Codex · hesap 1) | TODO | T-001, T-002, T-003, T-007; contracts 0.6; R-002-1/2 + R-003-2/3 |
 | T-007 | LLM analist (yalnız BUY riskini azaltır; SELL exempt) | analyst (Claude Code · Max) | INTEGRATED | T-001; contracts 0.5 |
 | T-008 | Teslim metinleri: form açıklaması, README taslağı, pitch, demo | docs (Claude Code · Max) | INTEGRATED (taslaklar; freeze sonrası doğrulama açık) | T-003/T-006 gerçek değerleri; D-012 |
 | R-002 | T-002 incelemesi: APPROVE koşullu, BLOCKER yok | Claude Code · Max (Opus 5.5) | DONE | bad30c3; R-002-1/2 T-006 kabulünde |
-| R-003 | T-003 bağımsız incelemesi | reviewer (bağımsız) | IN_PROGRESS | role/chain@fdd4bf0; kullanıcı merge'i şimdi istedi |
+| R-003 | T-003 incelemesi: APPROVE koşullu, yeniden deploy yok | reviewer (Claude Code · Opus 5.5) | DONE | a6044d7; R-003-2 decision.md v0.6, R-003-3 T-006 kabulünde |
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
 ## Kanıtlar (tx hash, emir kimliği, test çıktıları)
@@ -54,10 +54,13 @@
 - Fuji: `npm run verify:fuji` salt okunur → dört receipt/ABI/bytecode, owner/metadata/kayıt event'i/registry bağlantıları/hash geçti. AgentId=1; ledger=0x1B5fcf6DeFf2F9375338A2C35932224522118851; IdentityRegistry=0x120A4E53A24ddd09991633b4Cb88c3feA6166721; sayaçlar 0/0.
 - Ledger deploy tx: 0xde680409c053d535f55f7ab963bbb1a7dabee8b7e229a1ec819e34da17c730dd; agent kayıt tx: 0xfa98129b1bd4c67a4549f6cb994a3697d826a6d0d8b6832aaece20f3b9e4ee93; ikisi de status=1.
 - Hash: Python kanonik JSON birebir; tarayıcı keccak kütüphanesi chain.json testVector ile 0x6828363cc1b98703c227c13258bdaa654db4e1f6e870b27f2795a866cfe98776 eşleşti. Bu oturum yeni dış tx/emir göndermedi; Snowtrace tarayıcı görünümü doğrulanmadı.
+- R-003: `a6044d7` = origin/role/review; sınır yalnız coord/reviews/T-003.md + coord/handoffs/reviewer.md. R-003-2 kanonik okxOrderId eşlemesi ve R-003-3 kalıcı/monoton cycle_id kabulü işlendi; T-006 uygulama/test kanıtı henüz yok.
+- v0.6 birleşmiş ağaç: `cd chain && npx hardhat test` → 25 passing (1s); `cd engine && uv run pytest -q` → 84 passed (1.70s); `cd agents && uv run pytest -q` → 78 passed (0.22s); `cd web && npm run build` → geçti (45 modül, 644ms).
+- v0.6 config/state/VERSION eşleşmesi, validate_config, dry_run=true ve kanonik sonuç örnekleri doğrulandı; chain.json v0.5/golden payload korundu. chain/agents/engine/analyst/web ürün kaynakları 9bc78e3 ile aynı; yeni dış tx/emir yok.
 
 ## Bekleyen merge'ler
 - (yok)
 
 ## Engeller
-- Fuji deploy artık doğrulandı; gerçek state/Fuji UI T-006 döngüsünü bekliyor. R-003 incelemesi sürüyor; henüz APPROVE sonucu yok.
+- Fuji deploy doğrulandı; R-003 merge koşulları kapandı. Gerçek state/Fuji UI ve R-003-3 uygulama kanıtı T-006 döngüsünü bekliyor.
 - Canlı mod kapısı: R-002-1 kesin red → kalıcı unknown kilidi agents sahibince düzeltilmeli; R-002-2 pending/partial rezerv uzlaştırması T-006'da doğrulanmalı. dry_run=true.

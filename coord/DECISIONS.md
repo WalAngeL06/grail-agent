@@ -77,3 +77,10 @@ OKX TR katılımcılara gerçek bakiye verdi; emirler canlı hesapta. Erişim: `
 - Kullanıcı `role/web@9eb1b52` (v0.5 UI alanları) ve ardından `role/docs@d1e8ea0` (T-008 teslim metinleri) merge + push istedi. T-008 kartı bu teslimde açılır; contracts sürümü 0.5 kalır.
 - T-008 ilk teslimi docs/ altında dört İngilizce taslaktır: form açıklaması, README-draft, 10 slayt pitch, 2:00 demo senaryosu. Adresler ve henüz doğrulanmamış çalışma/ölçüm/komutlar açık yer tutucuyla kalır.
 - **README-draft.md köke taşıma kararı: 17:00 freeze SONRASI ve gerçek adresler doldurulup doğrulandığında.** Docs sahibi taslağı günceller ve RAPOR eder; köke taşıma integrator tarafından yapılır. Bu merge'de kök README değiştirilmez.
+
+## D-013 · R-003 koşullu onay; çok emirli reveal ve kalıcı cycle_id (contracts 0.6)
+- Kullanıcı `role/review@a6044d7` R-003 incelemesinin merge + push'unu istedi. T-003 APPROVE koşullu; BLOCKER/MAJOR yok, yeniden deploy gerekmez. İnceleme yalnız `coord/reviews/T-003.md` + reviewer handoff'u değiştirir.
+- R-003-2: `decision.md` reveal `okxOrderId` alanı kanonik JSON `{"BTC-USDT":"<ordId>|simulated|unknown"}` olarak tanımlandı; `|` alternatifleri gösterir. Çok coin alfabetik/boşluksuz eşleme, emir yoksa `""`; normal/kurtarma aynı biçim. Emir durumu sorgulandıktan sonra reveal; sonuç hash'e girmez. Kullanıcı bu biçimi agents'a verdi.
+- R-003-3: T-006 kabulü kalıcı ve monoton cycle_id ister; restart, tamamlanmış pending kayıtlarının silinmesi ve dry_run/canlı geçişi aynı agent için kimlikleri yeniden kullanmaz. Uygulama ve ağsız test kanıtı agents sahibinin T-006 tesliminde aranır.
+- `contracts/VERSION` ve config/state örnekleri 0.5 → 0.6. ABI, payload/hash kuralı ve golden testVector değişmedi. `chain.json.contractVersion=0.5` deploy anının kaydı olarak korunur; adres/kimlik/bytecode değişmez. Etkilenen agents/web rolleri `git merge main` ile alır; ürün kodlarına bu teslimde yazılmaz.
+- R-003-1/4 UI bağımsız doğrulama önerileri, R-003-5/6 opsiyonel metadata/deployBlock notları inceleme dosyasında korunur; bu merge'in koşulu değildir. Canlı mod için R-002-1 kapısı açık, dry_run=true.

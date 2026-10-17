@@ -4,7 +4,7 @@
 - Kurulum TAMAM: git + 6 rol worktree'si, GitHub private repo (WalAngeL06/grail-agent), AGENTS.md, coord/, contracts 0.3,
   BRIEF (ürün kesin), SUBMISSION (form kontrol listesi), Fuji test cüzdanı `.env`'de (adres 0x0660f43f5307Ea7C5Dbb6685FEEB648eD9620fcf).
 - OKX: `grail` profili (gerçek para, dry_run açık). Claude'daki tam yetkili OKX MCP kaldırıldı; sadece salt okunur market MCP var.
-- Fuji gas: organizatör test AVAX'ı kullanıcının MetaMask'ına gönderecek → kullanıcı 1 AVAX'ı agent adresine aktaracak → chain rolüne "deploy et".
+- Fuji gas: 13:05 1 test AVAX MetaMask'a (0x3b8b2…3C537) GELDİ. Kullanıcı ~0.9 AVAX'ı agent adresine aktaracak → bakiyeyi doğrula → chain rolüne "deploy et".
   Kullanıcı "gönderdim" derse: `eth_getBalance` ile https://api.avax-test.network/ext/bc/C/rpc üzerinden doğrula.
 - Bundan sonra `main`'e SADECE integrator (Codex · hesap 1, ana klasör) yazar. Planner sadece danışır; değişiklik önerisini integrator'a RAPOR "istek" olarak verdirir.
 - Kullanıcının bekleyen işleri: 4 AI'ı başlatmak (engine Claude Max ayrı proje grubunda `Agentic Hack-wt\engine`, "Çalışma ağacı" KAPALI),

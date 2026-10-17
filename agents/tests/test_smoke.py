@@ -37,7 +37,7 @@ def test_smoke_reads_account_and_market_and_simulates(cfg_dict, instrument_row, 
     assert result["ok"] is True and result["dry_run"] is True
     assert result["portfolio"]["cash_usdt"] == "100"
     assert result["market"][0]["last"] == "60000"
-    assert result["candle_counts"] == {"BTC-USDT": 49}
+    assert result["candle_counts"] == {"BTC-USDT": int(cfg_dict["lookback_bars"]) + 1}
     assert result["order"]["size_usdt"] == "2"
     assert result["order"]["order_status"] == "simulated"
     assert result["instruments"]["BTC-USDT"]["min_order_usdt_at_last"] == "0.6"

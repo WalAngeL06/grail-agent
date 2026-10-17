@@ -8,7 +8,7 @@
   "quote": "USDT",
   "cycle_seconds": 90,
   "candle_bar": "1H",
-  "lookback_bars": 48,
+  "lookback_bars": 168,
   "risk_budget_pct": 10,
   "max_position_pct": 30,
   "target_vol_pct": 20,

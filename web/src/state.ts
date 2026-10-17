@@ -48,6 +48,8 @@ export type Decision = {
   verified?: boolean;
   payload_utf8?: string;
   salt_hex?: string;
+  /** web/fixtures only: synthetic demo cycle that was never sent to Fuji */
+  synthetic?: boolean;
 };
 export type Position = { inst_id?: string; size_base?: string; value_usdt?: string; weight_pct?: number };
 export type MarketRow = { inst_id?: string; last?: string; change_24h_pct?: number; at_ms?: number };
@@ -176,6 +178,7 @@ export function normalize(raw: unknown): GrailState {
         verified: bool(o.verified),
         payload_utf8: str(o.payload_utf8),
         salt_hex: str(o.salt_hex),
+        synthetic: o.demo_synthetic === true ? true : undefined,
       };
     }),
     chain: {
@@ -211,6 +214,7 @@ export type Cycle = {
   verified?: boolean;
   dry_run?: boolean;
   trades: number;
+  synthetic: boolean;
 };
 
 export function groupCycles(s: GrailState): Cycle[] {
@@ -235,6 +239,7 @@ export function groupCycles(s: GrailState): Cycle[] {
       verified: first(ds, "verified"),
       dry_run: decisionDryRun({ ...ds[0], payload_utf8: first(ds, "payload_utf8") }, s),
       trades: ds.filter((d) => d.action === "BUY" || d.action === "SELL").length,
+      synthetic: ds.some((d) => d.synthetic),
     }))
     .sort((a, b) => (b.cycle_id ?? -1) - (a.cycle_id ?? -1));
 }

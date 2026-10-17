@@ -4,7 +4,7 @@ import subprocess
 import pytest
 
 from grail_agents.atk import AtkClient
-from grail_agents.config import GrailError
+from grail_agents.config import GrailError, OrderRejected
 
 
 class Runner:
@@ -89,3 +89,25 @@ def test_try_valuation_uses_inverse_usdt_try_public_ticker():
     run = Runner([{"instId": "USDT-TRY", "last": "50"}])
     assert AtkClient(command=("okx",), runner=run).try_usdt_rate() == "0.02"
     assert run.calls[0][0][-3:] == ["market", "ticker", "USDT-TRY"]
+
+
+def placement():
+    return {"inst_id": "BTC-USDT", "action": "BUY", "order_type": "market", "size": "5", "size_usdt": "5", "tgt_ccy": "quote_ccy", "client_order_id": "g1", "price": None}
+
+
+@pytest.mark.parametrize("wrapped,exit_code", [(False, 0), (True, 0), (True, 1)])
+def test_explicit_structured_rejection_is_distinct(wrapped, exit_code):
+    row = {"sCode": "51008", "sMsg": "secret", "ordId": "", "clOrdId": "g1"}
+    data = {"code": "1", "data": [row]} if wrapped else [row]
+    def run(argv, **kwargs):
+        return subprocess.CompletedProcess(argv, exit_code, json.dumps(data), "secret")
+    with pytest.raises(OrderRejected) as caught:
+        AtkClient(command=("okx",), runner=run)._place_spot(placement())
+    assert caught.value.code == "51008" and "secret" not in str(caught.value)
+
+
+@pytest.mark.parametrize("data", [[None], [{"sCode": "garbage"}], {"code": "51008", "data": []}, [{"sCode": "51008", "ordId": "42"}]])
+def test_unproven_rejection_remains_uncertain(data):
+    with pytest.raises(GrailError) as caught:
+        AtkClient(command=("okx",), runner=Runner(data))._place_spot(placement())
+    assert not isinstance(caught.value, OrderRejected)

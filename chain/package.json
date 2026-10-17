@@ -8,12 +8,16 @@
     "test": "hardhat test",
     "deploy:fuji": "hardhat run scripts/deploy.ts --network fuji",
     "verify:fuji": "hardhat run scripts/verify-deployment.ts --network fuji",
+    "verify:sources": "hardhat run scripts/check-source-verification.ts --network fuji",
+    "verify:cycle": "hardhat run scripts/verify-cycle.ts --network fuji",
+    "verify:cycle:1": "hardhat run scripts/verify-cycle.ts --network fuji --cycle 1 --commit-tx 0x7b47c4f313ffa5630d1acfff6411f11c6d13c321bbc69649ec8c90976995f728 --reveal-tx 0x541cb8ff88aac0248fbf79d7997915b62bb08fb873e226bbefc35cbcec77cf45",
     "deploy:local": "hardhat run scripts/deploy.ts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "2.1.0",
     "@nomicfoundation/hardhat-ethers": "3.1.0",
+    "@nomicfoundation/hardhat-verify": "2.0.14",
     "@openzeppelin/contracts": "5.0.2",
     "@types/chai": "4.3.20",
     "@types/mocha": "10.0.10",

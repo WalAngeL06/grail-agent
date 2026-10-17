@@ -7,15 +7,33 @@ name = "grail-agents"
 version = "0.1.0"
 description = "Guarded OKX ATK adapter for GRAIL"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "grail-engine",
+    "grail-analyst",
+    "eth-hash[pycryptodome]>=0.7,<1",
+    "python-dotenv>=1,<2",
+    "web3>=7,<8",
+]
+
+[tool.uv.sources]
+grail-engine = { path = "../engine", editable = true }
+grail-analyst = { path = "../analyst", editable = true }
 
 [dependency-groups]
-dev = ["pytest>=8,<10"]
+dev = [
+    "eth-tester>=0.13.0b1,<0.14",
+    "py-evm>=0.12.1b1,<0.13",
+    "pytest>=8,<10",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = ["--basetemp=runtime/pytest"]
+filterwarnings = [
+    "ignore:websockets.legacy is deprecated:DeprecationWarning",
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning:cached_property",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/grail_agents"]

@@ -1,22 +1,23 @@
 # Handoff — engine / analyst (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 (T-007 bitişi)
-- Aktif görev / durum: T-007 / READY_FOR_REVIEW (T-001 INTEGRATED)
-- Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`); main@e06987b merge edildi (fast-forward)
-- contracts okunan sürüm: 0.4
-- Tamamlanan somut davranış (T-007):
-  - `analyst/` uv paketi `grail-analyst` (`src/grail_analyst`, sadece stdlib): `review(decisions, snapshot, news, cfg, provider)`, `review_payload(payload, ...)`, `make_provider(env)`, `GeminiProvider`. Ayrıntı: `analyst/README.md`.
-  - Kod zorlar (planner onayı): sadece BUY LLM'e gider; SELL her durumda aynen (`llm_flag "exempt"`). BUY: action' ∈ {BUY, HOLD}; ters yön → HOLD; HOLD emre dönmez; size' ≤ size (kuruşa aşağı), min_order altı → HOLD; bilinmeyen coin yok sayılır.
-  - Sağlayıcı yok / timeout (daemon thread, tavan 8 sn) / bozuk JSON / hata → kararlar aynen, `llm_flag "skipped"`, `llm_note "skipped: <neden>"`. BUY yoksa LLM çağrılmaz (`no_buys`). İstisna fırlatmaz, girdi değişmez.
-  - Karara `llm_note` (ASCII ≤160) + `llm_flag` (skipped|approved|reduced|vetoed|exempt) eklenir → payload'la hash'lenir.
-  - `engine/pyproject.toml`: pytest `testpaths += ../analyst/tests`, `pythonpath = ../analyst/src` → engine test komutu analyst testlerini de koşar.
+- Güncelleme zamanı: 2026-10-17 ~15:30 (T-012 bitişi)
+- Aktif görev / durum: T-012 / READY_FOR_REVIEW. T-012 kartı main'de henüz yok; kapsam kullanıcı mesajından: "son 30 günün OKX mumlarıyla engine kararlarını geriye oynat, eşit ağırlıklı al-tut ile karşılaştır; out/replay.json + out/replay-summary.md; emir/tx yok". T-009 de READY_FOR_REVIEW (6448627, STATE'te hâlâ TODO).
+- Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`); main@6e9fc40 merge edildi.
+- contracts okunan sürüm: 0.6 (sözleşme değişikliği yok; replay.json yeni, sözleşme dışı bir çıktı).
+- Tamamlanan somut davranış (T-012):
+  - `engine/src/grail_engine/replay.py` (saf, I/O yok): `replay(candles, cfg, capital_usdt, fee_pct, window_bars)` her kapanmış 1H barda `decide()` çağırır, BUY/SELL'i bar kapanışında %0.1 ücretle simüle eder; tepe equity = en yüksek simüle equity (kill switch). Al-tut: pencere başında sermaye/5 her coine. Ayrıca `align_closes`, `max_drawdown_pct`, `count_cash_moves`, `summary_text`.
+  - `engine/scripts/replay_okx.py` (I/O): `--fetch` → `okx --json --profile grail market candles <inst> --bar 1H --limit 300 --after <ts>` ile geriye sayfalar (tek dış komut bu), sadece confirm=1 barlar → `engine/data/okx-candles-1H.json` (5 coin × 768 bar = 720 pencere + 48 ısınma). Bayraksız çalıştırma kayıtlı veriyle ağsız ve deterministik.
+  - Çıktı: `engine/out/replay.json` (`source`, `window`, `assumptions`, `grail`, `buy_hold`, `series[720]` = `t_ms,time,grail_usdt,buy_hold_usdt,grail_cash_pct,independent_bets`), `engine/out/replay-summary.md` (başlık + 3 cümle, ASCII).
+  - Sonuç (2026-09-17T13:00Z → 2026-10-17T12:00Z, 50 USDT): GRAIL 50.92 (+1.83%, max düşüş 7.48%), al-tut 54.41 (+8.81%, max düşüş 14.51%); ort. independent bets 1.36; tam nakite geçiş 9; coin çıkışı 84; barların %15.3'ü tam nakit; kill switch 166 bar (%23); 191 BUY / 191 SELL; ücret 2.07 USDT; engine hatası 0.
 - Commit edilmemiş / izlenmeyen dosyalar: yok
-- Çalıştırılan kontroller: `cd engine && uv run pytest -q` → `84 passed` (49 engine + 35 analyst, ağsız; gerçek engine payload'ı ile uçtan uca test dahil).
-- Çalıştırılmayan kontroller ve nedeni: gerçek Gemini çağrısı (LLM_API_KEY yok/ağ testi kapsam dışı); varsayılan model adı `gemini-flash-latest` canlıda doğrulanmadı (`LLM_MODEL` ile değiştirilebilir).
+- Çalıştırılan kontroller: `cd engine && uv run pytest -q` → `104 passed` (88 eski + 16 yeni; yeni testler önce kırmızıydı). `uv run python scripts/replay_okx.py --fetch` → çalıştı; bayraksız tekrar → `replay.json` bayt bayt aynı (sha256 bf5d9422…).
+- Çalıştırılmayan kontroller ve nedeni: web/agents (başka rollerin alanı; engine API'si değişmedi, sadece yeni modül).
 - Devam eden süreçler / portlar: yok
-- Dış eylemler (emir id, tx hash): yok
-- Açık konular (integrator kararı):
-  - Sözleşme: decision.md karar nesnesine opsiyonel `llm_note`, `llm_flag` alanları (hash'e girer). contracts güncellemesi integrator'da.
-  - Agent bağlantısı (T-006 eki, agents rolü): `decide` → `review_payload` → commit. `agents/pyproject.toml`'a `grail-analyst` path bağımlılığı.
-- TEKRARLANMAMASI gereken işlem: modül adı `decide.py` yapma (paket `decide` fonksiyonu modülü gölgeliyor → `decision.py`).
-- SIRADAKİ İLK ADIM: T-007 review bulgusu varsa düzelt; yoksa integrator'dan yeni görev kartı bekle — yeni chat, `Agentic Hack-wt/engine` içinde.
+- Dış eylemler (emir id, tx hash): yok. Sadece salt okunur `market candles` çağrıları.
+- Bu makinede tuzak: `%TEMP%\pytest-of-Serdar Arif` klasörünün izni bozuk (WinError 5) → testlerde `tmp_path` KULLANMA; `tempfile.TemporaryDirectory()` fixture'ı (`test_replay.py::tmp_dir`).
+- Açık konular / öneriler (integrator kararı):
+  - Ücret yükü: her barda yeniden dengeleme 382 emir, ~41× ciro, 2.07 USDT ücret (sermayenin %4.1'i). Ücretsiz getiri ≈ +6%. Öneri: hedeften sapma bandı (ör. min_order yerine %X sapma) ayrı kartla.
+  - Kill switch HOLD = pozisyonu dondurur (satmaz); %5 düşüşte zamanın %23'ü kilitli kaldı, max düşüş 7.48% (> %5). Davranış sözleşmeye uygun; değişiklik istenirse ayrı kart.
+  - Önceki açık konular (T-009): contracts örneklerindeki Türkçe reason'lar ve `errors[].message`/config mesajları hâlâ Türkçe.
+- TEKRARLANMAMASI gereken işlem: modül adı `decide.py` yapma (paket `decide` fonksiyonu modülü gölgeliyor → `decision.py`). Git Bash heredoc içindeki Python'da `\\n` gerçek satır sonuna dönüşüyor → çok satırlı düzenlemeyi Edit aracıyla yap.
+- SIRADAKİ İLK ADIM: T-012/T-009 review bulgusu varsa düzelt; yoksa integrator'dan yeni görev kartı bekle — yeni chat, `Agentic Hack-wt/engine` içinde.

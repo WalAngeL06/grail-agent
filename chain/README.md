@@ -72,3 +72,92 @@ Registries, interfaces and TaskAgent reference come from
 snapshot recorded in `UPSTREAM.txt`. Registries are unchanged. GRAIL adds the
 ledger, TypeScript configuration, acceptance tests and deployment/verification
 scripts. Upstream frontend/backend and task CLI are excluded.
+
+## Explorer source verification (T-010)
+
+The pinned `hardhat-verify` plugin uses Routescan's public Fuji endpoint. No secret
+API key is needed. Verification publishes Solidity sources and compiler inputs
+to the explorer; these commands do not deploy or submit blockchain transactions:
+
+Verified source pages (API confirmation recorded in `deployments/source-verification.json`):
+
+- [IdentityRegistry](https://testnet.snowtrace.io/address/0x120A4E53A24ddd09991633b4Cb88c3feA6166721#code)
+- [ReputationRegistry](https://testnet.snowtrace.io/address/0x326671e1e2e80121C3Cd53a9b9fA5751a669596F#code)
+- [ValidationRegistry](https://testnet.snowtrace.io/address/0x1a9c67CA99391812D7b157748fB814F6c7dADf0C#code)
+- [GrailLedger](https://testnet.snowtrace.io/address/0x1B5fcf6DeFf2F9375338A2C35932224522118851#code)
+
+```powershell
+npx hardhat verify --network fuji --contract contracts/IdentityRegistry.sol:IdentityRegistry 0x120A4E53A24ddd09991633b4Cb88c3feA6166721
+npx hardhat verify --network fuji --contract contracts/ReputationRegistry.sol:ReputationRegistry 0x326671e1e2e80121C3Cd53a9b9fA5751a669596F 0x120A4E53A24ddd09991633b4Cb88c3feA6166721
+npx hardhat verify --network fuji --contract contracts/ValidationRegistry.sol:ValidationRegistry 0x1a9c67CA99391812D7b157748fB814F6c7dADf0C 0x120A4E53A24ddd09991633b4Cb88c3feA6166721
+npx hardhat verify --network fuji --contract contracts/GrailLedger.sol:GrailLedger 0x1B5fcf6DeFf2F9375338A2C35932224522118851 0x120A4E53A24ddd09991633b4Cb88c3feA6166721
+npm run verify:sources
+```
+
+`verify:sources` checks `getsourcecode` independently of the submission queue and
+writes `deployments/source-verification.json` only after all four addresses have
+published source and ABI. It records compiler information, a source digest and
+the four Snowtrace `#code` links. The queue's CLI status can remain pending after
+sources become readable; the API check provides a separate confirmation.
+The check uses the same endpoint as submissions and requests uncached results.
+It also checks compiler version, optimizer runs, constructor arguments and ABI.
+The first ReputationRegistry minimal-input request stalled; submitting the
+original full compiler input succeeded. To use that fallback on an unverified
+address, set `$env:GRAIL_VERIFY_FULL_INPUT = '1'` before `hardhat verify`.
+New submissions print their public request GUID and stop after 40 pending polls.
+
+## Read-only cycle verification (T-010)
+
+```powershell
+npx hardhat run scripts/verify-cycle.ts --network fuji --cycle 1
+```
+
+The narrow `run --cycle` extension accepts this parameter only for
+`scripts/verify-cycle.ts`. The script loads deployment information from
+`contracts/chain.json` and uses no signer or private key. It reads the stored
+commitment and indexed commit/reveal events, obtains the successful reveal
+transaction, and decodes `payload` and `salt` from its calldata. It checks the
+target, agent/cycle, receipt, event values, storage and
+`keccak256(payload || salt) == commitHash` before printing `MATCH` and explorer
+transaction links. A supplied state file or fixture salt is never used.
+
+Cycle IDs are uint256 decimal strings, so values above JavaScript's safe integer
+limit retain full precision. Log scans start from the deployment receipt and run
+backwards in windows of at most 100 blocks. Once both events are found, older
+windows are skipped. Older-window reads are paced, and a rate-limited log read
+is retried once. Persistent RPC limits are reported as errors.
+
+Exit codes: `MATCH` = 0, `MISMATCH` or invalid/unavailable RPC data = 1,
+`PENDING` (committed, unrevealed) or `NOT_FOUND` = 2. These are cryptographic
+preimage checks; the opaque payload's trading semantics remain the caller's
+responsibility.
+
+The verified Fuji cycle 1 can be read without a log scan:
+
+```powershell
+npm run verify:cycle:1
+```
+
+This expands to `verify-cycle.ts --network fuji --cycle 1` with the known
+`--commit-tx 0x7b47c4f313ffa5630d1acfff6411f11c6d13c321bbc69649ec8c90976995f728`
+and `--reveal-tx 0x541cb8ff88aac0248fbf79d7997915b62bb08fb873e226bbefc35cbcec77cf45`.
+The IDs are lookup hints; every receipt and transaction is independently checked
+against the configured ledger, agent wallet and canonical block. Arbitrary
+cycles can use `npm run verify:cycle -- --cycle N --commit-tx HASH --reveal-tx HASH`.
+Only `--commit-tx` is also accepted for open commitments.
+
+Before `MATCH`, the reader validates payload `agent`/`cycle_id`, the `dry_run`
+label and the v0.6 canonical order-results mapping. HOLD/no attempted order uses
+an empty results string. Unsubmitted BUY/SELL decisions may be absent from the
+mapping; present keys must refer to BUY/SELL instruments in the committed
+payload. This checks the committed record and results format; it does not
+attest to exchange fills or returns.
+
+Observed cycle 1 result (2026-10-17):
+
+```text
+MATCH agent=1 cycle=1
+payload dry_run=true (SIMULATED)
+commitHash=0xd9064ac4000cae4637a50cd3f25b4ae7c9612e9c9600772f7468533371785a83
+keccak(payload||salt)=0xd9064ac4000cae4637a50cd3f25b4ae7c9612e9c9600772f7468533371785a83
+```

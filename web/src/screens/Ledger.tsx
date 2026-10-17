@@ -1,155 +1,156 @@
-import { Fragment, useMemo, useState } from "react";
-import { groupCycles, type GrailState } from "../state";
-import { Card, Empty, ExplorerLink, Hash, ModeTag } from "../components/Bits";
-import VerifyPanel from "../components/VerifyPanel";
-import { chainHints } from "../verify";
-import { countdown, dayClock } from "../format";
+import { useEffect, useMemo, useState } from "react";
+import { groupCycles, type Cycle } from "../state";
+import type { ScreenProps } from "../App";
+import { AvalancheMark, Card, Empty, ExplorerLink, Hash, ModeTag, PageHead, Term } from "../components/Bits";
+import VerifySheet from "../components/VerifySheet";
+import { readCounts } from "../chain";
+import { ago, countdown, dayClock } from "../format";
 
-type Props = { s: GrailState; chainJson: unknown; now: number; demo?: boolean };
-
-export default function Ledger({ s, chainJson, now, demo }: Props) {
-  const hints = chainHints(chainJson);
+export default function Ledger({ s, chain, now, demo }: ScreenProps) {
   const c = s.chain;
   const cycles = useMemo(() => groupCycles(s), [s]);
-  const [open, setOpen] = useState<string | null>(null);
+  const [verify, setVerify] = useState<Cycle | null>(null);
+
+  // Real addresses come from contracts/chain.json (deploy output); state.json values are the fallback.
+  const ledger = chain.ledger ?? c.address;
+  const explorer = c.explorer ?? chain.explorer;
+  const agentId = c.agent_id ?? chain.agentId;
+  const registry = c.identity_registry ?? chain.identityRegistry;
+  const onchain = useOnChainCounts(chain, agentId);
 
   const commits = c.commits ?? cycles.filter((x) => x.commit_tx).length;
   const reveals = c.reveals ?? cycles.filter((x) => x.reveal_tx).length;
   const unrevealed = c.unrevealed ?? Math.max(0, commits - reveals);
-  const agentId = c.agent_id ?? hints.agentId;
-  // v0.5: state.chain.agent_id / identity_registry; null until the deploy is verified → "not registered"
-  const showIdentity = agentId !== undefined || c.registered !== undefined;
-  const address = c.address ?? hints.address;
+  const lastSeal = cycles.find((x) => x.commit_tx);
+  const next = countdown(s.agent.next_cycle_at_ms, now);
 
   return (
     <>
-      <div className="head">
-        <div>
-          <h1>On-chain Ledger</h1>
-          <p>Each cycle is sealed on Avalanche before the order and revealed after it. The record can't be shown selectively.</p>
-        </div>
-      </div>
+      <PageHead
+        title="The public record: every decision, sealed on Avalanche. None can be hidden."
+        summary={
+          commits
+            ? `${commits} decision rounds sealed, ${reveals} opened${unrevealed ? `, ${unrevealed} still sealed` : ""}. Last seal ${ago(lastSeal?.decided_at_ms, now)}.`
+            : "Nothing sealed yet."
+        }
+      />
 
       <div className="stack">
         <div className="cols three">
           <div className="card bigstat">
-            <div className="label">Commits</div>
+            <Term plain="Sealed before trading" tech="commits" />
             <div className="v">{commits}</div>
-            <p>decisions sealed before any order</p>
+            <p>Decision locked on Avalanche before any order.</p>
           </div>
           <div className="card bigstat">
-            <div className="label">Reveals</div>
+            <Term plain="Opened for anyone to check" tech="reveals" />
             <div className="v">{reveals}</div>
-            <p>payload + salt published</p>
+            <p>Decision text and secret key published.</p>
           </div>
           <div className={`card bigstat ${unrevealed > 0 ? "open" : ""}`}>
-            <div className="label">Unrevealed</div>
+            <Term plain="Still sealed" tech="unrevealed commits" tip="A round is opened right after its order. A seal that is never opened stays visible here, so bad decisions can't be quietly dropped." />
             <div className="v">{unrevealed}</div>
-            <p>{unrevealed > 0 ? "Open commits stay visible — no cherry-picking." : "Every commit has been revealed."}</p>
+            <p>{unrevealed > 0 ? "Open seals stay visible — no cherry-picking." : "Every seal has been opened."}</p>
           </div>
         </div>
+        {onchain && (
+          <p className="muted" style={{ margin: "-4px 0 0", fontSize: 13 }}>
+            Read live from the contract on Fuji: <b>{onchain.commits}</b> sealed, <b>{onchain.reveals}</b> opened for agent #{agentId}.
+          </p>
+        )}
 
-        <div className={showIdentity ? "cols two" : "cols"}>
-          <Card title="Ledger contract">
+        <div className="cols two">
+          <Card title="Where the record lives">
             <div className="contract">
-              <AvaxLogo />
+              <AvalancheMark />
               <dl className="kvrows" style={{ flex: 1 }}>
                 <dt>Network</dt>
                 <dd>
-                  {c.network === "fuji" ? "Avalanche Fuji" : (c.network ?? "—")}
-                  {c.chain_id !== undefined && <span className="muted"> · {c.chain_id}</span>}
+                  Avalanche Fuji <span className="muted">· chain {c.chain_id ?? chain.chainId ?? 43113} (test network)</span>
                 </dd>
-                <dt>Address</dt>
-                <dd>{address ? <Hash value={address} full /> : <span className="muted">not deployed yet</span>}</dd>
-                <dt>Explorer</dt>
-                <dd>
-                  {address && c.explorer ? (
-                    <ExplorerLink explorer={c.explorer} kind="address" value={address} label="View on Snowtrace" />
-                  ) : (
-                    "—"
-                  )}
-                </dd>
+                <dt>
+                  <Term plain="Record contract" tech="GrailLedger" />
+                </dt>
+                <dd>{ledger ? <ExplorerLink explorer={explorer} kind="address" value={ledger} full /> : <span className="muted">not deployed yet</span>}</dd>
+                {chain.ledgerDeployTx && (
+                  <>
+                    <dt>Deployed in</dt>
+                    <dd>
+                      <ExplorerLink explorer={explorer} kind="tx" value={chain.ledgerDeployTx} />
+                    </dd>
+                  </>
+                )}
               </dl>
             </div>
           </Card>
-          {showIdentity && (
-            <Card title="Agent identity" meta="ERC-8004 IdentityRegistry">
-              <dl className="kvrows">
-                <dt>Agent</dt>
-                <dd>{s.agent.name ?? "—"}</dd>
-                <dt>agentId</dt>
-                <dd>
-                  {agentId !== undefined ? (
-                    <span style={{ fontSize: 20, fontWeight: 700 }}>#{agentId}</span>
-                  ) : (
-                    <span className="tag open">NOT REGISTERED</span>
-                  )}
-                </dd>
-                <dt>Registry</dt>
-                <dd>
-                  {c.identity_registry ? (
-                    <ExplorerLink explorer={c.explorer} kind="address" value={c.identity_registry} />
-                  ) : (
-                    <span className="muted">not registered</span>
-                  )}
-                </dd>
-              </dl>
-              {agentId === undefined && (
-                <p className="muted" style={{ margin: "12px 0 0", fontSize: 13 }}>
-                  The identity appears here once the Fuji deploy is verified.
-                </p>
+          <Card title={<Term plain="Agent identity card" tech="ERC-8004 IdentityRegistry" tip="A public on-chain ID for the agent, so its record can't be swapped for another one." />}>
+            <dl className="kvrows">
+              <dt>Agent</dt>
+              <dd>{s.agent.name ?? chain.agentName ?? "—"}</dd>
+              <dt>Agent ID</dt>
+              <dd>{agentId ? <span style={{ fontSize: 20, fontWeight: 700 }}>#{agentId}</span> : <span className="tag open">NOT REGISTERED</span>}</dd>
+              <dt>Registry</dt>
+              <dd>{registry ? <ExplorerLink explorer={explorer} kind="address" value={registry} /> : <span className="muted">not registered</span>}</dd>
+              {chain.registrationTx && agentId === chain.agentId && (
+                <>
+                  <dt>Registered in</dt>
+                  <dd>
+                    <ExplorerLink explorer={explorer} kind="tx" value={chain.registrationTx} />
+                  </dd>
+                </>
               )}
-            </Card>
-          )}
+              {chain.agentWallet && (
+                <>
+                  <dt>Agent wallet</dt>
+                  <dd>
+                    <Hash value={chain.agentWallet} />
+                  </dd>
+                </>
+              )}
+            </dl>
+          </Card>
         </div>
 
-        <Card title="Ledger" meta={`${cycles.length} cycles in state`}>
+        <Card title="Every round, newest first" meta={`${cycles.length} in view`}>
           {cycles.length === 0 ? (
-            <Empty title={`Waiting for first cycle${countdown(s.agent.next_cycle_at_ms, now) ? ` — next in ${countdown(s.agent.next_cycle_at_ms, now)}` : ""}`}>
-              Commit and reveal transactions appear here with Snowtrace links.
+            <Empty title={`Waiting for the first round${next ? ` — next in ${next}` : ""}`}>
+              Each round shows up here the moment it is sealed, with links to the Avalanche explorer (Snowtrace).
             </Empty>
           ) : (
             <div className="scroll-x">
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Cycle</th>
+                    <th>Round</th>
                     <th>Time</th>
-                    <th>Commit tx</th>
-                    <th>Reveal tx</th>
+                    <th>Sealed</th>
+                    <th>Opened</th>
                     <th>Mode</th>
-                    <th>Actions</th>
-                    <th>Verified</th>
+                    <th>Decisions</th>
+                    <th>Checked</th>
                     <th />
                   </tr>
                 </thead>
                 <tbody>
                   {cycles.map((x) => (
-                    <Fragment key={x.id}>
-                      <tr>
-                        <td style={{ fontWeight: 600 }}>#{x.id}</td>
-                        <td className="muted">{dayClock(x.decided_at_ms)}</td>
-                        <td>{x.commit_tx ? <ExplorerLink explorer={c.explorer} kind="tx" value={x.commit_tx} /> : <span className="tag live">FAILED</span>}</td>
-                        <td>{x.reveal_tx ? <ExplorerLink explorer={c.explorer} kind="tx" value={x.reveal_tx} /> : <span className="tag open">OPEN</span>}</td>
-                        <td>
-                          <ModeTag dry={x.dry_run} />
-                        </td>
-                        <td>{summary(x.decisions.map((d) => d.action))}</td>
-                        <td>{x.verified === true ? "✅" : x.verified === false ? "❌" : <span className="dim">—</span>}</td>
-                        <td className="r">
-                          <button className="btn sm gold" aria-expanded={open === x.id} onClick={() => setOpen(open === x.id ? null : x.id)}>
+                    <tr key={x.id}>
+                      <td style={{ fontWeight: 600 }}>#{x.id}</td>
+                      <td className="mono muted">{dayClock(x.decided_at_ms)}</td>
+                      <td>{x.commit_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.commit_tx} /> : <span style={{ color: "var(--danger)" }}>failed · no trade</span>}</td>
+                      <td>{x.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.reveal_tx} /> : x.commit_tx ? <span className="tag open">STILL SEALED</span> : "—"}</td>
+                      <td>
+                        <ModeTag dry={x.dry_run} />
+                      </td>
+                      <td>{summary(x.decisions.map((d) => d.action))}</td>
+                      <td>{x.verified === true ? <span className="mark ok">✓</span> : x.verified === false ? <span className="mark bad">✕</span> : <span className="dim">—</span>}</td>
+                      <td className="r">
+                        {x.commit_tx && (
+                          <button className="btn sm proofbtn" onClick={() => setVerify(x)}>
                             Verify
                           </button>
-                        </td>
-                      </tr>
-                      {open === x.id && (
-                        <tr>
-                          <td colSpan={8} style={{ background: "var(--bg)" }}>
-                            <VerifyPanel cycle={x} rpc={hints.rpc} contract={address} demo={demo} />
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
+                        )}
+                      </td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -157,26 +158,45 @@ export default function Ledger({ s, chainJson, now, demo }: Props) {
           )}
         </Card>
       </div>
+
+      {verify && (
+        <VerifySheet
+          cycle={verify}
+          chain={chain}
+          agentId={agentId}
+          agentName={s.agent.name ?? chain.agentName}
+          explorer={explorer}
+          demo={demo}
+          onClose={() => setVerify(null)}
+        />
+      )}
     </>
   );
+}
+
+function useOnChainCounts(chain: ScreenProps["chain"], agentId: string | undefined) {
+  const [v, setV] = useState<{ commits: number; reveals: number } | null>(null);
+  useEffect(() => {
+    if (!agentId || !chain.ledger) return;
+    let alive = true;
+    readCounts(chain, agentId).then(
+      (r) => alive && setV(r),
+      () => undefined,
+    );
+    return () => {
+      alive = false;
+    };
+  }, [chain, agentId]);
+  return v;
 }
 
 function summary(actions: (string | undefined)[]) {
   const counts = new Map<string, number>();
   for (const a of actions) counts.set(a ?? "?", (counts.get(a ?? "?") ?? 0) + 1);
+  const word: Record<string, string> = { BUY: "buy", SELL: "sell", HOLD: "hold" };
   const keys = ["BUY", "SELL", "HOLD", ...[...counts.keys()].filter((k) => !["BUY", "SELL", "HOLD"].includes(k))];
   return keys
     .filter((k) => counts.has(k))
-    .map((k) => `${counts.get(k)} ${k}`)
+    .map((k) => `${counts.get(k)} ${word[k] ?? k}`)
     .join(" · ");
-}
-
-function AvaxLogo() {
-  return (
-    <svg className="logo" width="40" height="40" viewBox="0 0 40 40" aria-label="Avalanche">
-      <circle cx="20" cy="20" r="20" fill="var(--avax)" />
-      <path d="M24.6 25.5h3.4c.8 0 1.2-.9.8-1.6l-1.7-2.9a.9.9 0 0 0-1.6 0l-1.7 2.9c-.4.7 0 1.6.8 1.6Z" fill="#fff" />
-      <path d="M21.3 11.6a.9.9 0 0 0-1.6 0l-8.4 14.3c-.4.6 0 1.4.8 1.4h4.1c.6 0 1.1-.3 1.4-.8l5.2-9c.3-.5.3-1.2 0-1.7l-1.5-4.2Z" fill="#fff" />
-    </svg>
-  );
 }

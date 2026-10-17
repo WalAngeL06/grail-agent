@@ -1,6 +1,6 @@
 import pytest
 
-from grail_agents.config import AgentConfig, GrailError
+from grail_agents.config import AgentConfig, GrailError, OrderRejected
 from grail_agents.journal import OrderJournal
 from grail_agents.orders import OrderService
 
@@ -239,3 +239,36 @@ def test_balance_refresh_and_budget_claim_are_serialized(setup_order, tmp_path):
         return original_balance()
     exchange.balance = balance_during_claim
     assert svc.execute(decision, portfolio, client_order_id="g1", live_confirmed=True)["order_status"] == "pending"
+
+
+def test_definite_rejection_is_terminal_and_next_order_can_execute(setup_order, tmp_path):
+    cfg, exchange, portfolio, decision = setup_order
+    cfg["dry_run"] = decision["dry_run"] = False
+    original = exchange._place_spot
+    def reject_once(prepared):
+        if prepared["client_order_id"] == "g1":
+            raise OrderRejected("51008")
+        return original(prepared)
+    exchange._place_spot = reject_once
+    svc = service(setup_order, journal=OrderJournal(tmp_path / "orders.sqlite3"))
+    assert svc.execute(decision, portfolio, client_order_id="g1", live_confirmed=True)["order_status"] == "rejected"
+    assert svc.query("g1")["rejection_code"] == "51008"
+    assert exchange.queried == []
+    assert svc.execute(decision, portfolio, client_order_id="g2", live_confirmed=True)["order_status"] == "pending"
+
+
+@pytest.mark.parametrize("prior_state", ["pending", "partial"])
+def test_filled_orders_are_reconciled_before_next_budget_check(setup_order, tmp_path, prior_state):
+    cfg, exchange, portfolio, decision = setup_order
+    cfg["dry_run"] = decision["dry_run"] = False
+    decision["size_usdt"] = "10"
+    portfolio["peak_equity_usdt"] = "29.4"
+    exchange.balance = lambda: [{"details": [{"ccy": "USDT", "cashBal": "29.4", "availBal": "29.4"}]}]
+    svc = service(setup_order, journal=OrderJournal(tmp_path / "orders.sqlite3"))
+    svc.execute(decision, portfolio, client_order_id="g1", live_confirmed=True)
+    record = svc.journal.get("g1")
+    svc.journal.save_result("g1", {**record["result"], "order_status": prior_state})
+    exchange.query_result["order_status"] = "filled"
+    exchange.balance = lambda: [{"details": [{"ccy": "USDT", "cashBal": "19.4", "availBal": "19.4"}, {"ccy": "BTC", "cashBal": "0.00016666", "availBal": "0.00016666"}]}]
+    assert svc.execute(decision, portfolio, client_order_id="g2", live_confirmed=True)["order_status"] == "pending"
+    assert exchange.queried == [("BTC-USDT", "g1")]

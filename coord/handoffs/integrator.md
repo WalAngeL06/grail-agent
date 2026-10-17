@@ -1,17 +1,12 @@
-# Handoff — integrator (sadece bu rol yazar)
+# Handoff — integrator
 
-- Güncelleme zamanı: 2026-10-17 15:08 (Europe/Istanbul)
-- Aktif görev / durum: R-004 DONE (APPROVE koşullu), role/review@62ef3c3 incelemesi merge/push. T-006 BLOCKED (merge kapısı): kullanıcı R-004-1/2/3'ün ÜÇÜ düzelmeden merge istemiyor. Canlı emir NO-GO.
-- Oturum: Codex · hesap 1 / integrator; Agentic Hack ana worktree, main. Başlangıç main@b806aff temiz ve origin/main ile aynı; son commit bu handoff'u içeren merge commit'i (git log -1).
-- contracts okunan/teslim 0.6 değişmedi; chain.json.contractVersion=0.5 deploy anı. dry_run=true, CLI canlı reddi korunur. Yeni canlı giriş/--live ekleme yetkisi yok; reviewer GO önerileri kullanıcı talimatı değildir.
-- Teslim: 62ef3c3=origin/role/review; yalnız coord/reviews/T-006.md + coord/handoffs/reviewer.md. Integrator STATE, T-006 kabulü, DECISIONS D-014 ve kendi handoff'unu güncelledi. Agents ürün dalı merge edilmedi; ürün kodu/ABI/chain.json b806aff ile aynı.
-- R-004 incelenen: dcf68db. Reviewer kısa basetemp ile 135 test, Fuji salt okunur receipt/calldata/hash ve 3 döngü dry_run rezerv repro'su sundu. R-002-1/2 ve R-003-2/3 kapandı. Bunlar reviewer kanıtı; integrator bu tur ürün testi/RPC çalıştırmadı.
-- R-004-1 MAJOR: v0.5'e sabit config/state. Uzak agents a7312a3'te v0.6 aday düzeltmesi var; agents raporu 136 test. Ek fark bağımsız onay/integrator testinden geçmedi. chain.json deploy kontrolü 0.5 kalmalı; tarihsel v0.5 payload/salt/hash/tx korunmalı.
-- R-004-2 MAJOR: simulated BUY rezervleri döngüler arasında birikiyor. Kabul: aynı taze snapshot ile en az 3 döngü + restart, her döngü bütçe sınırı korunur, eski simüle rezerv bütün BUY'ları kalıcı bloklamaz. Canlı journal/unknown rezerv davranışı değişmez.
-- R-004-3 MAJOR: her döngü tam geçmiş log taraması ve onaylı eski tx'lerin receipt/blok sorguları. Kabul: sayacı olan ağsız provider ile uzun geçmiş/120 eski döngüde yeni döngü çağrı sayısı geçmişle doğrusal büyümez; cycle floor, restart/reorg, receipt/event/storage ve belirsiz tx fail-closed korunur.
-- Üçü birlikte agents kendi alanında test/commit/push → bağımsız reviewer sadece ek fark → integrator hedef commit testleri → T-006 merge/push. R-004-4/5 MINOR ve 6/7 NIT incelemede korunur; bu tur ek kapsam verilmedi.
-- Tarihsel 14:50 kapısı geçerli: agents@dcf68db cycle1 dry_run, gerçek ATK okumaları + 5 simulated BUY + confirmed Fuji commit/reveal; errors=0, commits/reveals=1/1, pending boş. Commit 0x7b47c4f313ffa5630d1acfff6411f11c6d13c321bbc69649ec8c90976995f728, reveal 0x541cb8ff88aac0248fbf79d7997915b62bb08fb873e226bbefc35cbcec77cf45; status1. Yeniden koşu gerekmez.
-- UI tarihsel state v0.5: C:/Users/Serdar Arif/Desktop/Agentic Hack-wt/agents/agents/runtime/t006-fuji-gate/state.json. Gerçek state/Fuji UI hâlâ doğrulama bekler. Diğer açık işler T-009 engine, T-010 chain, T-011 docs; kartlar main'de. T-008 README köke: 17:00 freeze sonrası + gerçek değerler doğrulanınca (D-012).
-- Kontroller: inceleme sınırı ve diff --check; T-006/D-014/STATE üçlü merge kapısı + NO-GO tutarlılığı, yalnız koordinasyon yolları ve ürün kaynaklarının değişmemesi doğrulanır. Push sonrası status temiz/HEAD=origin/main/uzak main kontrolü RAPOR'da. Ürün testleri, OKX/ATK, runner, yeni dış tx/emir yok.
-- TEKRARLAMA: agents dcf68db/a7312a3'ü düzeltmeler/onay olmadan merge etme. Fuji deploy/kayıt/commit/reveal, canlı emir, --live yolu veya journal/runtime silme yok. Belirsiz tx/emir önce kimliğiyle sorgulanır. Başka role otomatik mesaj yok; kullanıcı RAPOR taşır.
-- SIRADAKİ İLK ADIM: kullanıcı R-004/D-014 RAPOR'unu agents'a taşısın; sahibi temiz role/agents'ta main'i alıp R-004-1/2/3'ü testlerle düzeltsin. Düzeltme + bağımsız ek-fark onayı gelince hedef commit/sınır/testleri doğrula, ancak sonra T-006 merge/push. Canlı NO-GO korunur.
+- Güncelleme: 2026-10-17 15:38 Europe/Istanbul; contracts 0.6, deployment 0.5. Başlangıç main@9205570 temizdi.
+- Aktif kullanıcı isteği: web57e2287 → docs1d411c0 → engineb7e294b → chainf36a95d → reviewac96902 → agents2bf5668; her merge test + commit + push. Bu handoff’u içeren commit (`git log -1`) aşama 6/6.
+- Tamamlanan: web@57e2287; docs@1d411c0; engine@b7e294b; chain@f36a95d; review@ac96902; agents@2bf5668. Push sonrası clean + HEAD=origin/main doğrulanır; sonuç RAPOR’da.
+- Son kontroller: web build geçti; engine 104; agents 157 (23.05s), ayrıca agents ortamından engine/analyst 104 (3.57s); chain 38 + typecheck. Detaylar STATE’te. Web diff-check tek EOF boş satırı MINOR, diğer hedefler temiz; sahip ürün kodlarına integrator düzeltme yazmadı.
+- İlk canlı koşu yalnız kullanıcı terminalinde: BTC-USDT, 2 USDT, cycles=1 (R-004b/D-015); henüz çalıştırılmadı.
+- Replay mevcut kapanış-fill, %0.1 ücret, slippage/AI hariç; JSON/özet deterministik. İlk teslim, sonraki-açılış ve sıkı veri/provenance maddelerinin tamamını sağlamıyor; kartta açık. T-013 ilk kopya; web uygulaması ve metin tamamlama ayrı.
+- R-006 chain bağımsız incelemesi Claude Pro, merge ile paralel kart; R-005 public taraması ayrı ve açık. R-004b 2bf5668’i inceliyor, MINOR/NIT’ler korunur. D-015 kullanıcı terminaliyle sınırlı canlı geçişi kaydeder.
+- Dokunulmayanlar: contracts/chain.json/VERSION, sırlar/.env/config profili, gerçek runtime/journal/pending. Bu chat smoke/run, ATK hesabı/emir, RPC, deploy/commit/reveal veya rol mesajı çalıştırmadı. Gerçek ilk canlı kanıtı yok.
+- Önceki kanıtlar coord/archive/STATE-r17-20261017.md; STATE güncel ve kısa tutulur. T-011 final sunum, T-012/013 tüketici UI güncellemesi, gerçek runtime UI, R-005/R-006 takip edilecek.
+- SIRADAKİ İLK ADIM: sıralı merge listesi tamamlandı. Kullanıcı ilk canlı koşuyu kendi terminalinde yapacak; ordId/tx RAPOR’u gelirse yalnız yetkili salt okunur doğrulama. Sahipler yeni main’i alsın.

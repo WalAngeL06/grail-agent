@@ -1,8 +1,8 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Revizyon r51 · 2026-10-17 18:05 Europe/Istanbul. Önceki ayrıntılar coord/archive/STATE-r49-20261017.md,r40/r26/r17 arşivlerinde.
+- Revizyon r52 · 2026-10-17 18:07 Europe/Istanbul. Önceki ayrıntılar coord/archive/STATE-r49-20261017.md,r40/r26/r17 arşivlerinde.
 - Sözleşme VERSION0.6.2; config/payload/state0.6,chain deploy0.5/ABI/hash aynı. ou opsiyonel/hash dışı; sleeve momentum|mean_reversion|none. İlk CANLI15:37cycle2BTC2USDTfilled korunur; yeni canlı yetki yok.
-- Bu istek: chainfaf65cb→main94344f9 push/clean/uzak eşitliği tamam; docs67d1ee3 bu ikinci merge'de,web785d260 sonraki ayrı merge/push. Başlangıçmainf9beb7e temiz/origin ile aynı; yalnız exact hedefler alınır.
+- Bu istek: chainfaf65cb→main94344f9 ve docs67d1ee3→maincfc704b ayrıpush/clean/uzak eşitliği tamam; web785d260 bu üçüncü merge'de. Başlangıçmainf9beb7e temiz/origin ile aynı; yalnız exact hedefler alındı.
 - R-011 GO: yeni audit başlangıçtaki sabit döngü kümesini doğrular; sonradan gelen döngüler açıkça hariç. Büyüme tek başına hata değil; seçili kayıt değişimi/sayaç gerilemesi/reorg/eksik-çift log/RPC hata olarak kalır. --max-cycleK seçilen ID<=K kapsamını açık etiketler.
 - Bu tur chain60test(5s)/typecheck PASS. Integrator publicRPC18:01:24snapshot59605190:Total89/Revealed89/Unopened0/MATCH89/Mismatch0/LIVE1,exit0,before=after89/89. Kullanıcı/planner ayrı80→81büyüme sırasında80/80MATCH/exit0 bildirdi; sayılar farklı snapshot'lardır. Runner'a dokunulmadı.
 - T-017 main88f00f3 AÇIK;17:51merge/push kapısı sağlandı. R-012-1bilinen davranış: MR çıkışı ranging+anlamlı coinde momentum pozisyonunu da satabilir; R-012-2MINOR tutma bandı düşüş SELL'ini bastırabilir. Restart/yeniOUruntime kanıtı agents sahibinde hâlâ açık.
@@ -26,7 +26,7 @@
 | T-002 | ATK veri+guarded emir | agents | INTEGRATED | R-002/R-004b işlendi |
 | T-003 | ERC-8004+GrailLedger+Fuji | chain | INTEGRATED | deploy0.5/ABI/hash aynı |
 | T-004 | UI brifi | docs | INTEGRATED | docs/ui-brief.md |
-| T-005 | TR/EN+motto+Rehber+OU | web/QA | INTEGRATED95d9eda;785d260 sırada | OUçipi+Smartentry;VerifyGO korunur |
+| T-005 | TR/EN+motto+Rehber+OU | web/QA | INTEGRATED785d260 | OUkol/z/yarıömürçipi+SmartEntry;22test/2build/normalize6kontrolPASS |
 | T-006 | Döngü+ilk canlı | agents | INTEGRATED | cycle2BTC2filled;dry-run döngü |
 | T-007 | LLM BUY azaltma | analyst/agents | INTEGRATED | Gemini3.7cycle45/46approved tarihli kanıt |
 | T-008 | README/form taslakları | docs | INTEGRATED67d1ee3 | motto/T-017/audit80snapshot;link/team/Grinoldkaynağı açık |
@@ -52,7 +52,8 @@
 - Docs67d1ee3 actual10dosya yalnızdocs/+handoff,exact/sınır/diff--check PASS;diğer ürünler94344f9 ile aynı.5finalslayt5not ve11yedek11not ZIP/XML;final5+değişen yedek1/5/6/10/11 PowerPoint1280x720render/tek tek görselPASS,kalan6yedek aynı. Renderbinary hash'leri mergeddeck ile birebir;notesUTF8/süre0:00..3:00,runbook3:00+6kısaQ&A+TUTORIALTR/EN PASS.
 - Yeni docs80/80 sayacı kullanıcı/planner snapshot'ı; integrator89/89 farklıtarihli snapshot. Docs engine/out/grinold-30d.md referansı main'de YOK(aa77641 kullanıcı merge talimatı yok); bu rapor/IC ölçümü integrator tarafından doğrulanmadı/otomatik alınmaz.
 - Önceki engine210/agents157/web22 ve iki build kanıtı r49arşivinde; ürün engine/agents değişmediği için bu tur tekrar koşulmadı. Son web785d260 test/build kontrolleri üçüncü merge'de.
+- Web785d260 actual3dosya yalnızweb;eski webhandoff aynı. Exact/sınır/diff PASS;diğer ürünlercfc704b ile aynı. npmtest22/22,normal/public build56modül724/717ms PASS. Gerçek signals normalizer'ında6/6ad-hoc kontrol(OU/legacy/null/enum/NaN/Infinity)PASS;kalıcı ürün/test dosyası eklenmedi. OUçipi momentum/mean_reversion/none ve z/yarıömür;tarayıcı/görsel/yeni runtime denemesi yok.
 
 ## Bekleyenler / sınırlar
-- Docs67d1ee3 alındı,web785d260 sırada. Main'e alınmayan Grinold kaynağı için exact kullanıcı talimatı veya docs referans düzeltmesi gerekir. Link/team/video/slides/rootREADME/prova açık;FAQ#12hâlâ48döngü ve yedekdeck/README167engine/48chain sayaçları eski;finalöncesi docs düzeltmesi. Doküman80snapshot yeni89runtime sayacı yerine sunulmaz.
+- Docs67d1ee3 ve web785d260 alındı. Main'de olmayan Grinold kaynağı için exact kullanıcı talimatı veya docs referans düzeltmesi gerekir. Link/team/video/slides/rootREADME/prova açık;FAQ#12eski48 ve yedekdeck/README167engine/48chain sayaçları docs'ta yenilenmeli. Doküman80snapshot yeni89audit yerine sunulmaz. OUtooltip BUY anlatıyor;kol HOLD/SELL de üretebilir,sonmetin uyumu web sahibinde.
 - T-017restart kanıtı agents'tan beklenir; integrator PID/state/.env/runner/config/runtime/journal/pending değiştirmez,yeniemir/tx yok. R-012-1kabul/-2MINOR sürer; AÇIK motor kararı canlı yetki değildir.

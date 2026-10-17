@@ -1,6 +1,7 @@
 import { Component, useEffect, useState, type ReactNode } from "react";
 import { isAddress, isHex32 } from "../verify";
-import { shortHash, usd } from "../format";
+import { n, shortHash, usd } from "../format";
+import type { Signal } from "../state";
 import { T } from "../i18n";
 
 export function Card(props: { title?: ReactNode; meta?: ReactNode; children: ReactNode; className?: string; id?: string }) {
@@ -213,8 +214,9 @@ const SETUP_TIP = {
 } as const;
 
 /** T-014 entry signals in plain words; renders nothing when the engine wrote no signal for this coin. */
-export function SignalChips({ sig }: { sig?: { hurst?: number; regime?: keyof typeof REGIME_TXT; setup?: keyof typeof SETUP_TXT } }) {
-  if (!sig || (!sig.regime && !sig.setup)) return null;
+export function SignalChips({ sig }: { sig?: Signal }) {
+  const ou = sig?.ou && sig.ou.sleeve !== "none" ? sig.ou : undefined;
+  if (!sig || (!sig.regime && !sig.setup && !ou)) return null;
   return (
     <span className="signal">
       {sig.regime && (
@@ -234,6 +236,33 @@ export function SignalChips({ sig }: { sig?: { hurst?: number; regime?: keyof ty
           {SETUP_TXT[sig.setup]()}
         </span>
       )}
+      {ou && <OuChip ou={ou} />}
+    </span>
+  );
+}
+
+/** T-017: which sleeve the coin is in this check-in. Mean reversion shows z and half-life (Ornstein-Uhlenbeck fit). */
+function OuChip({ ou }: { ou: NonNullable<Signal["ou"]> }) {
+  if (ou.sleeve === "momentum")
+    return (
+      <span className="sig trending" title={T("Momentum sleeve: the coin is trending, so trend-following rules size it.", "Momentum kolu: coin trendde, boyutu trend takip kuralları belirler.")}>
+        Momentum
+      </span>
+    );
+  const minus = (s: string) => s.replace(/^-/, "−");
+  const z = ou.z !== undefined ? ` · z ${minus(n(ou.z, 1, 1))}` : "";
+  const hl = ou.half_life_h !== undefined ? T(` · half-life ${n(ou.half_life_h, 0)}h`, ` · yarı ömür ${n(ou.half_life_h, 0)} sa`) : "";
+  return (
+    <span
+      className="sig retest"
+      title={T(
+        "Mean reversion (Ornstein-Uhlenbeck): the market is ranging and the price is clearly below its average, so a small buy bets on it returning. z = how many swings below the average; half-life = hours to close half the gap.",
+        "Ortalamaya dönüş (Ornstein-Uhlenbeck): piyasa yatay ve fiyat ortalamasının belirgin altında, bu yüzden geri döneceğine küçük bir alım yapılır. z = ortalamanın kaç sapma altında olduğu; yarı ömür = farkın yarısının kapanması için gereken saat.",
+      )}
+    >
+      {T("Mean reversion", "Ortalamaya dönüş")}
+      {z}
+      {hl}
     </span>
   );
 }

@@ -190,7 +190,8 @@ function SmartEntry({ s }: { s: GrailState }) {
         so it waits.
       </p>
       <p>
-        When a price breaks out of its range, GRAIL waits for it to come back, test the old ceiling and hold. That retest confirms the move. Right now:{" "}
+        When a price breaks out of its range, GRAIL waits for it to come back, test the old ceiling and hold. That retest confirms the move and allows a
+        full-size buy; with no breakout at all it buys only half size. These checks can only shrink a buy, never enlarge it. Right now:{" "}
         {trending} of {coins.length} coins trending, {confirmed} breakout{confirmed === 1 ? "" : "s"} confirmed by a retest.
       </p>
       <a className="linkbtn" href="#/decisions">

@@ -1,10 +1,21 @@
 # Handoff — web (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~16:15
-- Aktif görev / durum: R-007 + ui-copy + replay + gerçek veri + T-014 sinyalleri / READY_FOR_REVIEW (planner "Orkestra Şefi - 2" işi)
+- Güncelleme zamanı: 2026-10-17 ~16:20
+- Aktif görev / durum: public demo build + küçük düzeltmeler + T-014 doğrulama / READY_FOR_REVIEW (planner "Orkestra Şefi - 2")
 - Oturum: Claude Code · Max (Opus 5.5), durdu
 - Worktree / branch / son commit: `Agentic Hack-wt/web` / `role/web` / bu dosyayı içeren son commit (`git log -1`)
-- contracts okunan sürüm: v0.6 (origin/main@ad7edd1 merge)
+- contracts okunan sürüm: v0.6 (origin/main@d449da4 henüz merge edilmedi; web/ değişikliği yok)
+- Bu tur:
+  1. "Last 30 days" başlığı replay.json oranından üretiliyor (`drawdownHeadline`): 7.48/14.51 → "Half the worst drop", T-014 sonrası 4.34/14.51 → "Less than a third of the worst drop". replay.json import edildiği için main'e T-014 girince sayılar kendiliğinden güncellenir (yeniden build).
+     Verify'da "Fingerprint the agent reported" satırına ✓/✕ (zincirdeki mühürle, yoksa tarayıcı hash'iyle karşılaştırma).
+  2. Public demo: `npm run build:public` → `web/dist-public/` (gitignore), base `/grail-agent/` (GRAIL_BASE ile değişir). State = `web/fixtures/public-snapshot.json`
+     (`npm run snapshot -- <state.json>`; beyaz liste, reveal edilmemiş salt/payload silinir, sır kelimesi görürse yazmaz). chain.json import edilir.
+     Ledger/Verify tarayıcıdan canlı Fuji okur. Üst barda "Snapshot of <saat> · live chain checks", geri sayımlar gizli. Yayın YAPILMADI; talimat web/README.md.
+     Kontrol: `npm run preview:public` → 5 ekran hata yok, /api çağrısı 0, Ledger zincirden 22 mühür (3'ü "from chain"), Verify #2 (ilk canlı emir) ✅ + OKX order 4017748393474314240.
+     Paket taraması: yerel yol / kullanıcı adı / api-key/secret/private kelimesi yok.
+  3. T-014: main'de henüz yok; origin/role/engine@6e8abad kaynağıyla doğrulandı: metrics.signals[c] = {hurst (_clean, null olabilir), regime trending|unclear|ranging, setup none|breakout|retest},
+     eşikler 0.45/0.55 tooltip ile aynı; kart/tooltip boyut kuralları (ranging → alım yok, breakout → bekle, none → yarım, retest → tam) engine ile aynı. Gerçek engine state çıktısıyla çalıştırılmadı.
+
 - Bu turun somut davranışı:
   1. R-007 (origin/role/engine:coord/reviews/R-007-ui-math.md) — formül değişmedi, etiket/alan düzeltildi:
      PSR → "Chance the coin basket's recent trend is real" (+ "> 99%"/"< 1%"); Sharpe KPI → "Diversification boost (illustration)" ×√n_eff, SR₁ 0.5 "assumed, not measured";
@@ -54,4 +65,4 @@
   - Engine `reason` metinleri Türkçe ("-> nakit", "hedef"); UI İngilizce. Engine'e istek: reason'ı İngilizce yaz (UI metni olduğu gibi gösterir).
   - Brifte istenen "on-chain 0x…" satırı ABI ile kontrattan okunmuyor; commit tx calldata'sında hash aranıyor (ABI'siz). chain.json gelince `chainHints()` + gerekirse ABI okuması eklenecek.
 - TEKRARLANMAMASI gereken işlem: vite.config'te `new URL(...).pathname` (boşluklu yol → 404) — `fileURLToPath` kullan.
-- SIRADAKİ İLK ADIM: `git merge origin/main`; engine T-014 fixture'ı gelince sinyal alanlarını gerçek çıktıyla dene; canlı state için `GRAIL_STATE_PATH=.../runtime/live/state.json`; chain.json gelince src/verify.ts `chainHints()` anahtarlarını gerçek şekle göre düzelt; T-006 state yazınca `GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev` ile gerçek veriden ekran görüntüsü al; Claude Design çıktısı gelirse farkları uygula.
+- SIRADAKİ İLK ADIM: `git merge origin/main` (T-014 + yeni replay.json gelince); `npm run build:public` yeniden; agents T-014'lü state yazınca sinyal çiplerini gerçek veride gör; canlı state için `GRAIL_STATE_PATH=.../runtime/live/state.json`; chain.json gelince src/verify.ts `chainHints()` anahtarlarını gerçek şekle göre düzelt; T-006 state yazınca `GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev` ile gerçek veriden ekran görüntüsü al; Claude Design çıktısı gelirse farkları uygula.

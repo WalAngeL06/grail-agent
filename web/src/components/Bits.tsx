@@ -195,6 +195,11 @@ export function LlmBadge({ flag, note }: { flag: string; note?: string }) {
 
 const REGIME_TXT = { trending: "Trend is clear", unclear: "Trend is unclear", ranging: "Market is ranging" } as const;
 const SETUP_TXT = { retest: "Breakout confirmed by retest", breakout: "Waiting for retest", none: "No breakout yet" } as const;
+const SETUP_TIP = {
+  retest: "Price broke out of its range, came back to the old ceiling and held: full-size buy allowed.",
+  breakout: "Price broke out but hasn't retested the old ceiling yet: no new buy until it does.",
+  none: "No breakout from the recent range: buys are limited to half size.",
+} as const;
 
 /** T-014 entry signals in plain words; renders nothing when the engine wrote no signal for this coin. */
 export function SignalChips({ sig }: { sig?: { hurst?: number; regime?: keyof typeof REGIME_TXT; setup?: keyof typeof SETUP_TXT } }) {
@@ -211,7 +216,7 @@ export function SignalChips({ sig }: { sig?: { hurst?: number; regime?: keyof ty
         </span>
       )}
       {sig.setup && (
-        <span className={`sig ${sig.setup}`} title="Breakout = price closed above its recent range. Retest = it came back to that level and held, confirming the move.">
+        <span className={`sig ${sig.setup}`} title={SETUP_TIP[sig.setup]}>
           {SETUP_TXT[sig.setup]}
         </span>
       )}

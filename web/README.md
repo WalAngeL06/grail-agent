@@ -36,7 +36,7 @@ the Ledger and every "Verify yourself" still read Avalanche Fuji live from the v
 
 ```bash
 # 1) refresh the snapshot from a real runtime state.json (whitelisted fields only; salts of unrevealed check-ins are dropped)
-npm run snapshot -- "C:/Users/Serdar Arif/Desktop/Agentic Hack-wt/agents/agents/runtime/dryrun-5coin-20261017-1545/state.json"
+npm run snapshot -- "<path to agents runtime>/state.json"
 # 2) build (base path defaults to /grail-agent/ for GitHub Pages; override: GRAIL_BASE=/ npm run build:public)
 npm run build:public          # → web/dist-public/ (gitignored)
 # 3) check locally

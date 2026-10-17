@@ -10,13 +10,13 @@ const OUT = path.join(__dirname, "GRAIL-pitch.pptx");
 // engine/out/replay.json (role/engine@87539f8, T-014 sonrası), Fuji commitCount/revealCount(1) = 31/31 @ 16:29.
 const V = {
   bets: "1,36",              // 30 günlük ortalama bağımsız bahis (replay)
-  cyclesOnChain: "48",       // npm run audit (planner, public RPC): Total 48 | Revealed 48 | MATCH 48 | Mismatch 0 | LIVE 1
-  t017: false,               // T-017 (yatayda OU ortalamaya dönüş) main'e girerse true yap ve yeniden üret
+  cyclesOnChain: "80",       // npm run audit (planner, public RPC): Total 48 | Revealed 48 | MATCH 48 | Mismatch 0 | LIVE 1
+  t017: true,               // T-017 (yatayda OU ortalamaya dönüş) main'e girerse true yap ve yeniden üret
   gates: { buysBefore: "5", buysAfter: "1", amountDrop: "−%86", ranging: "4", onChain: "48/48" }, // role/engine@4a83bd8 out/live-gates-today.md
   liveOrder: { when: "17 Ekim 15:37", what: "BTC 2 USDT alım", okx: "4017748393474314240", commit: "0x16f2…9569", reveal: "0xae65…41f7" },
   replay: {
-    ddGrail: "%4,3", ddHold: "%14,5", ddOld: "%7,5", retGrail: "+%2,0", retHold: "+%8,8",
-    tradesOld: "382", tradesNew: "220",
+    ddGrail: "%4,5", ddHold: "%14,5", ddOld: "%7,5", retGrail: "+%1,6", retHold: "+%8,8",
+    tradesOld: "382", tradesNew: "295",
   },
   cycleSeconds: "90",
   maxOrder: "$10",
@@ -75,7 +75,10 @@ function badge(s, x, y, label, color, d) {
   const s = base(null, null);
   s.addText("OKX AGENT TRADE KIT  ×  AVALANCHE", { x: 0.5, y: 0.55, w: 5, h: 0.3, fontFace: BODY, fontSize: 11, bold: true, color: C.gold, charSpacing: 3, margin: 0 });
   s.addText("GRAIL", { x: 0.5, y: 0.95, w: 5, h: 1.0, fontFace: HEAD, fontSize: 60, bold: true, color: C.text, margin: 0 });
-  s.addText("Sicili herkesçe doğrulanabilen otonom alım-satım ajanı.", { x: 0.5, y: 2.0, w: 4.6, h: 0.9, fontFace: BODY, fontSize: 22, color: C.muted, margin: 0, valign: "top" });
+  s.addText([
+    { text: "Proof before profit.", options: { fontFace: HEAD, fontSize: 26, bold: true, color: C.gold, breakLine: true } },
+    { text: "Önce kanıt, sonra kâr.", options: { fontSize: 18, color: C.muted } },
+  ], { x: 0.5, y: 2.0, w: 4.8, h: 0.95, fontFace: BODY, margin: 0, valign: "top" });
   s.addText([
     { text: "5 coin tutuyorsun. ", options: { color: C.text } },
     { text: "Birlikte hareket ettikleri için son 30 günde ortalama " + V.bets + " bağımsız bahis (n_eff) gibi davrandılar.", options: { color: C.muted } },
@@ -459,6 +462,7 @@ function badge(s, x, y, label, color, d) {
     { text: "Sırada: ", options: { bold: true, color: C.gold } },
     { text: "her kararı zincirde inceleyen ikinci bir \"risk bekçisi\" ajanı · açılmış zarflardan oluşan itibar puanı · Avalanche ana ağı", options: { color: C.text } },
   ], { x: 0.5, y: 4.25, w: 9, h: 0.6, fontFace: BODY, fontSize: 13, margin: 0, valign: "top" });
+  s.addText("GRAIL — Proof before profit. · Önce kanıt, sonra kâr.", { x: 0.5, y: 4.62, w: 9, h: 0.3, fontFace: BODY, fontSize: 13, bold: true, color: C.gold, margin: 0 });
   s.addText(V.repo, { x: 0.5, y: 4.95, w: 9, h: 0.3, fontFace: MONO, fontSize: 11, color: C.proof, margin: 0 });
   s.addNotes(
     "Risk tarafı tek cümle: aynı 30 günde en kötü düşüş " + V.replay.ddGrail + ", eşit ağırlıklı al-tut " + V.replay.ddHold + "; acil durdurma hiç tetiklenmedi. " +

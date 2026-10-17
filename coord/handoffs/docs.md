@@ -1,23 +1,22 @@
 # Handoff — docs (sadece bu rol yazar)
 
-- Güncelleme zamanı: 17.10 17:25 (UTC+3)
-- Aktif görev / durum: teslim hazırlığı-3 (audit yeniden birincil, canlı kapı kanıtı, T-017'ye hazır slayt) / READY_FOR_REVIEW
+- Güncelleme zamanı: 17.10 17:58 (UTC+3)
+- Aktif görev / durum: 3 dakikalık final (5 slayt) + runbook + FAQ soru-cevap + TUTORIAL + motto / READY_FOR_REVIEW
 - Oturum: Claude Code · Max (Opus 5.5), durdu
-- Worktree / branch / son commit: `Agentic Hack-wt/docs` / `role/docs` / ürün commit'i bc818e1 + bu handoff commit'i; origin/main merge edildi (d0eb67a)
+- Worktree / branch / son commit: `Agentic Hack-wt/docs` / `role/docs` / bu handoff'u içeren commit; origin/main merge edildi (e0744bb)
 - contracts okunan sürüm: v0.6.1
 - Tamamlanan:
-  - Audit tekrar birincil (README "Verify in 60 seconds" 2. madde, form Avalanche cevabı, FAQ #1/#12, runbook terminal adımı).
-    Son koşu (planner, kullanıcı bildirimi): Total 48 | Revealed 48 | Unopened 0 | MATCH 48 | Mismatch 0 | LIVE 1. "Archive RPC" notları kaldırıldı.
-    README: rapor yolu `chain/runtime/audit-latest.md` (ignore'lu; tracked `deployments/audit-latest.md` 16:06 örnek), `--rpc URL` seçeneği, INCOMPLETE davranışı.
-    Runbook: audit'i 0:00'da ikinci terminalde başlat (~1–2 dk), 2:15'te özet; yedek verify:cycle:1; B planına audit satırı.
-  - Deck slayt 5 "Rejime göre strateji seçimi": trend → momentum; yatay → `V.t017` false: "bekler, alım yapmaz" / true: "ortalamaya dönüş (Ornstein-Uhlenbeck)".
-    Canlı kanıt kartı (role/engine@4a83bd8 out/live-gates-today.md): döngü başına alım 5 → 1, tutar −%86, 4 coin yatay, ETH yarım, hata 0, 48/48 zincirde.
-    Dürüst notlar slaytta: "48 barlık Hurst bir tahmindir; rastgele veride de ~%41 yatay çıkar" + "34–44. döngülerde yapay zekâ kota yüzünden görüş vermedi".
-    Slayt 6: 48 döngü; slayt 10: `npm run audit → 48/48 MATCH (~1–2 dk)`. İki varyant (t017 false/true) render edildi, ikisi de temiz.
-  - AI notu her yerde: 3–23 arası 105 alım onaylandı; 24–44 kota (fail-open); hiç küçültme/veto yok (kaynak live-gates-today.md §3).
-- T-017 GELİRSE: `docs/pitch/build-deck.cjs` → `t017: true` → `NODE_PATH=<pptxgenjs> node docs/pitch/build-deck.cjs` → PYTHONUTF8=1 validate → commit.
-  T-017'nin gerçek davranışı (limitler, boyut) kartı görülmeden doğrulanmadı; true varyantındaki "limitler aynı" cümlesini kartla karşılaştır.
-- Bağımlılıklar: README/FAQ `engine/out/live-gates-today.md`'ye atıf yapıyor → role/engine@4a83bd8 main'e girmeli. Audit düzeltmesi (chain d26da82/6f19510) de main'e girmeli; yoksa README'deki `--rpc` ve `runtime/` yolu main'de yok.
-- Kalan yer tutucular: `<PAGES_URL>`, `<VIDEO_URL>`, `<SLIDES_URL>`, Team `<TBD>`, deck yedek video `<TBD>`.
-- Çalıştırılmayan: npm run audit'i kendim çalıştırmadım (48/48 planner bildirimi); T-017 kodu yok.
-- SIRADAKİ İLK ADIM: T-017 kararı + 3 link + takım gelince doldur/yeniden üret; final öncesi audit sayısını güncelle.
+  - `docs/pitch/GRAIL-pitch-3min.pptx` (+ `build-deck-3min.cjs`): 5 slayt (0:00–0:30 kanca · 0:30–1:00 sorun · 1:00–1:45 nasıl · 1:45–2:40 canlı kanıt · 2:40–3:00 kapanış),
+    notlar Türkçe, saniye aralıklı, slayt başına 2 cümle. Motto slayt 1 ve 5'te. validate PASSED, 5 slayt render temiz.
+  - 11 slaytlık yedek (`GRAIL-pitch.pptx`): motto (slayt 1 + 11), `t017: true`, replay T-017 sayıları (+%1,6 / %4,5 / 382 → 295), audit 80.
+  - `docs/live-demo-runbook.md`: 3:00 akış (Türkçe menü adları), audit'i sunumdan ~5 dk önce başlat, B planı, 6 ekran görüntüsü.
+  - `docs/jury-faq.md`: en üstte "2 dakikalık soru-cevap" 6 soru × tek cümle (Grinold/IC dahil); alt bölüm sayıları 80/80, T-017 açık.
+  - `docs/TUTORIAL.md`: Guide.tsx (origin/main) metni birebir, önce TR sonra EN, 6 adım + "3 dakikada dene".
+  - README-draft: başlık "GRAIL: Proof before profit.", T-017 maddesi (çözüm #3), audit 80/80 (agent çalışırken güvenli), sonuç tablosu T-017 (+1.6% / 4.5% / 295),
+    Grinold paragrafı, sınırlar (IC ≈ 0). Form: motto + tek cümle başında motto, Avalanche cevabında 80/80.
+- Kaynaklar: role/engine@aa77641 (grinold-30d.md, replay.json T-017: 1.63 / 4.54 / 149+146=295 / kill 0), engine README T-017 kuralı (z ≤ −1.5, kol ≤ %25, limitler aynı),
+  web/src/screens/Guide.tsx + App.tsx + VerifySheet.tsx (origin/main), chain faf65cb audit 80/80 (kullanıcı bildirimi).
+- Bağımlılık: grinold-30d.md ve T-017 replay.json role/engine'de; README/FAQ onlara atıf yapıyor → main'e girmeli. Chain testleri artık 54 olabilir (README 48 yazıyor) — integrator teyit etsin.
+- Kalan yer tutucular: `<PAGES_URL>`, `<VIDEO_URL>`, `<SLIDES_URL>`, Team `<TBD>`.
+- Çalıştırılmayan: audit'i kendim koşmadım (80/80 bildirim); siteyi açıp Try to cheat akışını tıklamadım.
+- SIRADAKİ İLK ADIM: linkler + takım gelince doldur; final öncesi audit sayısını güncelle (3min deck V.audit, README, form, FAQ, runbook).

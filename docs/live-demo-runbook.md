@@ -1,71 +1,52 @@
-# GRAIL — 3 dakikalık canlı demo runbook'u
+# GRAIL — 3 dakikalık final sunumu runbook'u (+ 2 dk soru-cevap)
 
-Sunucu için. Final sunum **Türkçe**: talimatlar ve söylenecek cümleler Türkçe. Ekrandaki etiketler İngilizce kalır (site İngilizce); düğme adını söylerken İngilizcesini ve yanına Türkçesini kullan: "Verify yourself" (kendin doğrula). Ekran sırası: `docs/ui-brief.md` §5.
-Demo sırasında **yeni canlı emir ya da runner başlatılmaz.** D-016'ya göre yeni canlı koşu yetkisi yok; demo mevcut kanıtı gösterir.
+Sunucu için, Türkçe. Deck: `docs/pitch/GRAIL-pitch-3min.pptx` (5 slayt; 11 slaytlık `GRAIL-pitch.pptx` yedek).
+Site Türkçe; menü: **Panel · Kararlar · Zincir Kaydı · Güvenlik limitleri · Rehber · Nasıl çalışır**.
+Düğme adları İngilizce: **"Verify yourself"** (kendin doğrula), **"Try to cheat"** (hile yapmayı dene).
+Motto: **"GRAIL — Proof before profit."** · "Önce kanıt, sonra kâr."
+Demo sırasında yeni canlı emir ya da runner başlatılmaz; mevcut kanıt gösterilir.
 
-## T-30 dk · Hazırlık kontrol listesi
-- [ ] **Web gerçek state ile açık:** `cd web && GRAIL_STATE_PATH="C:/Users/Serdar Arif/Desktop/Agentic Hack-wt/agents/agents/runtime/live/state.json" npm run dev`.
-      Üstte **MOCK DATA** rozeti yok; mod rozeti **LIVE · real funds** (cycle 2, `dry_run=false`).
-- [ ] **Cycle 2 kartı görünüyor:** Decisions'ta BUY BTC $2.00, `FILLED`, OKX `4017748393474314240`, adımlayıcı Decided → … → Verified.
-- [ ] **Terminal hazır:** ana klasörde `cd chain && npm ci` bir kez çalışmış. `npm run verify:cycle:1` önceden bir kez denenip MATCH görülmüş. `npm run audit` provada bir kez çalıştırılmış (~1–2 dk; son koşu 48/48 MATCH, exit 0).
-      Font büyük (≥ 20 pt), pencere temiz.
-- [ ] **Tarayıcı sekmeleri sırayla açık:**
-  1. GRAIL Dashboard
-  2. Snowtrace cycle 2 commit: https://testnet.snowtrace.io/tx/0x16f2d1294cda0181cf94dd50f7cfccf90b449e2a7534b5eccb6aa5a1a96e9569
-  3. Snowtrace GrailLedger kaynak kodu: https://testnet.snowtrace.io/address/0x1B5fcf6DeFf2F9375338A2C35932224522118851#code
-- [ ] **B planı açık ama gizli:** yedek video (`<TBD: link/dosya>`) ve `docs/demo-backup/` ekran görüntüleri (aşağıdaki listeye göre önceden alınmış).
-- [ ] **Ekran ayarları:** tarayıcı zoom 110%, bildirimler kapalı, `.env` / cüzdan / OKX penceresi ekranda değil.
+## T-10 dk · Hazırlık
+- [ ] **Terminal A (audit):** `cd chain && npm run audit` → **sunumdan ~5 dk önce başlat**. 80 döngüde ~1–2 dk sürüyor, agent çalışırken de güvenli. Bitince özet satırını (`Total … | MATCH … | Mismatch 0`) ekranda bırak, fontu büyüt (≥ 20 pt).
+- [ ] **Tarayıcı sekme 1:** site (canlı demo `<PAGES_URL>` ya da yerel `npm run dev`) → **Kararlar** açık, check-in #2 kartı (BTC 2 USDT, FILLED, OKX `4017748393474314240`) görünür. Üstte MOCK DATA rozeti yok.
+- [ ] **Tarayıcı sekme 2:** Snowtrace GrailLedger `#code` (yedek kanıt): https://testnet.snowtrace.io/address/0x1B5fcf6DeFf2F9375338A2C35932224522118851#code
+- [ ] **Deck:** 3 dakikalık sürüm sunum modunda, slayt 1'de. Konuşmacı notları açık.
+- [ ] **B planı hazır:** yedek video `<VIDEO_URL>` ve `docs/demo-backup/` ekran görüntüleri (Verify yeşil, Try to cheat kırmızı, audit özeti).
+- [ ] Zoom 110%, bildirimler kapalı; `.env`, cüzdan ve OKX pencereleri ekranda değil.
 
 ## Akış (3:00)
-| Süre | Ekran | Yap | Söyle |
+| Saniye | Ekran | Yap | Söyle (en fazla 2 cümle) |
 |---|---|---|---|
-| 0:00–0:25 | Dashboard | Hero sayıyı ve Holy Grail eğrisini göster; ρ slider'ı aşağı çek, sonra "Back to today" | "Beş coin var ama birlikte hareket ediyorlar. GRAIL coinleri değil, gerçek bahisleri sayıyor ve her pozisyonu buna göre boyutluyor." |
-| 0:25–0:45 | On-chain Ledger | Sayaçlar: commits / reveals / unrevealed; agent #1 kimlik kartı | "Her karar, emirden önce Avalanche'a mühürleniyor. Açılmamış zarflar görünür kalıyor, yani hiçbir şey saklanamıyor. Zincirde 48 döngü var; hepsi açılmış ve eşleşiyor." |
-| 0:45–1:20 | Decisions | Cycle 2'yi aç: BUY BTC $2, FILLED, OKX order id; adımlayıcıyı soldan sağa göster | "Bu bizim ilk canlı emrimiz, bugün 15:37'de. OKX TR'de 2 dolarlık BTC: önce mühürlendi, sonra işlem yapıldı, sonra açıldı." |
-| 1:20–1:50 | Decisions → Verify | **Verify yourself** (kendin doğrula) düğmesine tıkla → "computing…" → üç satır ✓ → "Match" | "Tarayıcınız az önce parmak izini yeniden hesapladı ve Avalanche'taki mühürle karşılaştırdı. Bize güvenmeniz gerekmedi." |
-| 1:50–2:15 | Snowtrace (sekme 2, sonra 3) | Commit tx'in zamanını göster; sonra GrailLedger #code'da "verified" | "İşte Snowtrace'te, emirden önce yazılmış mühür. Kontratın kaynak kodu doğrulanmış; kuralları herkes okuyabilir." |
-| 2:15–2:40 | Terminal | Demo başında (0:00) ikinci terminalde `npm run audit`'i başlat (~1–2 dk sürer); burada bitmiş çıktının özet satırını göster (Total / MATCH). Bitmediyse `npm run verify:cycle:1` (birkaç saniye) | "Aynı kontrol terminalden, bütün sicil için: cüzdan yok, anahtar yok. Her döngünün açılışını çözüyor, parmak izini yeniden hesaplıyor, zincirle karşılaştırıyor: hepsi MATCH." |
-| 2:40–3:00 | Settings | Limitler + guardrail listesi; mod rozeti | "Sadece spot, para çekme yok, kesin sınırlar; canlıya geçmek insan kararı. Backtest yalan söyleyebilir. Avalanche söyleyemez." |
+| 0:00–0:30 | Slayt 1 (kanca) | — | "5 coin aldınız ama birlikte hareket ettikleri için aslında 1,4 bağımsız bahis tutuyorsunuz. GRAIL bunu ölçen ve her kararını işlemden önce mühürleyen bir ajan: Proof before profit, önce kanıt sonra kâr." |
+| 0:30–1:00 | Slayt 2 (sorun) | — | "Parasını bir AI ajanına emanet eden biri bugün sadece iddia görüyor: seçilmiş testler, düzenlenebilir ekran görüntüleri. Ajanın sicilini kimse bağımsız doğrulayamıyor." |
+| 1:00–1:45 | Slayt 3 (nasıl) | — | "Ajan her 90 saniyede kararı önce Avalanche'a mühürlüyor, sonra OKX'te emri veriyor, sonra açıyor; trendde momentum, yatayda ortalamaya dönüş seçiyor. Limitler kodda: sadece spot, kaldıraç ve para çekme yok, gerçek moda geçişi insan açıyor." |
+| 1:45–2:00 | Site → **Kararlar** | check-in #2 kartında **Verify yourself**'e bas → "computing…" → yeşil | "Bu, bugün 15:37'deki ilk gerçek emrimiz; tarayıcı parmak izini kendisi hesaplayıp Avalanche'taki mühürle karşılaştırdı: yeşil." |
+| 2:00–2:15 | Aynı panel | **Try to cheat** → "Bir sayıyı değiştir" → kırmızı | "Tek bir sayıyı değiştirince mühür tutmuyor: kırmızı. Sonradan düzeltme mümkün değil." |
+| 2:15–2:25 | Site → **Zincir Kaydı** | Açılmamış zarf sayısı: 0 | "Her mühür açılmış; açılmamış zarf olsaydı burada herkes görürdü." |
+| 2:25–2:40 | Terminal A | Biten `npm run audit` özet satırını göster | "Bütün sicili terminalden de denetledik: 80 döngünün 80'i eşleşiyor, sıfır uyuşmazlık." |
+| 2:40–3:00 | Slayt 5 (kapanış) | — | "GRAIL kârı vaat etmiyor, kanıtı veriyor. Proof before profit: bize güvenmeyin, doğrulayın." |
 
 Notlar:
-- Cycle 2'nin `reason` metninde Türkçe bir kelime ("hedef") var: T-009'dan önceki bir döngü. Sorulursa: "Bu eski bir döngü; gerekçe metinlerini sonradan İngilizceye geçirdik."
-- Jüri yapay zekâyı sorarsa: canlı emirde (cycle 2) analist `skipped`; 3–23 arası 105 alımı onayladı; 24–44 arası kota yüzünden görüş vermedi. Dürüstçe söyle (`docs/jury-faq.md` #5).
-- Akıllı giriş / Hurst sorulursa: "tahmin" de, "tespit" deme (`docs/jury-faq.md` #13).
-- `verify:cycle:1` cycle 1'i (practice mode) doğrular. Cycle 2 için komut:
-  `npm run verify:cycle -- --cycle 2 --commit-tx 0x16f2d1294cda0181cf94dd50f7cfccf90b449e2a7534b5eccb6aa5a1a96e9569 --reveal-tx 0xae6537e9acc9e66accfe5d0fe61b2f9a858460d7c42cf3d25f0acafa378541f7`
-  Bunu provada mutlaka bir kez dene; ben çalıştırmadım.
+- Slayt 4 (canlı kanıt) siteye geçmeden önce 2–3 saniye gösterilir; site çalışmazsa onun yerine konuşulur.
+- Zaman daralırsa Zincir Kaydı adımını (2:15–2:25) atla.
+- Jüri getiriyi ya da isabeti sorarsa: `docs/jury-faq.md` → "2 dakikalık soru-cevap".
 
 ## B planı · bir şey bozulursa
 | Belirti | Hemen yap | Söyle |
 |---|---|---|
-| Web açılmıyor / beyaz ekran | Yedek videoya geç (`<TBD>`), 1:20'deki Verify anından başlat | "Öğleden sonraki kaydı göstereyim, veriler aynı." |
-| Üstte **MOCK DATA** çıkıyor | `GRAIL_STATE_PATH` yanlış; düzeltmeye uğraşma, ekran görüntüleri setine geç | — |
-| Verify'da on-chain satırı "could not read Fuji" | Tarayıcı hesabı (computed = stated ✓) yine de geçerli; Snowtrace sekmesine geç | "Herkese açık RPC şu an yoğun; aynı işlemi Snowtrace'te gösteriyorum." |
-| `verify:cycle:1` → "Too Many Requests" (RPC 429) | 10 sn bekleyip bir kez tekrar dene; olmazsa aşağıdaki kayıtlı çıktıyı göster | "Herkese açık RPC istek sınırına takıldık; işte daha önceki çalıştırmamızın çıktısı." |
-| `npm run audit` → `INCOMPLETE` / hata / 429 | Uğraşma; `npm run verify:cycle:1`'e geç | "Bütün sicil taraması herkese açık RPC'de takıldı; tek döngüyü gösteriyorum, aynı kontrol." |
-| Snowtrace yavaş / 403 | Ekran görüntüsü 4–5 | — |
-| Wi-Fi yok | Tamamen video + ekran görüntüleri; Verify'ın tarayıcı satırı ağ olmadan da çalışır | — |
+| Site açılmıyor / beyaz ekran | Slayt 4'ü göster, ardından yedek videonun Verify anını (`<VIDEO_URL>`) | "Aynı kontrolün bugünkü kaydını gösteriyorum." |
+| Üstte MOCK DATA | Düzeltmeye uğraşma; ekran görüntülerine geç (Verify yeşil / Try to cheat kırmızı) | — |
+| Verify'da zincir okunamadı ("could not read" / gri) | Yeşil iddia etme; Snowtrace sekmesine geç | "Herkese açık RPC şu an yoğun; aynı mühür Snowtrace'te." |
+| `npm run audit` bitmedi / `INCOMPLETE` / 429 | `npm run verify:cycle:1` (birkaç saniye) ya da ekran görüntüsündeki audit özeti | "Tek döngüyü gösteriyorum, kontrol aynı." |
+| Wi-Fi yok | Tamamen slayt 4 + video + ekran görüntüleri | — |
 
-**Kayıtlı terminal çıktısı** (R-006 incelemesinde gerçekten alındı, 17.10, exit 0):
-```
-MATCH agent=1 cycle=1
-payload dry_run=true (SIMULATED)
-commitHash=0xd9064ac4000cae4637a50cd3f25b4ae7c9612e9c9600772f7468533371785a83
-keccak(payload||salt)=0xd9064ac4000cae4637a50cd3f25b4ae7c9612e9c9600772f7468533371785a83
-salt(calldata)=0x22afaf21ed2e74a9da64b8fce4450a37e8a20519478c3d0888e037fc11bbce58
-https://testnet.snowtrace.io/tx/0x7b47c4f313ffa5630d1acfff6411f11c6d13c321bbc69649ec8c90976995f728
-https://testnet.snowtrace.io/tx/0x541cb8ff88aac0248fbf79d7997915b62bb08fb873e226bbefc35cbcec77cf45
-```
-
-**Önceden alınacak ekran görüntüleri** → `docs/demo-backup/` (kullanıcı alır; repoya girmeden önce sır içermediğini kontrol et):
-1. Dashboard (hero + eğri)
-2. Ledger (sayaçlar + agent #1)
-3. Decisions, cycle 2 açık (FILLED + OKX id)
-4. Verify sheet, üç ✓ + "Match"
-5. Snowtrace commit tx (cycle 2)
-6. Snowtrace GrailLedger #code "verified"
-7. Terminal: `npm run audit` özet satırı (Total / MATCH) ve `verify:cycle:1` MATCH çıktısı
-8. Settings (limitler + guardrail'ler)
+**Önceden alınacak ekran görüntüleri** → `docs/demo-backup/` (kullanıcı alır; sır içermediğini kontrol et):
+1. Kararlar, check-in #2 kartı (FILLED + OKX id)
+2. Verify yourself → yeşil sonuç
+3. Try to cheat → kırmızı sonuç
+4. Zincir Kaydı (açılmamış 0)
+5. Terminal: `npm run audit` özet satırı
+6. Snowtrace GrailLedger `#code` "verified"
 
 ## Demo sonrası
 - Runner/emir yok; açık kalan bir şey olmamalı. `runtime/live` klasörüne dokunma (journal ve pending korunur).

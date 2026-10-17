@@ -5,11 +5,11 @@ Form: https://docs.google.com/forms/d/e/1FAIpQLSfSMYuEAv_RelL6JVXpvZHDyUkZAjtcVV
 
 | Alan | Zorunlu | Bizdeki karşılığı | Sorumlu | Durum |
 |---|---|---|---|---|
-| Builder Hub hesabına kayıtlı e-posta | ✅ | Kullanıcı Builder Hub hesabı açar: https://go.team1.network/turkiye-builder | kullanıcı | ⏳ |
+| Builder Hub hesabına kayıtlı e-posta | ✅ | Builder Hub hesabı açıldı (e-postayı formda kullanıcı yazar) | kullanıcı | ✅ |
 | Projenin yayınlandığı website | — | UI'ın public deploy'u (ör. Vercel), mock/okuma modunda | web + integrator | ⏳ (vakit kalırsa; jüriye artı) |
 | Takım / proje adı | ✅ | GRAIL | — | ✅ |
 | Proje açıklaması | ✅ | `coord/BRIEF.md` "Tek cümle" + 4 parça (docs rolü kısa metni hazırlar) | docs | ⏳ |
-| GitHub linki | ✅ | Public repo (ör. `grail-agent`), README ile | integrator + kullanıcı onayı | ⏳ repo yok |
+| GitHub linki | ✅ | github.com/WalAngeL06/grail-agent (şu an private; 18:30'da public) + README | integrator | ⏳ private |
 | Avalanche'da deploy edilen kontrat adresi | — (ama Bonus 2) | `contracts/chain.json` → GrailLedger adresi (+ IdentityRegistry, agentId) | chain | ⏳ |
 | Proje sunumu (Google Slides / Canva linki) | ✅ | Slayt destesi, paylaşım linki "bağlantıya sahip herkes görüntüleyebilir" | docs + kullanıcı | ⏳ |
 

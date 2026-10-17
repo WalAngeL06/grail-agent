@@ -52,7 +52,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
       <div className="chart-legend" aria-hidden="true">
         <span>
           <i style={{ borderColor: "var(--grail)", borderTopWidth: 3 }} />
-          {isWhatIf ? `your what-if: ${fmt(r, 2)}` : `today: coins move together ${fmt(r, 2)}`}
+          {isWhatIf ? `your what-if: ${fmt(r, 2)}` : `today's togetherness ${fmt(r, 2)}`}
         </span>
         {isWhatIf && (
           <span>
@@ -62,7 +62,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
         )}
         <span>
           <i className="thin" style={{ borderColor: "var(--dim)" }} />
-          if coins moved together 0 / 0.2 / 0.4 / 0.8
+          if togetherness were 0 / 0.2 / 0.4 / 0.8
         </span>
         <span>
           <i className="dash thin" style={{ borderColor: "var(--muted)" }} />
@@ -102,7 +102,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
             number of coins
           </text>
           <text x={12} y={(M.t + H - M.b) / 2} fontSize="11" fill="var(--muted)" textAnchor="middle" transform={`rotate(-90 12 ${(M.t + H - M.b) / 2})`}>
-            return per unit of risk
+            return per unit of risk, if one coin = {fmt(sr1, 1)} (assumed)
           </text>
 
           <g clipPath="url(#hg-plot)">
@@ -150,7 +150,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
           <div className="tooltip" style={{ left: `${(x(hover) / W) * 100}%`, top: 8 }}>
             <b>{hover} coins</b>
             <div>
-              at {fmt(r, 2)}: {fmt(nEff(hover, r), 1)} independent bets · return/risk {fmt(srP(sr1, hover, r), 2)}
+              at {fmt(r, 2)}: {fmt(nEff(hover, r), 1)} independent bets · return/risk {fmt(srP(sr1, hover, r), 2)} (illustrative)
             </div>
             <div className="muted">if fully independent: {hover} bets · {fmt(srP(sr1, hover, 0), 2)}</div>
           </div>
@@ -158,7 +158,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
       </div>
 
       <div className="slider">
-        <label htmlFor="rho">What if coins moved together…</label>
+        <label htmlFor="rho">What if togetherness were…</label>
         <input
           id="rho"
           type="range"
@@ -176,16 +176,17 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
       <div className="whatif">
         {isWhatIf && (
           <>
-            <span className="chip warn">what-if · preview only</span>
+            <span className="chip warn">what-if</span>
+            <span className="muted">Preview only. The agent keeps using today's togetherness ({fmt(live, 2)}).</span>
             <button className="linkbtn" onClick={() => setWhat(null)}>
-              Back to today ({fmt(live, 2)})
+              Back to live ({fmt(live, 2)})
             </button>
           </>
         )}
         {live === undefined && <span className="muted">Not measured yet — the curve uses the slider value.</span>}
       </div>
-      <p className="chart-note">Adding coins that move together adds almost nothing. GRAIL sizes positions by independent bets, not by coin count.</p>
-      <p className="tech" style={{ marginTop: 4 }}>Holy Grail chart · y = Sharpe ratio SR₁·√n_eff, n_eff = N/(1+(N−1)ρ), ceiling SR₁/√ρ</p>
+      <p className="chart-note">Adding coins that move together adds almost nothing. GRAIL sizes positions by independent bets.</p>
+      <p className="tech" style={{ marginTop: 4 }}>Holy Grail chart · y = SR₁·√n_eff with SR₁ = {fmt(sr1, 2)} assumed (illustration, not measured) · n_eff = N/(1+(N−1)ρ) · ceiling SR₁/√ρ</p>
     </div>
   );
 }

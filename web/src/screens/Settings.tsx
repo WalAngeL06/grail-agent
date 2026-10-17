@@ -11,12 +11,16 @@ const asUsd = (v: unknown) => (Number.isFinite(num(v)) ? usd(String(v)) : String
 const KNOWN: Record<string, Known> = {
   max_order_usdt: { label: "Most per trade", fmt: asUsd, hint: "No single order can be bigger than this." },
   max_total_deploy_usdt: { label: "Most in total", fmt: asUsd, hint: "The agent can never put more than this to work." },
-  kill_switch_drawdown_pct: { label: "Emergency stop", fmt: asPct, hint: "If the account falls this much, no new orders are placed." },
+  kill_switch_drawdown_pct: {
+    label: "Emergency stop",
+    fmt: asPct,
+    hint: "Pauses new orders while the account is this much or more below its highest value. It does not sell, so losses can go past this.",
+  },
   min_order_usdt: { label: "Smallest trade", fmt: asUsd, hint: "Tiny rebalances are skipped to save fees." },
   max_position_pct: { label: "Biggest share for one coin", fmt: asPct },
-  risk_budget_pct: { label: "Risk allowance per coin", fmt: asPct, hint: "share × yearly swing must stay under this" },
-  target_vol_pct: { label: "Target swing for the portfolio", fmt: asPct, hint: "Positions are scaled so the whole portfolio swings about this much per year." },
-  cycle_seconds: { label: "Time between rounds", fmt: (v) => `${String(v)} s` },
+  risk_budget_pct: { label: "Risk cap per coin", fmt: asPct, hint: "share × yearly swing must stay under this" },
+  target_vol_pct: { label: "Price-swing cap for the portfolio", fmt: asPct, hint: "Positions are scaled down so the portfolio swings at most about this much per year." },
+  cycle_seconds: { label: "Time between check-ins", fmt: (v) => `${String(v)} s` },
   candle_bar: { label: "Price candle size", fmt: (v) => String(v) },
   lookback_bars: { label: "History used for trends", fmt: (v) => `${String(v)} candles` },
   okx_site: { label: "OKX site", fmt: (v) => String(v).toUpperCase() },
@@ -30,8 +34,8 @@ const GUARDS: { title: string; text: string }[] = [
   { title: "No borrowing, no leverage", text: "Spot trading only: no derivatives, no margin. The leverage setting is never called." },
   { title: "Only the listed coins", text: "Orders for any other coin are rejected in code." },
   { title: "Spending caps", text: "Per-trade and total limits are checked in code before every order." },
-  { title: "Emergency stop", text: "If losses reach the limit, new orders stop automatically." },
-  { title: "No seal, no trade", text: "If sealing the decision on Avalanche fails, no order is placed that round (fail-closed)." },
+  { title: "Emergency stop", text: "While the account is more than the set percentage below its high, no new orders are placed. It pauses buying; it does not sell." },
+  { title: "No seal, no trade", text: "If sealing the decision on Avalanche fails, no order is placed that check-in (safe stop)." },
   { title: "A human switches it on", text: "Practice mode is the default. Going live is a config change made by a person, not a button here." },
 ];
 
@@ -42,20 +46,27 @@ export default function Settings({ s }: ScreenProps) {
   keys.sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
   const errors = [...s.errors].sort((a, b) => (b.at_ms ?? 0) - (a.at_ms ?? 0));
   const lim = (k: string) => (cfg[k] === undefined || cfg[k] === null || cfg[k] === "" ? null : KNOWN[k].fmt(cfg[k]));
-  const caps = [lim("max_order_usdt") && `${lim("max_order_usdt")} per trade`, lim("max_total_deploy_usdt") && `${lim("max_total_deploy_usdt")} in total`]
-    .filter(Boolean)
-    .join(" and ");
+  // docs/ui-copy.md (c) Settings live summary; emergency-stop wording per R-007-7 (it pauses buying, it does not sell)
+  const parts = [
+    lim("max_order_usdt") && `Max ${lim("max_order_usdt")} per order`,
+    lim("max_total_deploy_usdt") && `${lim("max_total_deploy_usdt")} in total`,
+    lim("kill_switch_drawdown_pct") && `emergency stop pauses new orders at −${lim("kill_switch_drawdown_pct")} from the high`,
+  ].filter(Boolean);
   const summary = [
-    s.dry_run ? "Practice mode — no real orders." : s.dry_run === false ? "Live mode — real funds." : "",
-    caps ? `Spending is capped at ${caps}.` : "",
-    lim("kill_switch_drawdown_pct") ? `Trading stops after a ${lim("kill_switch_drawdown_pct")} loss.` : "",
+    s.dry_run ? "Practice mode: decisions are sealed for real, orders are simulated." : s.dry_run === false ? "Live mode: real orders on OKX TR." : "",
+    parts.length ? `${parts.join(", ")}.` : "",
   ]
     .filter(Boolean)
     .join(" ");
 
   return (
     <>
-      <PageHead title="What GRAIL is allowed to do. The limits are enforced in code, not by promises." summary={summary} aside={<span className="tag unk">READ-ONLY</span>} />
+      <PageHead
+        eyebrow="Settings"
+        title="What the agent is allowed to do. The limits live in its settings file and are checked in code before every order."
+        summary={summary}
+        aside={<span className="tag unk">READ-ONLY</span>}
+      />
 
       <div className="stack">
         <Card title="Mode">
@@ -147,9 +158,9 @@ export default function Settings({ s }: ScreenProps) {
           </Card>
         </div>
 
-        <Card title={<Term plain="Problems the agent reported" tech="System › Errors" />} meta="a failing step skips the round; the agent keeps running" id="system">
+        <Card title={<Term plain="Errors" tech="System › Errors" />} meta="The agent skips a check-in when a step fails, logs it here, and carries on." id="system">
           {errors.length === 0 ? (
-            <span className="chip ok">✓ No problems</span>
+            <span className="chip ok">✓ No errors</span>
           ) : (
             <div className="scroll-x">
               <table className="table">

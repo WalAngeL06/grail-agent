@@ -48,10 +48,11 @@ export function Hint({ text }: { text: string }) {
 }
 
 /** Big one-sentence "what you're looking at" + a live summary built from state. */
-export function PageHead({ title, summary, aside }: { title: string; summary?: ReactNode; aside?: ReactNode }) {
+export function PageHead({ eyebrow, title, summary, aside }: { eyebrow?: string; title: string; summary?: ReactNode; aside?: ReactNode }) {
   return (
     <header className="page-head">
       <div>
+        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
         <h1>{title}</h1>
         {summary && <p className="live">{summary}</p>}
       </div>
@@ -177,14 +178,16 @@ const LLM: Record<string, { label: string; title: string }> = {
   approved: { label: "approved", title: "A second AI looked at this buy and kept it as is." },
   reduced: { label: "reduced", title: "A second AI made this buy smaller. It can never make it bigger." },
   vetoed: { label: "vetoed", title: "A second AI cancelled this buy (turned it into hold)." },
-  exempt: { label: "not needed", title: "Sells skip the AI check: reducing risk is never blocked." },
-  skipped: { label: "not needed", title: "The AI check did not run for this decision; the engine's decision stands." },
+  exempt: { label: "not needed (sell)", title: "Sells are not reviewed: reducing risk is never blocked." },
+  skipped: { label: "not needed", title: "No buy to review in this check-in; the decision is unchanged." },
 };
 
 export function LlmBadge({ flag, note }: { flag: string; note?: string }) {
-  const known = LLM[flag];
+  // "skipped" covers two cases: nothing to review (no buys) vs AI not reachable — say which.
+  const unavailable = flag === "skipped" && !!note && /^skipped/.test(note) && !/no_buys/.test(note);
+  const known = unavailable ? { label: "unavailable — decision unchanged", title: "AI review unavailable — decision unchanged." } : LLM[flag];
   return (
-    <span className={`llm ${known ? flag : "unknown"}`} title={[known?.title ?? `llm_flag: ${flag}`, note].filter(Boolean).join(" — ")}>
+    <span className={`llm ${LLM[flag] ? flag : "unknown"}`} title={[known?.title ?? `llm_flag: ${flag}`, note].filter(Boolean).join(" — ")}>
       AI second opinion: {known?.label ?? flag}
     </span>
   );

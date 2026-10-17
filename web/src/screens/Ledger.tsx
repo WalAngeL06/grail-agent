@@ -27,30 +27,31 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
   return (
     <>
       <PageHead
-        title="The public record: every decision, sealed on Avalanche. None can be hidden."
+        eyebrow="On-chain record"
+        title="Every decision is sealed on Avalanche before the trade and opened after it. Nothing can be hidden or edited."
         summary={
           commits
-            ? `${commits} decision rounds sealed, ${reveals} opened${unrevealed ? `, ${unrevealed} still sealed` : ""}. Last seal ${ago(lastSeal?.decided_at_ms, now)}.`
-            : "Nothing sealed yet."
+            ? `${commits} envelopes sealed, ${reveals} opened${unrevealed ? `, ${unrevealed} still sealed — visible to everyone.` : ". Every envelope is open."} Last seal ${ago(lastSeal?.decided_at_ms, now)}.`
+            : "No envelopes yet — the first one is sealed at the next check-in."
         }
       />
 
       <div className="stack">
         <div className="cols three">
           <div className="card bigstat">
-            <Term plain="Sealed before trading" tech="commits" />
+            <Term plain="Sealed" tech="commits" />
             <div className="v">{commits}</div>
-            <p>Decision locked on Avalanche before any order.</p>
+            <p>sealed before any order</p>
           </div>
           <div className="card bigstat">
-            <Term plain="Opened for anyone to check" tech="reveals" />
+            <Term plain="Opened" tech="reveals" />
             <div className="v">{reveals}</div>
-            <p>Decision text and secret key published.</p>
+            <p>opened and checkable</p>
           </div>
           <div className={`card bigstat ${unrevealed > 0 ? "open" : ""}`}>
-            <Term plain="Still sealed" tech="unrevealed commits" tip="A round is opened right after its order. A seal that is never opened stays visible here, so bad decisions can't be quietly dropped." />
+            <Term plain="Still sealed" tech="unrevealed commits" tip="A check-in is opened right after its order. A seal that is never opened stays visible here, so bad decisions can't be quietly dropped." />
             <div className="v">{unrevealed}</div>
-            <p>{unrevealed > 0 ? "Open seals stay visible — no cherry-picking." : "Every seal has been opened."}</p>
+            <p>{unrevealed > 0 ? "Still sealed — they stay visible, so no decision can be hidden." : "Every envelope has been opened."}</p>
           </div>
         </div>
         {onchain && (
@@ -83,7 +84,7 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
               </dl>
             </div>
           </Card>
-          <Card title={<Term plain="Agent identity card" tech="ERC-8004 IdentityRegistry" tip="A public on-chain ID for the agent, so its record can't be swapped for another one." />}>
+          <Card title={<Term plain="On-chain ID card" tech="ERC-8004 IdentityRegistry" tip="A public on-chain ID for the agent, so its record can't be swapped for another one." />}>
             <dl className="kvrows">
               <dt>Agent</dt>
               <dd>{s.agent.name ?? chain.agentName ?? "—"}</dd>
@@ -111,17 +112,17 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
           </Card>
         </div>
 
-        <Card title="Every round, newest first" meta={`${cycles.length} in view`}>
+        <Card title="Every check-in, newest first" meta={`${cycles.length} in view`}>
           {cycles.length === 0 ? (
-            <Empty title={`Waiting for the first round${next ? ` — next in ${next}` : ""}`}>
-              Each round shows up here the moment it is sealed, with links to the Avalanche explorer (Snowtrace).
+            <Empty title={`Waiting for the first check-in${next ? ` — next in ${next}` : ""}`}>
+              Each check-in shows up here the moment it is sealed, with links to the Avalanche explorer (Snowtrace).
             </Empty>
           ) : (
             <div className="scroll-x">
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Round</th>
+                    <th>Check-in</th>
                     <th>Time</th>
                     <th>Sealed</th>
                     <th>Opened</th>
@@ -137,7 +138,7 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
                       <td style={{ fontWeight: 600 }}>#{x.id}</td>
                       <td className="mono muted">{dayClock(x.decided_at_ms)}</td>
                       <td>{x.commit_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.commit_tx} /> : <span style={{ color: "var(--danger)" }}>failed · no trade</span>}</td>
-                      <td>{x.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.reveal_tx} /> : x.commit_tx ? <span className="tag open">STILL SEALED</span> : "—"}</td>
+                      <td>{x.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.reveal_tx} /> : x.commit_tx ? <span className="tag open" title="Sealed but not opened yet. It stays visible on chain.">OPEN</span> : "—"}</td>
                       <td>
                         <ModeTag dry={x.dry_run} />
                       </td>

@@ -125,8 +125,8 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
       <aside className="sheet">
         <header className="sheet-head">
           <div>
-            <b>Open the sealed envelope yourself</b>
-            <span className="muted"> · round #{cycle.id}</span>
+            <b>Check it yourself</b>
+            <span className="muted"> · check-in #{cycle.id}</span>
           </div>
           <button className="btn sm" onClick={onClose} aria-label="Close">
             ✕
@@ -135,28 +135,28 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
 
         <div className="sheet-body">
           <p className="lead">
-            GRAIL locked this decision on Avalanche before trading. Your browser now recomputes its fingerprint and compares it with the one
-            stored on-chain. Nothing is sent to a server.
+            Your browser rebuilds the fingerprint from the opened decision and compares it with the seal on Avalanche. Nothing is sent to a
+            server.
           </p>
 
           <ol className="checks-list">
             <CheckRow
               title="Fingerprint computed in your browser"
               tech="keccak256(payload ‖ salt)"
-              value={phase === "computing" ? "computing…" : !usable ? "cannot compute — payload or salt is missing or a placeholder" : computed}
+              value={phase === "computing" ? "computing…" : !usable ? "Sample data — there is nothing real to check." : computed}
               mark={phase === "computing" || !usable ? undefined : matchStated}
               note={usable ? (fromChain ? "input read from the reveal transaction on Fuji" : "input taken from state.json") : undefined}
             />
-            <CheckRow title="Fingerprint the agent reports" tech="state.json · commit_hash" value={cycle.commit_hash ?? "—"} />
+            <CheckRow title="Fingerprint the agent reported" tech="state.json · commit_hash" value={cycle.commit_hash ?? "—"} />
             <CheckRow
-              title="Fingerprint stored on Avalanche"
+              title="Seal on Avalanche"
               tech={`GrailLedger.decisions(${agentId ?? "?"}, ${cycleNo ?? "?"})`}
               value={
                 skipChain
                   ? "demo cycle — never sent to Fuji, nothing to read"
                   : phase !== "done"
                     ? phase === "reading"
-                      ? "reading Fuji…"
+                      ? "reading Avalanche…"
                       : "waiting"
                     : chainErr
                       ? `could not read Fuji (${chainErr})`
@@ -194,7 +194,7 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
                 </b>
                 <p>
                   {verdict === "ok"
-                    ? `All ${cycle.decisions.length} decisions in round #${cycle.id}${cycle.decisions.some((d) => d.action === "HOLD") ? ", holds included," : ""} are exactly what was sealed${onchain?.committed ? ` on Avalanche at ${clock(onchain.committedAt * 1000)}` : ""}, before any order was sent.${!onchain ? " (Avalanche could not be read, so this compares with state.json only.)" : ""}`
+                    ? `All ${cycle.decisions.length} decisions in check-in #${cycle.id}${cycle.decisions.some((d) => d.action === "HOLD") ? ", holds included," : ""} are exactly what was sealed${onchain?.committed ? ` on Avalanche at ${clock(onchain.committedAt * 1000)}` : ""}, before any order was sent.${!onchain ? " (Avalanche could not be read, so this compares with state.json only.)" : ""}`
                     : verdict === "bad"
                       ? tamper
                         ? "The edited decision no longer matches the sealed fingerprint. One changed digit breaks the seal."
@@ -208,14 +208,14 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
           {phase === "done" && usable && (
             <div className="cheat">
               <b>Try to cheat</b>
-              <p className="muted">Change one number in the sealed decision and check again.</p>
+              <p className="muted">Change one number and check again.</p>
               {tamper ? (
                 <>
                   <p className="mono" style={{ color: "var(--sell)", fontSize: 12 }}>
                     edited: {tamper.diff}
                   </p>
                   <button className="btn sm" onClick={() => setTamper(null)}>
-                    Restore original
+                    Put the original back
                   </button>
                 </>
               ) : (

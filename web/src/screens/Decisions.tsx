@@ -11,16 +11,16 @@ export default function Decisions({ s, chain, now, demo }: ScreenProps) {
   const [verify, setVerify] = useState<Cycle | null>(null);
   const fresh = useFreshKeys(cycles.map((c) => c.id));
   const trades = s.decisions.filter(isTrade).length;
-  const opened = cycles.filter((c) => c.reveal_tx).length;
   const next = countdown(s.agent.next_cycle_at_ms, now);
 
   return (
     <>
       <PageHead
-        title="Every decision GRAIL made, sealed before it traded."
+        eyebrow="Decisions"
+        title="What the agent decided for each coin, and why. Every check-in is sealed before any order."
         summary={
           cycles.length
-            ? `${cycles.length} round${cycles.length === 1 ? "" : "s"} shown: ${trades} trade${trades === 1 ? "" : "s"}, ${s.decisions.length - trades} holds. ${opened} opened and checkable by anyone — press "Verify" on a round.`
+            ? decisionsSummary(cycles[0], s.dry_run)
             : undefined
         }
         aside={
@@ -33,9 +33,9 @@ export default function Decisions({ s, chain, now, demo }: ScreenProps) {
       />
 
       {cycles.length === 0 ? (
-        <Empty title={`Waiting for the first round${next ? ` — next in ${next}` : ""}`}>
+        <Empty title={`Waiting for the first check-in${next ? ` — next in ${next}` : ""}`}>
           Every {String(s.config.cycle_seconds ?? 90)} seconds GRAIL reads prices, decides buy / sell / hold for each coin, and seals that decision on Avalanche
-          before any trade. The first round appears here.
+          before any trade. The first check-in appears here.
         </Empty>
       ) : (
         <div className="stack">
@@ -62,6 +62,13 @@ export default function Decisions({ s, chain, now, demo }: ScreenProps) {
 
 const isTrade = (d: Decision) => d.action === "BUY" || d.action === "SELL";
 
+// docs/ui-copy.md (c) Decisions live summary
+function decisionsSummary(c: Cycle, dry?: boolean) {
+  if (!c.commit_tx) return `Check-in #${c.id} could not be sealed, so no order was sent.`;
+  const k = (a: string) => c.decisions.filter((d) => d.action === a).length;
+  return `Check-in #${c.id} at ${clock(c.decided_at_ms)}: ${k("BUY")} buy · ${k("SELL")} sell · ${k("HOLD")} hold. Sealed${c.reveal_tx ? " and opened" : ", waiting to be opened"}.${dry ? " Practice mode — orders were simulated." : ""}`;
+}
+
 function CycleCard({ c, explorer, onlyTrades, flash, onVerify }: { c: Cycle; explorer?: string; onlyTrades: boolean; flash: boolean; onVerify: () => void }) {
   const [proof, setProof] = useState(false);
   const all = [...c.decisions].sort((a, b) => Number(isTrade(b)) - Number(isTrade(a)) || (a.inst_id ?? "").localeCompare(b.inst_id ?? ""));
@@ -69,17 +76,17 @@ function CycleCard({ c, explorer, onlyTrades, flash, onVerify }: { c: Cycle; exp
   const hidden = all.length - rows.length;
 
   return (
-    <article className={`card cycle-card ${flash ? "flash" : ""}`} aria-label={`Round ${c.id}`}>
+    <article className={`card cycle-card ${flash ? "flash" : ""}`} aria-label={`Check-in ${c.id}`}>
       <div className="cycle-top">
         <h3>
-          Round #{c.id} <span className="mono muted">{dayClock(c.decided_at_ms)}</span> <span className="muted">· {c.decisions.length} decisions</span>{" "}
+          Check-in #{c.id} <span className="mono muted">{dayClock(c.decided_at_ms)}</span> <span className="muted">· {c.decisions.length} decisions</span>{" "}
           <ModeTag dry={c.dry_run} />
         </h3>
         <Stepper c={c} />
       </div>
       {!c.commit_tx && (
         <div className="failbar">
-          ✕ Seal failed → no trade was placed (fail-closed). <span className="tech">commit_tx missing</span>
+          ✕ Couldn't seal this decision, so no order was sent (safe stop). <span className="tech">commit_tx missing</span>
         </div>
       )}
 
@@ -90,7 +97,7 @@ function CycleCard({ c, explorer, onlyTrades, flash, onVerify }: { c: Cycle; exp
             <ActionChip action={d.action} size={d.size_usdt} />
           </span>
           <span className="reason">
-            {d.reason ?? <span className="dim">no reason given</span>}
+            {d.reason ?? <span className="dim">No reason recorded.</span>}
             {d.llm_flag && (
               <span className="llm-line">
                 <LlmBadge flag={d.llm_flag} note={d.llm_note} />
@@ -105,7 +112,7 @@ function CycleCard({ c, explorer, onlyTrades, flash, onVerify }: { c: Cycle; exp
           <span className="ord">{isTrade(d) ? <OrderStatus d={d} failed={!c.commit_tx} /> : null}</span>
         </div>
       ))}
-      {onlyTrades && hidden > 0 && <div className="drow-note">{rows.length ? `+ ${hidden} hold hidden` : `${hidden} hold — no trades this round`}</div>}
+      {onlyTrades && hidden > 0 && <div className="drow-note">{rows.length ? `+ ${hidden} hold hidden` : "All hold — nothing to trade this check-in."}</div>}
 
       <div className="cycle-foot">
         <span>
@@ -113,7 +120,7 @@ function CycleCard({ c, explorer, onlyTrades, flash, onVerify }: { c: Cycle; exp
         </span>
         <span>
           <Term plain="opened" tech="reveal tx" />{" "}
-          {c.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={c.reveal_tx} /> : c.commit_tx ? <span className="tag open">STILL SEALED</span> : "—"}
+          {c.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={c.reveal_tx} /> : c.commit_tx ? <span className="tag open" title="Sealed but not opened yet. It stays visible on chain.">OPEN</span> : "—"}
         </span>
         <span className="grow" />
         <button className="btn sm" aria-expanded={proof} onClick={() => setProof(!proof)}>
@@ -142,7 +149,7 @@ function Proof({ c, explorer }: { c: Cycle; explorer?: string }) {
     <div className="detail">
       <div style={{ flex: "3 1 340px", minWidth: 0 }}>
         <div className="label">The sealed decision (payload_utf8 · {c.payload_utf8 ? new TextEncoder().encode(c.payload_utf8).length : 0} bytes)</div>
-        {pretty ? <pre>{pretty}</pre> : <p className="muted">Published when the round is opened (revealed).</p>}
+        {pretty ? <pre>{pretty}</pre> : <p className="muted">Published when the envelope is opened (revealed).</p>}
       </div>
       <dl className="kvrows" style={{ flex: "2 1 280px" }}>
         <dt>
@@ -152,15 +159,15 @@ function Proof({ c, explorer }: { c: Cycle; explorer?: string }) {
           <Hash value={c.commit_hash} full />
         </dd>
         <dt>
-          <Term plain="secret key" tech="salt_hex" />
+          <Term plain="random code" tech="salt_hex" />
         </dt>
-        <dd>{c.salt_hex ? <Hash value={c.salt_hex} full /> : <span className="muted">kept secret until opened</span>}</dd>
+        <dd>{c.salt_hex ? <Hash value={c.salt_hex} full /> : <span className="muted">kept private until opened</span>}</dd>
         <dt>sealed tx</dt>
         <dd>
           <ExplorerLink explorer={explorer} kind="tx" value={c.commit_tx} full />
         </dd>
         <dt>opened tx</dt>
-        <dd>{c.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={c.reveal_tx} full /> : <span className="tag open">STILL SEALED</span>}</dd>
+        <dd>{c.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={c.reveal_tx} full /> : <span className="tag open">OPEN</span>}</dd>
       </dl>
     </div>
   );
@@ -183,7 +190,7 @@ function Stepper({ c }: { c: Cycle }) {
     { label: "Checked", cls: c.verified === true ? "done ok" : c.verified === false ? "fail" : c.commit_tx ? "pending" : "skip", sub: c.verified === true ? "matches" : c.verified === false ? "mismatch" : c.commit_tx ? "pending" : "—" },
   ];
   return (
-    <ol className="stepper" aria-label="Round lifecycle">
+    <ol className="stepper" aria-label="Check-in lifecycle">
       {steps.map((st) => (
         <li key={st.label} className={`step ${st.cls}`}>
           <i aria-hidden="true" />

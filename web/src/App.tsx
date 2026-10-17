@@ -179,8 +179,8 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
       </span>
       <ModeChip state={s} />
       {(feed.source === "mock" || feed.source === "bundled") && (
-        <span className="chip mock" title="The agent hasn't written live data yet; this is the example file (contracts/state.example.json).">
-          EXAMPLE DATA
+        <span className="chip mock" title="No live agent data found. Showing sample data.">
+          MOCK DATA
         </span>
       )}
       {feed.source === "demo" && (
@@ -190,9 +190,9 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
       )}
       <span className="sep" />
       <span>
-        Round <b>#{s.agent.cycle_id ?? "—"}</b>
+        Check-in <b>#{s.agent.cycle_id ?? "—"}</b>
       </span>
-      <span>{!running ? "paused" : next ? <>next in <b className="mono">{next}</b></> : "next round overdue"}</span>
+      <span>{!running ? "paused" : next ? <>next in <b className="mono">{next}</b></> : "next check-in overdue"}</span>
       <span className="sep" />
       {(c.commits !== undefined || c.reveals !== undefined) && (
         <a className="mini" href="#/ledger" title="Decisions sealed on Avalanche / opened / still sealed">
@@ -201,8 +201,8 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
           <span className={(c.unrevealed ?? 0) > 0 ? "open" : ""}>still sealed</span>
         </a>
       )}
-      <a className={`chip ${errs > 0 ? "danger" : ""}`} href="#/settings/system" title="Problems the agent reported (it skips the round and keeps running)">
-        {errs} {errs === 1 ? "problem" : "problems"}
+      <a className={`chip ${errs > 0 ? "danger" : ""}`} href="#/settings/system" title="Errors the agent reported (it skips the check-in and keeps running)">
+        {errs} {errs === 1 ? "error" : "errors"}
       </a>
       <span className="grow" />
       <span title={s.generated_at_ms ? new Date(s.generated_at_ms).toISOString() : ""}>updated {ago(s.generated_at_ms, now)}</span>
@@ -236,7 +236,7 @@ function Strips({ feed, now }: { feed: Feed; now: number }) {
     <>
       {feed.error && (
         <div className="strip-msg danger" role="alert">
-          Can't read the agent's data right now (retrying every 3 s). {s ? "You are seeing the last good reading." : ""}
+          Can't read the agent's data right now. Retrying — showing the last known state.
           <span className="tech">{feed.error}</span>
         </div>
       )}
@@ -247,11 +247,11 @@ function Strips({ feed, now }: { feed: Feed; now: number }) {
       )}
       {stale && (
         <div className="strip-msg warn" role="alert">
-          Agent silent for {Math.max(1, Math.round(age! / 60000))}m — last state shown.
+          No update from the agent for {Math.max(1, Math.round(age! / 60000))}m — showing the last known state.
         </div>
       )}
       {stopped && (
-        <div className="strip-msg warn">Agent stopped — no new decisions until it is restarted. Everything already sealed stays checkable.</div>
+        <div className="strip-msg warn">The agent is stopped. No new check-ins until it is restarted.</div>
       )}
     </>
   );

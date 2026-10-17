@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGrailFeed, type Feed, type GrailState } from "./state";
 import { readChainJson, type ChainInfo } from "./chain";
 import { Boundary, Toaster } from "./components/Bits";
@@ -31,16 +31,31 @@ export default function App() {
   const now = useNow(1000);
   const chain = useMemo(() => readChainJson(feed.chainJson), [feed.chainJson]);
 
+  const [hash, setHash] = useState(() => window.location.hash);
   useEffect(() => {
-    const on = () => setRoute(readRoute());
+    const on = () => {
+      setRoute(readRoute());
+      setHash(window.location.hash);
+    };
+    // A link to the hash we are already on fires no hashchange: scroll to its anchor anyway.
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.("a[href^='#/']");
+      if (a && a.getAttribute("href") === window.location.hash) scrollToAnchor(window.location.hash);
+    };
     window.addEventListener("hashchange", on);
-    return () => window.removeEventListener("hashchange", on);
+    document.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("hashchange", on);
+      document.removeEventListener("click", onClick);
+    };
   }, []);
+  const lastRoute = useRef(route);
   useEffect(() => {
-    const anchor = window.location.hash.split("/")[2];
-    if (anchor) window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth" }), 50);
-    else window.scrollTo(0, 0);
-  }, [route]);
+    // #/screen/anchor scrolls to the anchor (also within the same screen); a new screen without anchor starts at the top
+    if (hash.split("/")[2]) scrollToAnchor(hash);
+    else if (lastRoute.current !== route) window.scrollTo(0, 0);
+    lastRoute.current = route;
+  }, [hash, route]);
 
   const s = feed.state;
   const open = s?.chain.unrevealed;
@@ -105,6 +120,15 @@ export default function App() {
       <Toaster />
     </div>
   );
+}
+
+/** Scroll to the element named by #/screen/<id>; retries briefly while the screen renders its data. */
+function scrollToAnchor(h: string, tries = 12) {
+  const id = h.split("/")[2];
+  if (!id) return;
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ block: "start" }); // instant: smooth scrolling was unreliable in testing
+  else if (tries > 0) window.setTimeout(() => scrollToAnchor(h, tries - 1), 100);
 }
 
 // ---------- first-visit intro (dismissible, remembered per browser) ----------

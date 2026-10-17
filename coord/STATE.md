@@ -1,9 +1,9 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Revizyon: r46 · 2026-10-17 17:45 Europe/Istanbul. Önceki ayrıntı: coord/archive/STATE-r40-20261017.md (daha eski r26/r17 arşivleri korunur).
+- Revizyon: r47 · 2026-10-17 17:48 Europe/Istanbul. Önceki ayrıntı: coord/archive/STATE-r40-20261017.md (daha eski r26/r17 arşivleri korunur).
 - İlk CANLI:15:37 cycle2 BUY BTC2USDT filled, OKX4017748393474314240. Sürekli döngü dry_run=true; gerçek Fuji commit/reveal. Integrator runner/emir/tx başlatmaz.
 - Sözleşme: VERSION0.6.2; yalnız opsiyonel/hash dışı metrics.signals[inst].ou eklendi. Config/payload/state contract_version0.6,chain deploy0.5/ABI/hash aynı. sleeve kullanıcının kesinleştirdiği momentum|mean_reversion|none metin enumudur; %25 tavan engine kodunda/testte, ek bütçe alanı yok.
-- Bu teslim: kullanıcı web95d9eda→review1feb9ed→engine88f00f3 sıralı merge/push istedi. Başlangıçmainfd0d200 temiz/origin ile aynı; üç exact hedef uzak dallardan erişilebilir. Web bu adımda alınıyor; review/engine sonraki iki ayrı merge. Önceki dört merge kanıtı D-022'de.
+- Bu teslim: web95d9eda→mainab6e2d5 push/clean/uzak eşitliği tamam. Review1feb9ed bu adımda; ardından engine88f00f3 ayrı merge/push. Başlangıçmainfd0d200 temiz/origin ile aynı; üç exact hedef uzak dallardan erişilebilir. Önceki dört merge kanıtı D-022'de.
 - Verify R-010 GO yalnız webc1c2361/chain23a81aa. **R-011 KAPANDI, audit jüriye GO**: kullanıcı/planner public RPC48/48 MATCH,Unopened0,Mismatch0,LIVE1,exit0; integrator54 test/typecheck PASS. Kendi audit tekrarı61→62 yeni cycle nedeniyle INCOMPLETE/exit1; beklenen fail-closed, tam rapor yazılmadı. Bunlar ayrı snapshot/kanıtlardır.
 - **T-017 kullanıcı kararıyla AÇIK merge GO:** R-012/review1feb9ed tam88f00f3 için APPROVE koşullu,18:10merge+AÇIK GO. R-012-1 kabul edilen bilinen davranış: ranging+anlamlı coinde MR çıkışı momentumdan gelen pozisyonu da satabilir (risk azaltıcı); R-012-2 MINOR tutma bandı düşüş SELL'ini bastırabilir. İnceleyen kullanıcı/planner kararıyla role/review oldu (chain meşgul); aynı model ailesinde bağımsız oturum sınırı raporda açık. Merge sonrası restart agents sahibinde.
 - Public kapısı: R-005 GO yalnız taranmış main9acec55/ref kümesi; son yayın SHA fark taraması hâlâ açık. Public ayarı/yayın/form/slides/video yüklemesi yapılmadı.
@@ -49,7 +49,7 @@
 | R-009 | T-014 inceleme | reviewerClaudeMax | DONE / GO koşullu |8ef0449+87539f8 kullanıcıGO; Hurst tahmin sınırı korunur |
 | R-010 | Web Verify | chain/reviewer | DONE / GO | c1c2361/23a81aa |
 | R-011 | Audit RPC düzeltmesi | chain | DONE / GO; INTEGRATED |6f19510→main81356a1 push; planner48MATCH,integrator54test; moving-ledger fail-closed |
-| R-012 | T-017 bağımsız inceleme | reviewer/ClaudeOpus, ayrı oturum | APPROVE koşullu; rapor merge sırada |1feb9ed;88f00f3,210/157test+400fuzz inceleyen kanıtı; kullanıcı AÇIK |
+| R-012 | T-017 bağımsız inceleme | reviewer/ClaudeOpus, ayrı oturum | INTEGRATED / APPROVE koşullu / GO |1feb9ed;88f00f3;R-012-1STATE'e bilinen davranış işlendi,-2MINOR; kullanıcı AÇIK |
 
 ## Bu tur kanıtları
 - Chain birleşik ağacı6f19510 ile birebir; staged fark yalnız chain/+kendi handoff'u.54test(6s)/typecheck PASS; diff --check temiz; diğer ürünler başlangıç1f57076 ile aynı. Yeni audit latest state ve fresh before/after sayaç kontrolüyle çalışır; canonical scan-head/event/hash/receipt kontrolleri korunur.
@@ -60,6 +60,7 @@
 - Engine4a83bd8 actual farkı engine/out/live-gates-today.md+.json ve kendi handoff'u; ürün kaynakları/test/ayarlar aynı. JSON/cohort/tutar/toplam kontrolleri PASS:22eski/17yeni aynıbar döngüsü,110/17BUY,418.44/44.88USDT. Cycle3–50 toplam48commit+48reveal/240karar sahibin dosya kanıtıdır; yeni bağımsız RPC kanıtı değil. PID48008python17:22 salt okunur süreç kontrolünde çalışıyor.
 - Agentsaf4106d actual farkı3kanıtJSON+kendi handoff; kaynak/test/ayarlar değişmedi. ÜçJSON parse ve Gemini45/46koşul kontrolleri PASS; ikisinde4HOLD+1ETHsimulatedBUY/approved/errors0,modelgemini-3.7-flash,fallbackfalse. Anahtar okunmadı. Main'de uv run --frozen pytest -q --tb=short→157passed(15.45s). Receipt/hash doğrulaması sahip kanıtıdır, integrator RPC/fill tekrarı yapmadı.
 - Bu tur web95d9eda birleşik ağacı exact/sınır/diff--check PASS; npm test22/22,normal/public build56modül708/754ms PASS. Yalnız web/+handoff değişti; diğer ürünlerfd0d200 ile aynı. DefaultTR/EN|TR/localStorage/motto/guide kaynakta doğrulandı; verifyLogic/verify/chain çekirdeği aynı. Tarayıcı/görsel QA sahip kanıtıdır; integrator bu tur tekrarlamadı.
+- Review1feb9ed actual farkı T-017/T-015 incelemeleri+reviewer handoff; exact/diff--check temiz,ürünlerwebab6e2d5 ile aynı. T-015 raporu eskiR-011NO-GO tarihsel incelemesidir; güncel R-011GO aynen geçerli. R-012210/157test+400senaryo0ihlal bağımsız oturum kanıtı; integrator engine kontrolleri sonraki adım.
 
 ## Bekleyenler / sınırlar
 - Docs9a0fb7f R-011 NO-GO zamanındaki archive-RPC metnini içerir; exact hedef alınır, R-011 kapandıktan sonra README/FAQ/form/runbook metni docs sahibince güncellenmeli. İlk canlıcycle2; verify:cycle:1 simülasyoncycle1. Kök README D-012/link/doğrulama kapısında.

@@ -17,4 +17,4 @@ packages = ["src/grail_engine"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "../analyst/tests"]
-pythonpath = ["../analyst/src"]
+pythonpath = ["../analyst/src", "scripts"]

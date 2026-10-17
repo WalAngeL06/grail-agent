@@ -78,3 +78,12 @@ def test_same_runtime_has_one_writer(tmp_path):
         with pytest.raises(GrailError, match="RUNTIME_LOCK"):
             with CycleStore(tmp_path).lock():
                 pass
+
+
+def test_deployed_chain_test_vector_when_available():
+    from pathlib import Path
+    path = Path(__file__).parents[2] / "contracts/chain.json"
+    if not path.exists():
+        pytest.skip("T-003 chain.json is not available; deployment vector pending")
+    vector = json.loads(path.read_text(encoding="utf-8"))["testVector"]
+    assert commitment(vector["payloadUtf8"], vector["saltHex"]) == vector["commitHash"]

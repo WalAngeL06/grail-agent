@@ -27,9 +27,9 @@ Interfaces: canonical_payload(dict)->str; commitment(str,salt_hex)->str; CycleSt
 ## Step 2 — recoverable autonomous loop
 Files: src/grail_agents/loop.py; tests/test_loop.py.
 Interface: AgentLoop(config, client, chain, runtime, provider=None, news_source=None, clock=None, decide_fn=None).run_once()/recover()/run(cycles=None).
-- [ ] Tests pin final BUY reduction/veto, unchanged SELL exempt, HOLD commit, provider skip/timeout, strict commit-before-execute-before-reveal, durable pending before commit, same payload/salt on recovery and no duplicate execution, commit/reveal/data failures and continued cycles.
-- [ ] Integrate real engine and analyst, atomically persist peak/cycle IDs, deterministic client IDs, write v0.5 state (decisions[] only; limits/identity fields), bounded error/decision history. Only confirmed reveal publishes salt/payload to public state.
-- [ ] Run all agents + engine + analyst tests from agents environment; handoff, commit + push.
+- [x] Tests pin final BUY reduction/veto, unchanged SELL exempt, HOLD commit, provider skip/timeout, strict commit-before-execute-before-reveal, durable pending before commit, same payload/salt on recovery and no duplicate execution, commit/reveal/data failures and continued cycles.
+- [x] Integrate real engine and analyst, atomically persist peak/cycle IDs, deterministic client IDs, write v0.5 state (decisions[] only; limits/identity fields), bounded error/decision history. Only confirmed reveal publishes salt/payload to public state.
+- [x] Run all agents + engine + analyst tests from agents environment; handoff, commit + push.
 
 ## Step 3 — command and handoff
 Files: src/grail_agents/__main__.py, README.md, ACCEPTANCE-T-006.md.
@@ -48,3 +48,6 @@ Files: src/grail_agents/__main__.py, README.md, ACCEPTANCE-T-006.md.
 - Main synced to origin/main 76e0724 via merge 9c67988; contracts 0.5; no chain.json.
 - Reviewer fixes: 88/88 pass (0.42s), ef5aecd pushed. R-002-5 placement malformed row also converted to GrailError as part of typed response parsing.
 - Step 1: storage/chain tests first failed on missing modules; 97/97 now pass (0.40s). Runtime file lock releases after process exit, IDs/peak and pending use fsync + atomic replace; simulated chain optionally persists its ledger across processes, never reports real identity/tx.
+- Step 2: agents 114 passed + 1 intentional skip (chain.json vector unavailable), engine+analyst 84 passed. Actual subprocess os._exit(23) immediately after persisted fake-chain commit was recovered with fresh adapters, exact payload/salt, one commit and one reveal. Three final regression tests exposed and fixed public decision field overwrites, recovery of saved live unknown/pending IDs, and corrupt-pending handling (process survives without new effects).
+- Ruling: public state lists only revealed cycles; pending salts/payload stay in private runtime/pending until successful reveal. Unrevealed counts/errors remain visible. This preserves the commit/reveal privacy purpose; cost is delayed decision-row visibility during reveal failures.
+- Ruling: execution rounding fields use execution_size_usdt/execution_size_base so v0.5 decision fields stay exactly those in the committed payload. Both are additive fields; cost is UI must opt in to display actual order sizing separately.

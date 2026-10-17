@@ -79,12 +79,14 @@ class CycleStore:
             raise GrailError("STORAGE_CONTROL: invalid runtime control")
         return value
 
-    def allocate_cycle(self):
+    def allocate_cycle(self, *, minimum=1):
+        if type(minimum) is not int or not 1 <= minimum < 2**64:
+            raise GrailError("STORAGE_CONTROL: invalid chain cycle floor")
         control = self._control()
         state = self.load_state() or {}
         recorded = [record["cycle_id"] for record in self.pending()]
         recorded.append(state.get("agent", {}).get("cycle_id", 0))
-        cycle = max(control.get("next_cycle_id", 1), max(recorded, default=0) + 1)
+        cycle = max(minimum, control.get("next_cycle_id", 1), max(recorded, default=0) + 1)
         if type(cycle) is not int or not 1 <= cycle < 2**64:
             raise GrailError("STORAGE_CONTROL: cycle ID exhausted or invalid")
         atomic_json(self.root / "control.json", {**control, "next_cycle_id": cycle + 1})

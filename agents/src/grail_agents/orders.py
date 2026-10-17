@@ -101,6 +101,11 @@ class OrderService:
     def query(self, client_order_id):
         """Reconcile an existing durable record; never submit or retry an order."""
         validate_client_id(client_order_id)
+        if self.config.dry_run:
+            record = self._simulated.get(client_order_id)
+            if record is None:
+                raise GrailError("JOURNAL_MISSING: unknown simulated client order ID")
+            return deepcopy(record["result"])
         if self.journal is None:
             raise GrailError("JOURNAL_REQUIRED: reconciliation needs a durable journal")
         record = self.journal.get(client_order_id)

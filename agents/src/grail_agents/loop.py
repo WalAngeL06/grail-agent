@@ -86,8 +86,14 @@ class AgentLoop:
 
     @staticmethod
     def _order_summary(record):
-        values = {decision["inst_id"]: record["orders"].get(decision["inst_id"], {}).get("okx_order_id") or record["orders"].get(decision["inst_id"], {}).get("order_status", "unknown") for decision in record["payload"]["decisions"]}
-        return json.dumps(values, sort_keys=True, separators=(",", ":"))
+        values = {}
+        for decision in record["payload"]["decisions"]:
+            result = record["orders"].get(decision["inst_id"], {})
+            status = result.get("order_status", "unknown")
+            if decision["action"] == "HOLD" or status in {"hold", "blocked", "rejected"}:
+                continue
+            values[decision["inst_id"]] = "simulated" if status == "simulated" else str(result.get("okx_order_id") or "unknown")
+        return json.dumps(values, sort_keys=True, separators=(",", ":")) if values else ""
 
     def _reveal(self, record):
         # Every retry first checks confirmation, including a reveal mined before a crash.
@@ -151,7 +157,7 @@ class AgentLoop:
                 return deepcopy(self.state)
             cycle_id = self.state["agent"]["cycle_id"]
             try:
-                cycle_id = self.store.allocate_cycle()
+                cycle_id = self.store.allocate_cycle(minimum=self.chain.next_cycle_id())
                 self.state["agent"].update({"status": "running", "cycle_id": cycle_id})
                 data = fetch_snapshot(self.client, self.cfg)
                 portfolio = data["portfolio"]
@@ -189,7 +195,7 @@ class AgentLoop:
                     if decision["action"] != "HOLD":
                         try:
                             outcome = self.orders.execute(deepcopy(decision), portfolio, client_order_id=record["client_order_ids"][inst], live_confirmed=self.live_confirmed)
-                            if not self.cfg.dry_run and outcome["order_status"] in {"pending", "partial", "unknown"}:
+                            if outcome["order_status"] in {"simulated", "filled", "canceled", "pending", "partial", "unknown"}:
                                 outcome = self.orders.query(record["client_order_ids"][inst])
                         except Exception as error:
                             self._error(error, "agents.order", cycle_id)

@@ -9,6 +9,10 @@ from .storage import atomic_json, read_json
 
 
 class ChainAdapter(Protocol):
+    def next_cycle_id(self) -> int:
+        """Largest confirmed own-agent cycle ID plus one, never commit count."""
+        ...
+
     def lookup(self, cycle_id: int) -> dict | None:
         """Confirmed commitment/reveal; None = no confirmed entry, exception = unknown."""
         ...
@@ -38,6 +42,9 @@ class SimulatedChain:
 
     def lookup(self, cycle_id):
         return deepcopy(self.records.get(str(cycle_id)))
+
+    def next_cycle_id(self):
+        return max((int(key) for key in self.records), default=0) + 1
 
     def commit(self, cycle_id, commit_hash):
         if str(cycle_id) in self.records:

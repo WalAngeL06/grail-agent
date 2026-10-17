@@ -1,11 +1,11 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Revizyon: r44 · 2026-10-17 17:25 Europe/Istanbul. Önceki ayrıntı: coord/archive/STATE-r40-20261017.md (daha eski r26/r17 arşivleri korunur).
+- Revizyon: r45 · 2026-10-17 17:30 Europe/Istanbul. Önceki ayrıntı: coord/archive/STATE-r40-20261017.md (daha eski r26/r17 arşivleri korunur).
 - İlk CANLI:15:37 cycle2 BUY BTC2USDT filled, OKX4017748393474314240. Sürekli döngü dry_run=true; gerçek Fuji commit/reveal. Integrator runner/emir/tx başlatmaz.
-- Sözleşme: VERSION0.6.1; config/payload/state contract_version0.6, chain deploy0.5. Kullanıcı T-017 için yalnız eklemeli metrics.signals[inst].ou ve VERSION0.6.2 istedi; kart/sözleşme dört merge sonrasında hazırlanacak.
-- Bu istek: chain6f19510→main81356a1,docs9a0fb7f→mainb2c2ba0,engine4a83bd8→maina16044e ayrı push/clean/uzak eşitliği doğrulandı. Agentsaf4106d bu dördüncü merge'de; ardından T-017. Başlangıçmain1f57076 temiz/origin ile aynı; yalnız exact hedefler alınır.
+- Sözleşme: VERSION0.6.2; yalnız opsiyonel/hash dışı metrics.signals[inst].ou eklendi. Config/payload/state contract_version0.6,chain deploy0.5/ABI/hash aynı. sleeve kullanıcının kesinleştirdiği momentum|mean_reversion|none metin enumudur; %25 tavan engine kodunda/testte, ek bütçe alanı yok.
+- Dört merge/push tamam: chain6f19510→main81356a1,docs9a0fb7f→mainb2c2ba0,engine4a83bd8→maina16044e,agentsaf4106d→maine1206b2. Her adım clean+HEAD=origin/main=uzak main doğrulandı. Başlangıç1f57076; daha yeni hedef alınmadı. T-017 kartı/v0.6.2 bu son koordinasyon teslimidir.
 - Verify R-010 GO yalnız webc1c2361/chain23a81aa. **R-011 KAPANDI, audit jüriye GO**: kullanıcı/planner public RPC48/48 MATCH,Unopened0,Mismatch0,LIVE1,exit0; integrator54 test/typecheck PASS. Kendi audit tekrarı61→62 yeni cycle nedeniyle INCOMPLETE/exit1; beklenen fail-closed, tam rapor yazılmadı. Bunlar ayrı snapshot/kanıtlardır.
-- 17:00 freeze yalnız T-017 için kullanıcı tarafından kaldırıldı. Diğer yeni özellikler kapsam dışı; T-017 engine push17:50/chain bağımsız inceleme/merge<=18:10; yetişmezse dışarıda. UI değişen davranışı yansıtmalı, ayrı web sahibi teslimi gerekir.
+- 17:00 freeze yalnız T-017 için kullanıcı istisnası. Engine88f00f3 adayı kullanıcı tarafından bildirildi; bu tur alınmadı/incelenmedi. **Planner GO + kullanıcının merge veya varsayılan kapalı kararı beklenir.** Engine push17:50/chain inceleme/merge<=18:10; yetişmezse dışarıda. UI/docs ayrı sahip teslimi gerekir.
 - Public kapısı: R-005 GO yalnız taranmış main9acec55/ref kümesi; son yayın SHA fark taraması hâlâ açık. Public ayarı/yayın/form/slides/video yüklemesi yapılmadı.
 
 ## Zaman kapıları
@@ -40,6 +40,7 @@
 | T-014 | Hurst+entry gate | engine/agents | INTEGRATED; restart/sonuç kanıtı alındı |4a83bd8 rapor+af4106d cycle34/35/45/46; aynı barlarda5→1BUY/19.02→2.64USDT |
 | T-015 | Sicil audit | chain | INTEGRATED; R-011 GO |6f19510;54test/typecheck; kullanıcı bağımsız48MATCH |
 | T-016 | Türkçe FAQ+3dk runbook | docs | INTEGRATED9a0fb7f |12+1 soru; yeni R-011GO/video/link/prova son hazırlık |
+| T-017 | O-U ortalamaya dönüş kolu | engine; inceleme chain | KART/SÖZLEŞME HAZIR; aday kullanıcı bildirimi |88f00f3 merge edilmedi; plannerGO+kullanıcı kararı; push17:50/merge<=18:10 |
 | R-002/R-003 | İlk adapter/chain incelemeleri | bağımsız reviewer | DONE; koşullar işlendi | r40 arşivi/kararlar |
 | R-004/R-004b | Döngü/canlı kapı | bağımsız reviewer | DONE / APPROVE | ac96902; gerçek ilk canlı kullanıcı yaptı |
 | R-005 | Public sır taraması | reviewer | GO (taranan kapsam) | son yayın SHA tekrar taraması açık |
@@ -57,9 +58,10 @@
 - Docs9a0fb7f actual merge farkı yalnız docs/+kendi handoff7dosya; çoklu merge-base nedeniyle üç-nokta diff'teki eski main kayıtları yeni yabancı yazım değil. Exact docs ağaç/diff--check PASS; diğer ürünlerchain81356a1 ile aynı. PPTX11slayt11not;8103126'ya göre yalnızslide6/10XML değişmiş; ikisi PowerPoint'te1280x720 render/görsel PASS.
 - Engine4a83bd8 actual farkı engine/out/live-gates-today.md+.json ve kendi handoff'u; ürün kaynakları/test/ayarlar aynı. JSON/cohort/tutar/toplam kontrolleri PASS:22eski/17yeni aynıbar döngüsü,110/17BUY,418.44/44.88USDT. Cycle3–50 toplam48commit+48reveal/240karar sahibin dosya kanıtıdır; yeni bağımsız RPC kanıtı değil. PID48008python17:22 salt okunur süreç kontrolünde çalışıyor.
 - Agentsaf4106d actual farkı3kanıtJSON+kendi handoff; kaynak/test/ayarlar değişmedi. ÜçJSON parse ve Gemini45/46koşul kontrolleri PASS; ikisinde4HOLD+1ETHsimulatedBUY/approved/errors0,modelgemini-3.7-flash,fallbackfalse. Anahtar okunmadı. Main'de uv run --frozen pytest -q --tb=short→157passed(15.45s). Receipt/hash doğrulaması sahip kanıtıdır, integrator RPC/fill tekrarı yapmadı.
+- T-017/0.6.2: half_life_h(float|null),z(float|null),significant(bool),sleeve(momentum|mean_reversion|none); fallback null/null/false/none. Son enum/null/geriye uyum JSON kontrolleri PASS; ou çıkarılınca eski örnek birebir/config/decision/chain.json aynı. Web22test PASS; son enum örneğiyle normal/public build PASS(54modül720/708ms). Dört exact hedef ancestor/ağaç PASS;88f00f3 main ancestor değil. Yeni O-U kodu alınmadı.
 
 ## Bekleyenler / sınırlar
 - Docs9a0fb7f R-011 NO-GO zamanındaki archive-RPC metnini içerir; exact hedef alınır, R-011 kapandıktan sonra README/FAQ/form/runbook metni docs sahibince güncellenmeli. İlk canlıcycle2; verify:cycle:1 simülasyoncycle1. Kök README D-012/link/doğrulama kapısında.
 - Engine4a83bd8 ve agentsaf4106d rapor/kanıt teslimleri alındı; yeni ürün kodu veya yeni canlı fill yok. Yeni modelde cycle48timeout raporlanmıştır;45/46başarılı kanıt tüm çağrılar başarılı demek değildir. Tarihli dosya kanıtı ile mevcut PID durumu ayrılır.
-- T-017 kart/v0.6.2 dördüncü merge sonrası; ou.sleeve anlamı için kullanıcıya opsiyonel soru soruldu, bağımsız işler sürüyor. Yeni engine henüz yok/merge edilmiş sayılmaz; yeni canlı yetki yok.
+- T-017 kart/v0.6.2 hazır; kullanıcı sleeve'i metin enum olarak kesinleştirdi, sayısal sözleşme taslağı push'lanmadan düzeltildi. Engine88f00f3 için plannerGO/kullanıcının etkinleştirme veya varsayılan kapalı kararı ve chain bağımsız incelemesi beklenir; yeni canlı yetki yok.
 - Runtime/journal/pending/.env/anahtarlar ve worker korunur; integrator yeni runner başlatmaz/durdurmaz, OKX/tx göndermez. R-004/R-002 MINOR/NIT ve R-006 INFO'lar korunur.

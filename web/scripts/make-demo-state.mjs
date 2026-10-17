@@ -26,7 +26,8 @@ const vol = { "BTC-USDT": 38.2, "ETH-USDT": 51.7, "SOL-USDT": 74.9, "AVAX-USDT":
 const hrp = { "BTC-USDT": 31.4, "ETH-USDT": 21.8, "SOL-USDT": 13.2, "AVAX-USDT": 12.6, "OKB-USDT": 21.0 };
 const tw = { "BTC-USDT": 26.18, "ETH-USDT": 19.34, "SOL-USDT": 0, "AVAX-USDT": 12.15, "OKB-USDT": 0 };
 
-const T0 = 1760700000000;
+// Zamanlar üretim anına göre; demo öncesi `npm run fixture` ile tazele.
+const T0 = Math.floor(Date.now() / 1000) * 1000;
 const agent = "GRAIL-01";
 const decisions = [];
 const cycles = [9, 10, 11, 12];

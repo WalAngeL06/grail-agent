@@ -53,11 +53,17 @@ export default function VerifyPanel({ d, explorer, rpc, contract, onClose }: Pro
               <b>Agent'ın mühürlediği karar metni</b>{" "}
               <span className="faint">(düzenleyebilirsiniz; tek karakter değişse hash tutmaz)</span>
             </p>
-            <textarea value={payload} onChange={(e) => setPayload(e.target.value)} spellCheck={false} aria-label="Payload" />
+            <textarea value={payload} onChange={(e) => {
+                setPayload(e.target.value);
+                setChain(null);
+              }} spellCheck={false} aria-label="Payload" />
             {edited && (
               <div className="edited">
                 Metni değiştirdiniz.{" "}
-                <button className="btn" style={{ padding: "2px 8px" }} onClick={() => setPayload(original)}>
+                <button className="btn" style={{ padding: "2px 8px" }} onClick={() => {
+                    setPayload(original);
+                    setChain(null);
+                  }}>
                   Orijinale dön
                 </button>
               </div>

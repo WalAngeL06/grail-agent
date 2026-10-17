@@ -59,7 +59,10 @@ export default function Decisions({ s, chainJson }: { s: GrailState; chainJson: 
         const head = ds[0];
         const dry = decisionDryRun(head, s);
         const revealed = ds.some((d) => d.reveal_tx) || ds.some((d) => d.verified);
-        const rows = onlyTrades ? ds.filter((d) => d.action === "BUY" || d.action === "SELL") : ds;
+        const isTrade = (d: Decision) => d.action === "BUY" || d.action === "SELL";
+        const rows = (onlyTrades ? ds.filter(isTrade) : [...ds]).sort(
+          (a, b) => Number(isTrade(b)) - Number(isTrade(a)) || (a.inst_id ?? "").localeCompare(b.inst_id ?? ""),
+        );
         if (rows.length === 0) return null;
         return (
           <article className="cycle" key={cid}>
@@ -68,6 +71,11 @@ export default function Decisions({ s, chainJson }: { s: GrailState; chainJson: 
               <span className="faint num">{dateTime(head.decided_at_ms)}</span>
               <DryTag dry={dry} />
               <span className="sp" />
+              {head.commit_hash && (
+                <span className="faint" style={{ fontSize: 12.5 }} title={head.commit_hash}>
+                  hash <span className="mono">{shortHash(head.commit_hash, 8, 6)}</span>
+                </span>
+              )}
               <span className="faint" style={{ fontSize: 12.5 }}>
                 commit <ExplorerLink explorer={s.chain.explorer} kind="tx" value={head.commit_tx} />
               </span>
@@ -113,7 +121,7 @@ export default function Decisions({ s, chainJson }: { s: GrailState; chainJson: 
                       </span>
                     )}
                     {d.fill_price && <span>dolum {price(d.fill_price)}</span>}
-                    {d.commit_hash && (
+                    {d.commit_hash && d.commit_hash !== head.commit_hash && (
                       <span title={d.commit_hash}>
                         hash <span className="mono">{shortHash(d.commit_hash, 8, 6)}</span>
                       </span>

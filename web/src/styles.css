@@ -39,7 +39,6 @@ body {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  font-variant-numeric: tabular-nums;
 }
 a { color: inherit; }
 button { font: inherit; color: inherit; }
@@ -49,7 +48,7 @@ button { font: inherit; color: inherit; }
 .mono { font-family: var(--mono); font-size: 12.5px; letter-spacing: -0.01em; }
 .muted { color: var(--ink-2); }
 .faint { color: var(--ink-3); }
-.num { font-variant-numeric: tabular-nums; }
+.table td.r { font-variant-numeric: tabular-nums; }
 
 /* ---------- shell ---------- */
 .shell { display: grid; grid-template-columns: var(--rail) 1fr; min-height: 100vh; }
@@ -140,7 +139,7 @@ button { font: inherit; color: inherit; }
 .equation { display: grid; gap: 22px; padding-top: 8px; }
 .equation .pair { display: flex; align-items: stretch; gap: 22px; }
 .equation .figure { display: grid; gap: 2px; }
-.equation .figure .big { font-size: 88px; line-height: 0.92; font-weight: 800; letter-spacing: -0.045em; }
+.equation .figure .big { font-variant-numeric: proportional-nums; font-size: 88px; line-height: 0.92; font-weight: 800; letter-spacing: -0.045em; }
 .equation .figure .lbl { font-size: 14px; color: var(--ink-2); max-width: 15ch; }
 .equation .figure.from .big { color: var(--ink-3); }
 .equation .figure.to .big { color: var(--gold); }
@@ -299,7 +298,7 @@ button { font: inherit; color: inherit; }
   .rail { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; border-right: none; border-bottom: 1px solid var(--line); }
   .agent-id { display: none; }
   .nav { grid-auto-flow: column; overflow-x: auto; width: 100%; }
-  .nav a { grid-template-columns: auto auto; padding: 7px 10px; }
+  .nav a { grid-template-columns: auto auto; padding: 7px 10px; white-space: nowrap; }
   .nav .count { display: none; }
   .seal { margin-top: 0; padding: 6px 10px; width: 100%; }
   .seal p { display: none; }

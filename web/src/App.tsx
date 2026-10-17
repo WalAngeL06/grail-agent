@@ -30,7 +30,9 @@ export default function App() {
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);
   }, []);
-  useEffect(() => window.scrollTo(0, 0), [route]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [route]);
 
   const s = feed.state;
   const unrevealed = s?.chain.unrevealed;

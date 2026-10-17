@@ -2,8 +2,9 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const here = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
+const here = path.dirname(fileURLToPath(import.meta.url));
 const contracts = path.resolve(here, "../contracts");
 
 // /api/state → GRAIL_STATE_PATH (agent'ın runtime/state.json'u) yoksa contracts/state.example.json (mock).
@@ -44,8 +45,9 @@ function grailState(mode: string): Plugin {
     }
     if (url === "/api/chain") {
       if (send(res, chainPath, "chain")) return;
-      res.statusCode = 404;
-      res.end("{}");
+      // chain.json henüz yok (T-003): konsolu kırmızıya boğmamak için 200 + null
+      res.setHeader("Content-Type", "application/json");
+      res.end("null");
       return;
     }
     next();

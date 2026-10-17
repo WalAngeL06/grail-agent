@@ -1,7 +1,9 @@
 # Handoff — engine / analyst (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~17:45 (Grinold ölçümü bitişi)
-- Son iş: Grinold Temel Yasası ölçümü (salt okuma analiz, planner) / READY_FOR_REVIEW. `engine/scripts/grinold_ic.py` → `engine/out/grinold-30d.{json,md}`; src'ye dokunulmadı (T-014 = betik içinde `_mr_target` kapatılarak). İki çalıştırma byte-byte aynı.
+- Güncelleme zamanı: 2026-10-17 ~17:58 (180 günlük backtest bitişi)
+- Son iş: 180 günlük uzun backtest (salt okuma analiz, planner) / READY_FOR_REVIEW. `engine/scripts/backtest_long.py` (`--fetch` → OKX public history-candles, anahtarsız) → `engine/data/okx-candles-1H-180d.json` (5 coin × 4512 bar, eksik 0) → `engine/out/backtest-180d.{md,json}` (json'da her stratejinin günlük değeri). src'ye dokunulmadı; stratejiler betik içinde modül özniteliği değiştirilerek (base: Hurst 0.6 + retest sabit; t014: `_mr_target`→None; e: MR miktarı izlenir). İki çalıştırma byte-byte aynı (~1 dk, ProcessPool).
+  - Sonuç: 180 gün al-tut +16.73% (düşüş 32.7%); base −5.64%, T-014 −3.22%, T-017 −8.50%, (e) −3.84% (düşüş 6.1–14.6%). Örneklem dışı 150 gün Sharpe al-tut +0.69, GRAIL −1.06…−2.43. Kill switch saat oranı: base %78, T-014 %31, T-017 %76; kapatınca üçü de daha kötü. Duyarlılık: üçü de HASSAS (örn. t014 lookback168 +7.12%) → aşırı uyum uyarısı, ayar yapılmadı.
+- Önceki iş: Grinold Temel Yasası ölçümü (salt okuma analiz, planner) / aa77641. `engine/scripts/grinold_ic.py` → `engine/out/grinold-30d.{json,md}`; src'ye dokunulmadı (T-014 = betik içinde `_mr_target` kapatılarak). İki çalıştırma byte-byte aynı.
   - Tahmin = BUY+1/HOLD0/SELL−1 (birincil), ek olarak hedef ağırlık seviyesi/değişimi. İleri getiri 1/6/24 sa; başlık ufku 24 sa (önceden seçildi). Anlamlılık = örtüşmeyen alt örnek p<0.05 VE kesit IC ortalamasında Newey-West |t|≥2 (lag h−1).
   - Sonuç: 24 sa IC T-014 +0.0032 / T-017 +0.0002, anlamsız; hiçbir ufuk/tahmin tanımı kuralı geçmiyor (1 sa havuz p=0.03 ama NW t=0.98). Genişlik n_eff 1.36 → yıllık 495 (24 sa). Grinold IR 0.07 / 0.00; gerçekleşen IR 2.02 / 1.72 ama 30 günde SE ≈ ±3.5 → o da sıfırdan ayırt edilemez. Transfer katsayısı IC anlamsızken null.
 - Önceki görev: T-017 (O-U ortalamaya dönüş kolu) role/engine@88f00f3, kullanıcı kararıyla main'e girecek (R-012 incelemesi).

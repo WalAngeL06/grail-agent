@@ -1,6 +1,7 @@
 import { Component, useEffect, useState, type ReactNode } from "react";
 import { isAddress, isHex32 } from "../verify";
-import { shortHash } from "../format";
+import { shortHash, usd } from "../format";
+import { T } from "../i18n";
 
 export function Card(props: { title?: ReactNode; meta?: ReactNode; children: ReactNode; className?: string; id?: string }) {
   return (
@@ -97,11 +98,11 @@ export function CopyButton({ value }: { value: string }) {
   return (
     <button
       className="copy"
-      title="Copy"
-      aria-label={`Copy ${value}`}
+      title={T("Copy", "Kopyala")}
+      aria-label={`${T("Copy", "Kopyala")} ${value}`}
       onClick={() => {
         navigator.clipboard?.writeText(value).then(
-          () => pushToast?.(`Copied ${shortHash(value)}`),
+          () => pushToast?.(`${T("Copied", "Kopyalandı")} ${shortHash(value)}`),
           () => undefined,
         );
       }}
@@ -134,7 +135,7 @@ export function ExplorerLink(props: { explorer?: string; kind: "tx" | "address";
   const text = props.label ?? (props.full ? value : shortHash(value));
   if (!valid || !explorer)
     return (
-      <span className="mono dim" style={{ fontSize: 12.5 }} title={valid ? value : "Not a valid hash — no explorer link"}>
+      <span className="mono dim" style={{ fontSize: 12.5 }} title={valid ? value : T("Not a valid hash — no explorer link", "Geçerli bir hash değil — explorer linki yok")}>
         {text}
       </span>
     );
@@ -151,11 +152,11 @@ export function ExplorerLink(props: { explorer?: string; kind: "tx" | "address";
 export function ModeTag({ dry }: { dry?: boolean }) {
   if (dry === undefined) return <span className="tag unk">?</span>;
   return dry ? (
-    <span className="tag sim" title="Practice mode: order simulated, decision really on-chain">
+    <span className="tag sim" title={T("Practice mode: order simulated, decision really on-chain", "Deneme modu (dry run): emir simüle, karar gerçekten zincirde")}>
       PRACTICE
     </span>
   ) : (
-    <span className="tag live" title="Real order on OKX TR">
+    <span className="tag live" title={T("Real order on OKX TR", "OKX TR'de gerçek emir")}>
       LIVE
     </span>
   );
@@ -164,7 +165,7 @@ export function ModeTag({ dry }: { dry?: boolean }) {
 const ACTION_WORD: Record<string, string> = { BUY: "Buy", SELL: "Sell", HOLD: "Hold" };
 export function ActionChip({ action, size }: { action?: string; size?: string }) {
   const known = action === "BUY" || action === "SELL" || action === "HOLD";
-  const amount = action !== "HOLD" && size && Number(size) > 0 ? `$${Number(size).toFixed(2)}` : null;
+  const amount = action !== "HOLD" && size && Number(size) > 0 ? usd(size) : null;
   return (
     <span className={`act ${known ? action : "other"}`} title={action}>
       {known ? ACTION_WORD[action!] : (action ?? "?")}
@@ -174,31 +175,41 @@ export function ActionChip({ action, size }: { action?: string; size?: string })
 }
 
 // v0.5 analyst flag (contracts/decision.md): the AI may only keep, shrink or cancel a BUY; SELLs never go through it.
-const LLM: Record<string, { label: string; title: string }> = {
-  approved: { label: "approved", title: "A second AI looked at this buy and kept it as is." },
-  reduced: { label: "reduced", title: "A second AI made this buy smaller. It can never make it bigger." },
-  vetoed: { label: "vetoed", title: "A second AI cancelled this buy (turned it into hold)." },
-  exempt: { label: "not needed (sell)", title: "Sells are not reviewed: reducing risk is never blocked." },
-  skipped: { label: "not needed", title: "No buy to review in this check-in; the decision is unchanged." },
+const LLM: Record<string, () => { label: string; title: string }> = {
+  approved: () => ({ label: T("approved", "onayladı"), title: T("A second AI looked at this buy and kept it as is.", "İkinci bir AI bu alımı inceledi ve olduğu gibi bıraktı.") }),
+  reduced: () => ({ label: T("reduced", "küçülttü"), title: T("A second AI made this buy smaller. It can never make it bigger.", "İkinci bir AI bu alımı küçülttü. Asla büyütemez.") }),
+  vetoed: () => ({ label: T("vetoed", "veto etti"), title: T("A second AI cancelled this buy (turned it into hold).", "İkinci bir AI bu alımı iptal etti (HOLD'a çevirdi).") }),
+  exempt: () => ({ label: T("not needed (sell)", "gerekmedi (SELL)"), title: T("Sells are not reviewed: reducing risk is never blocked.", "Satışlar incelenmez: riski azaltmak asla engellenmez.") }),
+  skipped: () => ({ label: T("not needed", "gerekmedi"), title: T("No buy to review in this check-in; the decision is unchanged.", "Bu check-in'de incelenecek alım yok; karar değişmedi.") }),
 };
 
 export function LlmBadge({ flag, note }: { flag: string; note?: string }) {
   // "skipped" covers two cases: nothing to review (no buys) vs AI not reachable — say which.
   const unavailable = flag === "skipped" && !!note && /^skipped/.test(note) && !/no_buys/.test(note);
-  const known = unavailable ? { label: "unavailable — decision unchanged", title: "AI review unavailable — decision unchanged." } : LLM[flag];
+  const known = unavailable
+    ? { label: T("unavailable — decision unchanged", "ulaşılamadı — karar değişmedi"), title: T("AI review unavailable — decision unchanged.", "AI incelemesi yapılamadı — karar değişmedi.") }
+    : LLM[flag]?.();
   return (
     <span className={`llm ${LLM[flag] ? flag : "unknown"}`} title={[known?.title ?? `llm_flag: ${flag}`, note].filter(Boolean).join(" — ")}>
-      AI second opinion: {known?.label ?? flag}
+      {T("AI second opinion", "AI ikinci görüş")}: {known?.label ?? flag}
     </span>
   );
 }
 
-const REGIME_TXT = { trending: "Trend is clear", unclear: "Trend is unclear", ranging: "Market is ranging" } as const;
-const SETUP_TXT = { retest: "Breakout confirmed by retest", breakout: "Waiting for retest", none: "No breakout yet" } as const;
+const REGIME_TXT = {
+  trending: () => T("Trend is clear", "Trend net"),
+  unclear: () => T("Trend is unclear", "Trend belirsiz"),
+  ranging: () => T("Market is ranging", "Piyasa yatay"),
+} as const;
+const SETUP_TXT = {
+  retest: () => T("Breakout confirmed by retest", "Breakout, retest ile onaylandı"),
+  breakout: () => T("Waiting for retest", "Retest bekleniyor"),
+  none: () => T("No breakout yet", "Henüz breakout yok"),
+} as const;
 const SETUP_TIP = {
-  retest: "Price broke out of its range, came back to the old ceiling and held: full-size buy allowed.",
-  breakout: "Price broke out but hasn't retested the old ceiling yet: no new buy until it does.",
-  none: "No breakout from the recent range: buys are limited to half size.",
+  retest: () => T("Price broke out of its range, came back to the old ceiling and held: full-size buy allowed.", "Fiyat aralığından çıktı, eski tavana geri döndü ve tuttu: tam boy alım serbest."),
+  breakout: () => T("Price broke out but hasn't retested the old ceiling yet: no new buy until it does.", "Fiyat aralıktan çıktı ama eski tavanı henüz test etmedi: edene kadar yeni alım yok."),
+  none: () => T("No breakout from the recent range: buys are limited to half size.", "Son aralıktan breakout yok: alımlar yarım boyla sınırlı."),
 } as const;
 
 /** T-014 entry signals in plain words; renders nothing when the engine wrote no signal for this coin. */
@@ -209,15 +220,18 @@ export function SignalChips({ sig }: { sig?: { hurst?: number; regime?: keyof ty
       {sig.regime && (
         <span
           className={`sig ${sig.regime}`}
-          title={`Hurst exponent${sig.hurst !== undefined ? ` ${sig.hurst.toFixed(2)}` : ""}: above ~0.55 prices tend to keep going (trend), below ~0.45 they tend to snap back (range).`}
+          title={T(
+            `Hurst exponent${sig.hurst !== undefined ? ` ${sig.hurst.toFixed(2)}` : ""}: above ~0.55 prices tend to keep going (trend), below ~0.45 they tend to snap back (range).`,
+            `Hurst${sig.hurst !== undefined ? ` ${sig.hurst.toFixed(2)}` : ""}: ~0,55 üstünde fiyat aynı yönde gitmeye eğilimli (trend), ~0,45 altında geri dönmeye eğilimli (yatay).`,
+          )}
         >
-          {REGIME_TXT[sig.regime]}
+          {REGIME_TXT[sig.regime]()}
           {sig.hurst !== undefined && <span className="tech">H {sig.hurst.toFixed(2)}</span>}
         </span>
       )}
       {sig.setup && (
-        <span className={`sig ${sig.setup}`} title={SETUP_TIP[sig.setup]}>
-          {SETUP_TXT[sig.setup]}
+        <span className={`sig ${sig.setup}`} title={SETUP_TIP[sig.setup]()}>
+          {SETUP_TXT[sig.setup]()}
         </span>
       )}
     </span>
@@ -247,10 +261,10 @@ export class Boundary extends Component<{ children: ReactNode; name: string }, {
       return (
         <div className="strip-msg danger" role="alert">
           <span>
-            The {this.props.name} screen failed to render ({this.state.err}). Other screens still work.
+            {T(`The ${this.props.name} screen failed to render (${this.state.err}). Other screens still work.`, `${this.props.name} ekranı çizilemedi (${this.state.err}). Diğer ekranlar çalışıyor.`)}
           </span>
           <button className="btn sm" onClick={() => this.setState({ err: null })}>
-            Retry
+            {T("Retry", "Tekrar dene")}
           </button>
         </div>
       );

@@ -5,6 +5,7 @@ import { checkReveal, parseOrderIds, readDecision, type ChainInfo, type RevealCa
 import { decideVerdict, type ChainRead, type RevealRead } from "../verifyLogic";
 import { ExplorerLink } from "./Bits";
 import { clock, coin, shortHash } from "../format";
+import { T, tx } from "../i18n";
 
 type Props = { cycle: Cycle; chain: ChainInfo; agentId?: string; agentName?: string; explorer?: string; demo?: boolean; onClose: () => void };
 type Phase = "computing" | "reading" | "done";
@@ -155,94 +156,102 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
       <aside className="sheet">
         <header className="sheet-head">
           <div>
-            <b>Check it yourself</b>
+            <b>{T("Check it yourself", "Kendin kontrol et")}</b>
             <span className="muted"> · check-in #{cycle.id}</span>
           </div>
-          <button className="btn sm" onClick={onClose} aria-label="Close">
+          <button className="btn sm" onClick={onClose} aria-label={T("Close", "Kapat")}>
             ✕
           </button>
         </header>
 
         <div className="sheet-body">
           <p className="lead">
-            Your browser rebuilds the fingerprint from the opened decision and compares it with the seal on Avalanche. Nothing is sent to a
-            server.
+            {T(
+              "Your browser rebuilds the fingerprint from the opened decision and compares it with the seal on Avalanche. Nothing is sent to a server.",
+              "Tarayıcın, açılmış karardan parmak izini (hash) yeniden hesaplar ve Avalanche'taki mühürle karşılaştırır. Hiçbir sunucuya bir şey gönderilmez.",
+            )}
           </p>
 
           <ol className="checks-list">
             <CheckRow
-              title="Fingerprint computed in your browser"
+              title={T("Fingerprint computed in your browser", "Tarayıcında hesaplanan parmak izi")}
               tech="keccak256(payload ‖ salt)"
               value={
                 phase === "computing"
-                  ? "computing…"
+                  ? T("computing…", "hesaplanıyor…")
                   : usable
                     ? computed
                     : chainErr || revealRead?.kind === "error"
-                      ? "not computed: the opened decision lives on Avalanche, which could not be read"
+                      ? T("not computed: the opened decision lives on Avalanche, which could not be read", "hesaplanmadı: açılmış karar Avalanche'ta duruyor ve okunamadı")
                       : reading
-                        ? "waiting for the opened decision…"
-                        : "Sample data — there is nothing real to check."
+                        ? T("waiting for the opened decision…", "açılmış karar bekleniyor…")
+                        : T("Sample data — there is nothing real to check.", "Örnek veri — kontrol edilecek gerçek bir şey yok.")
               }
               mark={phase === "computing" || !usable || !cycle.commit_hash ? undefined : eq(computed, cycle.commit_hash)}
-              note={usable ? (fromChain ? "input read from the verified reveal transaction on Fuji" : "input taken from the agent's file") : undefined}
+              note={usable ? (fromChain ? T("input read from the verified reveal transaction on Fuji", "girdi, Fuji'deki doğrulanmış reveal işleminden okundu") : T("input taken from the agent's file", "girdi agent'ın dosyasından alındı")) : undefined}
             />
             <CheckRow
-              title="Fingerprint the agent reported"
+              title={T("Fingerprint the agent reported", "Agent'ın bildirdiği parmak izi")}
               tech={cycle.fromChain ? "DecisionCommitted event · commitHash" : "state.json · commit_hash"}
               value={cycle.commit_hash ?? "—"}
               mark={!reading && onchainHash && cycle.commit_hash ? eq(cycle.commit_hash, onchainHash) : undefined}
-              note={!reading ? (onchainHash ? "compared with the seal on Avalanche" : "not compared: the seal on Avalanche was not read") : undefined}
+              note={!reading ? (onchainHash ? T("compared with the seal on Avalanche", "Avalanche'taki mühürle karşılaştırıldı") : T("not compared: the seal on Avalanche was not read", "karşılaştırılmadı: Avalanche'taki mühür okunamadı")) : undefined}
             />
             <CheckRow
-              title="Seal on Avalanche"
+              title={T("Seal on Avalanche", "Avalanche'taki mühür")}
               tech={`GrailLedger.decisions(${agentId ?? "?"}, ${cycleNo ?? "?"})`}
               value={
                 skipChain
-                  ? "demo check-in — never sent to Fuji, nothing to read"
+                  ? T("demo check-in — never sent to Fuji, nothing to read", "demo check-in — Fuji'ye hiç gönderilmedi, okunacak bir şey yok")
                   : reading
                     ? phase === "reading"
-                      ? "reading Avalanche…"
-                      : "waiting"
+                      ? T("reading Avalanche…", "Avalanche okunuyor…")
+                      : T("waiting", "bekleniyor")
                     : chainErr
-                      ? `could not read Avalanche (${chainErr})`
+                      ? T(`could not read Avalanche (${chainErr})`, `Avalanche okunamadı (${chainErr})`)
                       : chainRead?.kind === "ok" && !chainRead.committed
-                        ? "not sealed on Avalanche"
+                        ? T("not sealed on Avalanche", "Avalanche'ta mühürlenmemiş")
                         : onchainHash
               }
               warn={!reading && !!chainErr}
               mark={!reading && chainRead?.kind === "ok" && usable ? chainRead.committed && eq(computed, onchainHash) : undefined}
               note={
                 chainRead?.kind === "ok" && chainRead.committed && onchainAt
-                  ? `sealed at ${clock(onchainAt * 1000)} · ${chainRead.revealed ? "opened (revealed)" : "not opened yet"} · contract ${shortHash(chain.ledger)}`
+                  ? T(
+                      `sealed at ${clock(onchainAt * 1000)} · ${chainRead.revealed ? "opened (revealed)" : "not opened yet"} · contract ${shortHash(chain.ledger)}`,
+                      `mühür saati ${clock(onchainAt * 1000)} · ${chainRead.revealed ? "açıldı (reveal)" : "henüz açılmadı"} · kontrat ${shortHash(chain.ledger)}`,
+                    )
                   : undefined
               }
             />
             <CheckRow
-              title="Opening on Avalanche"
+              title={T("Opening on Avalanche", "Avalanche'taki açılış")}
               tech="revealDecision tx · receipt · DecisionRevealed"
               value={
                 !claimsReveal
-                  ? "not opened yet"
+                  ? T("not opened yet", "henüz açılmadı")
                   : skipChain
-                    ? "demo check-in — nothing to read"
+                    ? T("demo check-in — nothing to read", "demo check-in — okunacak bir şey yok")
                     : reading
-                      ? "reading Avalanche…"
+                      ? T("reading Avalanche…", "Avalanche okunuyor…")
                       : revealRead?.kind === "error"
-                        ? `could not read the opening (${revealRead.error})`
+                        ? T(`could not read the opening (${revealRead.error})`, `açılış okunamadı (${revealRead.error})`)
                         : revealRead?.kind === "ok" && revealRead.problems.length
-                          ? revealRead.problems.join(" · ")
+                          ? revealRead.problems.map(tx).join(" · ")
                           : revealRead?.kind === "ok"
-                            ? `successful · sent by the agent · to GrailLedger · agent #${revealCall?.agentId} · check-in #${revealCall?.cycleId}`
+                            ? T(
+                                `successful · sent by the agent · to GrailLedger · agent #${revealCall?.agentId} · check-in #${revealCall?.cycleId}`,
+                                `başarılı · agent gönderdi · GrailLedger'a · agent #${revealCall?.agentId} · check-in #${revealCall?.cycleId}`,
+                              )
                             : "—"
               }
               warn={!reading && revealRead?.kind === "error"}
               mark={!reading && revealRead?.kind === "ok" ? revealRead.problems.length === 0 : undefined}
             />
             <CheckRow
-              title="It is the right agent and check-in"
+              title={T("It is the right agent and check-in", "Doğru agent ve doğru check-in")}
               tech="payload.cycle_id == cycleId · payload.agent == agent name"
-              value={parsed ? `the sealed text says check-in ${String(parsed.cycle_id)}${agentName ? `, agent ${String(parsed.agent)}` : ""}` : "—"}
+              value={parsed ? T(`the sealed text says check-in ${String(parsed.cycle_id)}${agentName ? `, agent ${String(parsed.agent)}` : ""}`, `mühürlü metne göre check-in ${String(parsed.cycle_id)}${agentName ? `, agent ${String(parsed.agent)}` : ""}`) : "—"}
               mark={!reading && cycleOk !== undefined ? cycleOk && agentOk !== false : undefined}
             />
           </ol>
@@ -251,20 +260,20 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
 
           {phase === "done" && usable && (
             <div className="cheat">
-              <b>Try to cheat</b>
-              <p className="muted">Change one number and check again.</p>
+              <b>{T("Try to cheat", "Hile yapmayı dene")}</b>
+              <p className="muted">{T("Change one number and check again.", "Tek bir sayıyı değiştir ve yeniden kontrol et.")}</p>
               {tamper ? (
                 <>
                   <p className="mono" style={{ color: "var(--sell)", fontSize: 12 }}>
-                    edited: {tamper.diff}
+                    {T("edited", "değiştirildi")}: {tamper.diff}
                   </p>
                   <button className="btn sm" onClick={() => setTamper(null)}>
-                    Put the original back
+                    {T("Put the original back", "Orijinali geri koy")}
                   </button>
                 </>
               ) : (
                 <button className="btn sm danger" onClick={cheat}>
-                  Change one number
+                  {T("Change one number", "Bir sayıyı değiştir")}
                 </button>
               )}
             </div>
@@ -272,13 +281,13 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
 
           {phase === "done" && claimsReveal && !skipChain && (
             <section>
-              <div className="label">What happened to the orders · from the opening</div>
+              <div className="label">{T("What happened to the orders · from the opening", "Emirlere ne oldu · açılıştan")}</div>
               {!orders ? (
                 <p className="muted" style={{ margin: "4px 0 0" }}>
-                  Not shown: the opening transaction could not be verified, so its order results are not trusted.
+                  {T("Not shown: the opening transaction could not be verified, so its order results are not trusted.", "Gösterilmiyor: açılış işlemi doğrulanamadı, bu yüzden emir sonuçlarına güvenilmiyor.")}
                 </p>
               ) : orders === "none" ? (
-                <p className="muted">No order was sent in this check-in.</p>
+                <p className="muted">{T("No order was sent in this check-in.", "Bu check-in'de emir gönderilmedi.")}</p>
               ) : (
                 <table className="table" style={{ marginTop: 6 }}>
                   <tbody>
@@ -287,11 +296,11 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
                         <td style={{ fontWeight: 600 }}>{coin(o.inst)}</td>
                         <td className="r mono">
                           {o.id === "simulated" ? (
-                            <span style={{ color: "var(--warn)" }}>simulated (practice mode)</span>
+                            <span style={{ color: "var(--warn)" }}>{T("simulated (practice mode)", "simüle (deneme modu)")}</span>
                           ) : o.id === "unknown" ? (
-                            <span style={{ color: "var(--warn)" }}>unknown — checked later</span>
+                            <span style={{ color: "var(--warn)" }}>{T("unknown — checked later", "bilinmiyor — sonra kontrol edilir")}</span>
                           ) : (
-                            <span title="OKX order id">OKX order {o.id}</span>
+                            <span title="OKX order id">OKX {T("order", "emir")} {o.id}</span>
                           )}
                         </td>
                       </tr>
@@ -303,11 +312,11 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
             </section>
           )}
 
-          {rows && !rows.ok && <p style={{ color: "var(--danger)", fontSize: 13 }}>✕ {rows.note}</p>}
+          {rows && !rows.ok && <p style={{ color: "var(--danger)", fontSize: 13 }}>✕ {tx(rows.note)}</p>}
 
           <details className="math">
-            <summary>Show the math</summary>
-            <p className="mono small">fingerprint = keccak256( utf8(payload_utf8) ‖ bytes(salt_hex) )</p>
+            <summary>{T("Show the math", "Hesabı göster")}</summary>
+            <p className="mono small">{T("fingerprint", "parmak izi")} = keccak256( utf8(payload_utf8) ‖ bytes(salt_hex) )</p>
             <div className="kvrows">
               <dt>salt</dt>
               <dd className="mono small">{salt ?? "—"}</dd>
@@ -316,10 +325,10 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
                 <ExplorerLink explorer={explorer} kind="tx" value={cycle.commit_tx} />
               </dd>
               <dt>reveal tx</dt>
-              <dd>{cycle.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={cycle.reveal_tx} /> : "not opened yet"}</dd>
+              <dd>{cycle.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={cycle.reveal_tx} /> : T("not opened yet", "henüz açılmadı")}</dd>
             </div>
             <div className="label" style={{ marginTop: 12 }}>
-              payload_utf8 · {payload ? new TextEncoder().encode(payload).length : 0} bytes {fromChain ? "· from the verified reveal tx" : ""}
+              payload_utf8 · {payload ? new TextEncoder().encode(payload).length : 0} bytes {fromChain ? T("· from the verified reveal tx", "· doğrulanmış reveal tx'ten") : ""}
             </div>
             <pre className={tamper ? "tampered" : ""}>{pretty || "—"}</pre>
           </details>
@@ -356,11 +365,12 @@ function Result({
           ✓
         </span>
         <div>
-          <b>Match — you didn't have to trust us</b>
+          <b>{T("Match — you didn't have to trust us", "Eşleşti — bize güvenmek zorunda değilsin")}</b>
           <p>
-            {n === 1 ? "The decision" : `All ${n} decisions`} in check-in #{cycle.id}
-            {cycle.decisions.some((d) => d.action === "HOLD") ? ", holds included," : ""} {n === 1 ? "is" : "are"} exactly what was sealed on Avalanche
-            {at ? ` at ${clock(at * 1000)}` : ""}, before any order was sent.
+            {T(
+              `${n === 1 ? "The decision" : `All ${n} decisions`} in check-in #${cycle.id}${cycle.decisions.some((d) => d.action === "HOLD") ? ", holds included," : ""} ${n === 1 ? "is" : "are"} exactly what was sealed on Avalanche${at ? ` at ${clock(at * 1000)}` : ""}, before any order was sent.`,
+              `Check-in #${cycle.id} içindeki ${n === 1 ? "karar" : `${n} kararın tamamı`}${cycle.decisions.some((d) => d.action === "HOLD") ? " (HOLD'lar dahil)" : ""}, herhangi bir emir gönderilmeden önce Avalanche'ta mühürlenenle birebir aynı${at ? ` (mühür saati ${clock(at * 1000)})` : ""}.`,
+            )}
           </p>
         </div>
       </div>
@@ -372,12 +382,16 @@ function Result({
           ✕
         </span>
         <div>
-          <b>Mismatch</b>
-          <p>{tampered ? "The edited decision no longer matches its seal. Changing a single digit breaks it." : "This decision does not match its seal on Avalanche."}</p>
+          <b>{T("Mismatch", "Uyuşmadı")}</b>
+          <p>
+            {tampered
+              ? T("The edited decision no longer matches its seal. Changing a single digit breaks it.", "Değiştirilen karar artık mührüyle eşleşmiyor. Tek bir rakamı değiştirmek bile bozar.")
+              : T("This decision does not match its seal on Avalanche.", "Bu karar Avalanche'taki mührüyle eşleşmiyor.")}
+          </p>
           {reasons.length > 0 && (
             <ul className="reasons">
               {reasons.map((r) => (
-                <li key={r}>{r}</li>
+                <li key={r}>{tx(r)}</li>
               ))}
             </ul>
           )}
@@ -391,25 +405,40 @@ function Result({
           !
         </span>
         <div>
-          <b>Could not reach Avalanche</b>
+          <b>{T("Could not reach Avalanche", "Avalanche'a ulaşılamadı")}</b>
           <p>
             {hasLocal
-              ? "Your browser's fingerprint matches the agent's file, but the seal on Avalanche was not checked, so this is not a verified match yet."
-              : "The seal and the opening live on Avalanche and could not be read, so nothing has been checked yet."}
+              ? T(
+                  "Your browser's fingerprint matches the agent's file, but the seal on Avalanche was not checked, so this is not a verified match yet.",
+                  "Tarayıcındaki parmak izi agent'ın dosyasıyla eşleşiyor ama Avalanche'taki mühür kontrol edilemedi, yani bu henüz doğrulanmış bir eşleşme değil.",
+                )
+              : T(
+                  "The seal and the opening live on Avalanche and could not be read, so nothing has been checked yet.",
+                  "Mühür ve açılış Avalanche'ta duruyor ve okunamadı, yani henüz hiçbir şey kontrol edilmedi.",
+                )}
           </p>
-          {reasons.length > 0 && <p className="tech">{reasons.join(" · ")}</p>}
+          {reasons.length > 0 && <p className="tech">{reasons.map(tx).join(" · ")}</p>}
           <button className="btn sm" style={{ marginTop: 8 }} onClick={onRetry}>
-            Retry
+            {T("Retry", "Tekrar dene")}
           </button>
         </div>
       </div>
     );
   const grey =
     kind === "demo"
-      ? ["Demo check-in — not on Avalanche", "This check-in is made-up demo data. The fingerprint is consistent, but there is no seal to compare it with."]
+      ? [
+          T("Demo check-in — not on Avalanche", "Demo check-in — Avalanche'ta değil"),
+          T("This check-in is made-up demo data. The fingerprint is consistent, but there is no seal to compare it with.", "Bu check-in uydurma demo verisi. Parmak izi tutarlı ama karşılaştırılacak bir mühür yok."),
+        ]
       : kind === "not-opened"
-        ? ["Not opened yet — nothing to check", "The envelope is still sealed. The decision and its random code are published when it is opened."]
-        : ["Sample data — nothing real to check", "This state has placeholder values, so there is nothing real to check."];
+        ? [
+            T("Not opened yet — nothing to check", "Henüz açılmadı — kontrol edilecek bir şey yok"),
+            T("The envelope is still sealed. The decision and its random code are published when it is opened.", "Zarf hâlâ mühürlü. Karar ve rastgele kodu (salt) zarf açılınca yayımlanır."),
+          ]
+        : [
+            T("Sample data — nothing real to check", "Örnek veri — kontrol edilecek gerçek bir şey yok"),
+            T("This state has placeholder values, so there is nothing real to check.", "Bu durumda yer tutucu değerler var, kontrol edilecek gerçek bir şey yok."),
+          ];
   return (
     <div className="result grey">
       <span className="result-mark" aria-hidden="true">
@@ -435,11 +464,11 @@ function CheckRow({ title, tech, value, mark, note, warn }: { title: string; tec
         {note && <div className="tech">{note}</div>}
       </div>
       {mark !== undefined ? (
-        <span className={`mark ${mark ? "ok" : "bad"}`} aria-label={mark ? "matches" : "does not match"}>
+        <span className={`mark ${mark ? "ok" : "bad"}`} aria-label={mark ? T("matches", "eşleşiyor") : T("does not match", "eşleşmiyor")}>
           {mark ? "✓" : "✕"}
         </span>
       ) : warn ? (
-        <span className="mark warn" aria-label="not checked">
+        <span className="mark warn" aria-label={T("not checked", "kontrol edilmedi")}>
           !
         </span>
       ) : null}

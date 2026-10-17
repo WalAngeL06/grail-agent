@@ -5,6 +5,7 @@ import { AvalancheMark, Card, Empty, ExplorerLink, Hash, ModeTag, PageHead, Term
 import VerifySheet from "../components/VerifySheet";
 import { readCounts, readLedgerHistory, type ChainCycle } from "../chain";
 import { ago, countdown, dayClock } from "../format";
+import { T, isTr } from "../i18n";
 
 export default function Ledger({ s, chain, now, demo }: ScreenProps) {
   const c = s.chain;
@@ -39,55 +40,63 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
   return (
     <>
       <PageHead
-        eyebrow="On-chain record"
-        title="Every decision is sealed on Avalanche before the trade and opened after it. Nothing can be hidden or edited."
+        eyebrow={T("On-chain record", "Zincir kaydı")}
+        title={T("Every decision is sealed on Avalanche before the trade and opened after it. Nothing can be hidden or edited.", "Her karar işlemden önce Avalanche'ta mühürlenir, işlemden sonra açılır. Hiçbir şey gizlenemez veya değiştirilemez.")}
         summary={
           commits
-            ? `${commits} envelopes sealed, ${reveals} opened${unrevealed ? `, ${unrevealed} still sealed — visible to everyone.` : ". Every envelope is open."} Last seal ${ago(lastSeal?.decided_at_ms, now)}.`
-            : "No envelopes yet — the first one is sealed at the next check-in."
+            ? T(
+                `${commits} envelopes sealed, ${reveals} opened${unrevealed ? `, ${unrevealed} still sealed — visible to everyone.` : ". Every envelope is open."} Last seal ${ago(lastSeal?.decided_at_ms, now)}.`,
+                `${commits} zarf mühürlendi, ${reveals} tanesi açıldı${unrevealed ? `, ${unrevealed} tanesi hâlâ mühürlü — herkese görünür.` : ". Bütün zarflar açık."} Son mühür ${ago(lastSeal?.decided_at_ms, now)}.`,
+              )
+            : T("No envelopes yet — the first one is sealed at the next check-in.", "Henüz zarf yok — ilki sonraki check-in'de mühürlenir.")
         }
       />
 
       <div className="stack">
         <div className="cols three">
           <div className="card bigstat">
-            <Term plain="Sealed" tech="commits" />
+            <Term plain={T("Sealed", "Mühürlenen")} tech="commits" />
             <div className="v">{commits}</div>
-            <p>sealed before any order</p>
+            <p>{T("sealed before any order", "her emirden önce mühürlendi")}</p>
           </div>
           <div className="card bigstat">
-            <Term plain="Opened" tech="reveals" />
+            <Term plain={T("Opened", "Açılan")} tech="reveals" />
             <div className="v">{reveals}</div>
-            <p>opened and checkable</p>
+            <p>{T("opened and checkable", "açıldı ve kontrol edilebilir")}</p>
           </div>
           <div className={`card bigstat ${unrevealed > 0 ? "open" : ""}`}>
-            <Term plain="Still sealed" tech="unrevealed commits" tip="A check-in is opened right after its order. A seal that is never opened stays visible here, so bad decisions can't be quietly dropped." />
+            <Term
+              plain={T("Still sealed", "Hâlâ mühürlü")}
+              tech="unrevealed commits"
+              tip={T("A check-in is opened right after its order. A seal that is never opened stays visible here, so bad decisions can't be quietly dropped.", "Bir check-in emrinden hemen sonra açılır. Hiç açılmayan bir mühür burada görünür kalır, böylece kötü kararlar sessizce saklanamaz.")}
+            />
             <div className="v">{unrevealed}</div>
-            <p>{unrevealed > 0 ? "Still sealed — they stay visible, so no decision can be hidden." : "Every envelope has been opened."}</p>
+            <p>{unrevealed > 0 ? T("Still sealed — they stay visible, so no decision can be hidden.", "Hâlâ mühürlü — görünür kalırlar, böylece hiçbir karar gizlenemez.") : T("Every envelope has been opened.", "Bütün zarflar açıldı.")}</p>
           </div>
         </div>
         {onchain && (
           <p className="muted" style={{ margin: "-4px 0 0", fontSize: 13 }}>
-            Read live from the contract on Fuji: <b>{onchain.commits}</b> sealed, <b>{onchain.reveals}</b> opened for agent #{agentId}.
+            {T("Read live from the contract on Fuji:", "Fuji'deki kontrattan canlı okundu:")} <b>{onchain.commits}</b> {T("sealed", "mühürlü")}, <b>{onchain.reveals}</b>{" "}
+            {T("opened for agent", "açık, agent")} #{agentId}.
           </p>
         )}
 
         <div className="cols two">
-          <Card title="Where the record lives">
+          <Card title={T("Where the record lives", "Kayıt nerede duruyor")}>
             <div className="contract">
               <AvalancheMark />
               <dl className="kvrows" style={{ flex: 1 }}>
-                <dt>Network</dt>
+                <dt>{T("Network", "Ağ")}</dt>
                 <dd>
-                  Avalanche Fuji <span className="muted">· chain {c.chain_id ?? chain.chainId ?? 43113} (test network)</span>
+                  Avalanche Fuji <span className="muted">· chain {c.chain_id ?? chain.chainId ?? 43113} ({T("test network", "test ağı")})</span>
                 </dd>
                 <dt>
-                  <Term plain="Record contract" tech="GrailLedger" />
+                  <Term plain={T("Record contract", "Kayıt kontratı")} tech="GrailLedger" />
                 </dt>
-                <dd>{ledger ? <ExplorerLink explorer={explorer} kind="address" value={ledger} full /> : <span className="muted">not deployed yet</span>}</dd>
+                <dd>{ledger ? <ExplorerLink explorer={explorer} kind="address" value={ledger} full /> : <span className="muted">{T("not deployed yet", "henüz deploy edilmedi")}</span>}</dd>
                 {chain.ledgerDeployTx && (
                   <>
-                    <dt>Deployed in</dt>
+                    <dt>{T("Deployed in", "Deploy tx")}</dt>
                     <dd>
                       <ExplorerLink explorer={explorer} kind="tx" value={chain.ledgerDeployTx} />
                     </dd>
@@ -96,17 +105,25 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
               </dl>
             </div>
           </Card>
-          <Card title={<Term plain="On-chain ID card" tech="ERC-8004 IdentityRegistry" tip="A public on-chain ID for the agent, so its record can't be swapped for another one." />}>
+          <Card
+            title={
+              <Term
+                plain={T("On-chain ID card", "Zincirdeki kimlik kartı")}
+                tech="ERC-8004 IdentityRegistry"
+                tip={T("A public on-chain ID for the agent, so its record can't be swapped for another one.", "Agent için zincirde herkese açık bir kimlik; böylece sicili başka biriyle değiştirilemez.")}
+              />
+            }
+          >
             <dl className="kvrows">
               <dt>Agent</dt>
               <dd>{s.agent.name ?? chain.agentName ?? "—"}</dd>
               <dt>Agent ID</dt>
               <dd>{agentId ? <span style={{ fontSize: 20, fontWeight: 700 }}>#{agentId}</span> : <span className="tag open">NOT REGISTERED</span>}</dd>
               <dt>Registry</dt>
-              <dd>{registry ? <ExplorerLink explorer={explorer} kind="address" value={registry} /> : <span className="muted">not registered</span>}</dd>
+              <dd>{registry ? <ExplorerLink explorer={explorer} kind="address" value={registry} /> : <span className="muted">{T("not registered", "kayıtlı değil")}</span>}</dd>
               {chain.registrationTx && agentId === chain.agentId && (
                 <>
-                  <dt>Registered in</dt>
+                  <dt>{T("Registered in", "Kayıt tx")}</dt>
                   <dd>
                     <ExplorerLink explorer={explorer} kind="tx" value={chain.registrationTx} />
                   </dd>
@@ -114,7 +131,7 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
               )}
               {chain.agentWallet && (
                 <>
-                  <dt>Agent wallet</dt>
+                  <dt>{T("Agent wallet", "Agent cüzdanı")}</dt>
                   <dd>
                     <Hash value={chain.agentWallet} />
                   </dd>
@@ -127,20 +144,26 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
         {(historyErr || missing > 0) && (
           <div className="strip-msg warn" role="alert">
             {historyErr
-              ? `Couldn't load the full on-chain history (${historyErr}). Showing the agent's file only.`
-              : `Some check-ins may be missing: the contract counts ${onchain!.commits} seals, the event list returned ${historyCommits}.`}
+              ? T(`Couldn't load the full on-chain history (${historyErr}). Showing the agent's file only.`, `Zincirdeki tam geçmiş yüklenemedi (${historyErr}). Sadece agent'ın dosyası gösteriliyor.`)
+              : T(
+                  `Some check-ins may be missing: the contract counts ${onchain!.commits} seals, the event list returned ${historyCommits}.`,
+                  `Bazı check-in'ler eksik olabilir: kontrat ${onchain!.commits} mühür sayıyor, event listesi ${historyCommits} döndürdü.`,
+                )}
             <button className="btn sm" onClick={reloadHistory}>
-              Retry
+              {T("Retry", "Tekrar dene")}
             </button>
           </div>
         )}
         <Card
-          title="Every check-in, newest first"
-          meta={`${cycles.length} in view${chainOnly ? ` · ${chainOnly} read straight from Avalanche (not in this agent's state file)` : ""}${history ? "" : historyErr ? " · on-chain history unavailable" : " · on-chain history loading…"}`}
+          title={T("Every check-in, newest first", "Bütün check-in'ler, en yeni üstte")}
+          meta={T(
+            `${cycles.length} in view${chainOnly ? ` · ${chainOnly} read straight from Avalanche (not in this agent's state file)` : ""}${history ? "" : historyErr ? " · on-chain history unavailable" : " · on-chain history loading…"}`,
+            `${cycles.length} görünüyor${chainOnly ? ` · ${chainOnly} tanesi doğrudan Avalanche'tan okundu (agent'ın state dosyasında yok)` : ""}${history ? "" : historyErr ? " · zincir geçmişi alınamadı" : " · zincir geçmişi yükleniyor…"}`,
+          )}
         >
           {cycles.length === 0 ? (
-            <Empty title={`Waiting for the first check-in${next ? ` — next in ${next}` : ""}`}>
-              Each check-in shows up here the moment it is sealed, with links to the Avalanche explorer (Snowtrace).
+            <Empty title={T(`Waiting for the first check-in${next ? ` — next in ${next}` : ""}`, `İlk check-in bekleniyor${next ? ` — sonraki: ${next}` : ""}`)}>
+              {T("Each check-in shows up here the moment it is sealed, with links to the Avalanche explorer (Snowtrace).", "Her check-in mühürlendiği anda burada, Avalanche explorer (Snowtrace) linkleriyle görünür.")}
             </Empty>
           ) : (
             <div className="scroll-x">
@@ -148,12 +171,12 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
                 <thead>
                   <tr>
                     <th>Check-in</th>
-                    <th>Time</th>
-                    <th>Sealed</th>
-                    <th>Opened</th>
-                    <th>Mode</th>
-                    <th>Decisions</th>
-                    <th>Checked</th>
+                    <th>{T("Time", "Saat")}</th>
+                    <th>{T("Sealed", "Mühür")}</th>
+                    <th>{T("Opened", "Açılış")}</th>
+                    <th>{T("Mode", "Mod")}</th>
+                    <th>{T("Decisions", "Kararlar")}</th>
+                    <th>{T("Checked", "Kontrol")}</th>
                     <th />
                   </tr>
                 </thead>
@@ -163,22 +186,32 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
                       <td data-label="Check-in" style={{ fontWeight: 600 }}>
                         #{x.id}
                         {x.fromChain && (
-                          <div className="tech" title="Not in this agent's state file; read from GrailLedger events on Avalanche.">
-                            from chain
+                          <div className="tech" title={T("Not in this agent's state file; read from GrailLedger events on Avalanche.", "Agent'ın state dosyasında yok; Avalanche'taki GrailLedger event'lerinden okundu.")}>
+                            {T("from chain", "zincirden")}
                           </div>
                         )}
                       </td>
-                      <td data-label="Time" className="mono muted">{dayClock(x.decided_at_ms)}</td>
-                      <td data-label="Sealed">{x.commit_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.commit_tx} /> : <span style={{ color: "var(--danger)" }}>failed · no trade</span>}</td>
-                      <td data-label="Opened">{x.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.reveal_tx} /> : x.commit_tx ? <span className="tag open" title="Sealed but not opened yet. It stays visible on chain.">OPEN</span> : "—"}</td>
-                      <td data-label="Mode">
+                      <td data-label={T("Time", "Saat")} className="mono muted">{dayClock(x.decided_at_ms)}</td>
+                      <td data-label={T("Sealed", "Mühür")}>{x.commit_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.commit_tx} /> : <span style={{ color: "var(--danger)" }}>{T("failed · no trade", "başarısız · işlem yok")}</span>}</td>
+                      <td data-label={T("Opened", "Açılış")}>
+                        {x.reveal_tx ? (
+                          <ExplorerLink explorer={explorer} kind="tx" value={x.reveal_tx} />
+                        ) : x.commit_tx ? (
+                          <span className="tag open" title={T("Sealed but not opened yet. It stays visible on chain.", "Mühürlü ama henüz açılmadı. Zincirde görünür kalır.")}>
+                            OPEN
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td data-label={T("Mode", "Mod")}>
                         <ModeTag dry={x.dry_run} />
                       </td>
-                      <td data-label="Decisions">{summary(x.decisions.map((d) => d.action)) || <span className="dim">not opened yet</span>}</td>
-                      <td data-label="Checked">{x.verified === true ? <span className="mark ok">✓</span> : x.verified === false ? <span className="mark bad">✕</span> : <span className="dim">—</span>}</td>
+                      <td data-label={T("Decisions", "Kararlar")}>{summary(x.decisions.map((d) => d.action)) || <span className="dim">{T("not opened yet", "henüz açılmadı")}</span>}</td>
+                      <td data-label={T("Checked", "Kontrol")}>{x.verified === true ? <span className="mark ok">✓</span> : x.verified === false ? <span className="mark bad">✕</span> : <span className="dim">—</span>}</td>
                       <td className="r verify-cell">
                         {x.commit_tx && (
-                          <button className="btn sm proofbtn" onClick={() => setVerify(x)}>
+                          <button className="btn sm proofbtn" onClick={() => setVerify(x)} title={isTr() ? "kendin doğrula" : undefined}>
                             Verify yourself
                           </button>
                         )}
@@ -293,7 +326,7 @@ function useOnChainCounts(chain: ScreenProps["chain"], agentId: string | undefin
 function summary(actions: (string | undefined)[]) {
   const counts = new Map<string, number>();
   for (const a of actions) counts.set(a ?? "?", (counts.get(a ?? "?") ?? 0) + 1);
-  const word: Record<string, string> = { BUY: "buy", SELL: "sell", HOLD: "hold" };
+  const word: Record<string, string> = isTr() ? { BUY: "BUY", SELL: "SELL", HOLD: "HOLD" } : { BUY: "buy", SELL: "sell", HOLD: "hold" };
   const keys = ["BUY", "SELL", "HOLD", ...[...counts.keys()].filter((k) => !["BUY", "SELL", "HOLD"].includes(k))];
   return keys
     .filter((k) => counts.has(k))

@@ -22,7 +22,17 @@
     "sr_single_assumed": 0.5,
     "sr_portfolio_est": 0.6,
     "holy_grail_curve": [ { "n": 1, "sr": 0.5 }, { "n": 5, "sr": 0.6 }, { "n": 10, "sr": 0.62 } ],
-    "corr_matrix": { "labels": ["BTC-USDT", "ETH-USDT"], "values": [[1, 0.8], [0.8, 1]] },
+    "corr_matrix": {
+      "labels": ["BTC-USDT", "ETH-USDT", "SOL-USDT", "AVAX-USDT", "OKB-USDT"],
+      "values": [[1, 0.62, 0.62, 0.62, 0.62], [0.62, 1, 0.62, 0.62, 0.62], [0.62, 0.62, 1, 0.62, 0.62], [0.62, 0.62, 0.62, 1, 0.62], [0.62, 0.62, 0.62, 0.62, 1]]
+    },
+    "signals": {
+      "BTC-USDT": { "hurst": 0.61, "regime": "trending", "setup": "breakout" },
+      "ETH-USDT": { "hurst": 0.5, "regime": "unclear", "setup": "none" },
+      "SOL-USDT": { "hurst": 0.39, "regime": "ranging", "setup": "none" },
+      "AVAX-USDT": { "hurst": 0.58, "regime": "trending", "setup": "retest" },
+      "OKB-USDT": { "hurst": 0.47, "regime": "unclear", "setup": "none" }
+    },
     "hrp_weights_pct": { "BTC-USDT": 40, "ETH-USDT": 60 },
     "portfolio_vol_pct": 18.5,
     "psr": null

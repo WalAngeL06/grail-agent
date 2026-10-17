@@ -21,7 +21,21 @@ chain/typechain-types/
 
 # runtime output
 runtime/
+**/runtime/
 *.log
+*.sqlite3
+fuji-*.json
+live-config*.json
+
+# local credentials and tooling (R-005 MINOR-1)
+.envrc
+*.pem
+*.key
+.claude/
+
+# Public JSON fixtures remain trackable; credential file types stay ignored.
+!**/fixtures/fuji-*.json
+!**/fixtures/live-config*.json
 
 # Claude app worktrees (bizim worktree düzenimiz Agentic Hack-wt altında)
 .claude/worktrees/

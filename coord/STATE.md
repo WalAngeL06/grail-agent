@@ -1,6 +1,6 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r24 · 2026-10-17 15:46 (Europe/Istanbul)
+- Durum revizyonu: r25 · 2026-10-17 15:47 (Europe/Istanbul)
 - Ürün: Fuji 43113, ERC-8004 agentId 1. İlk CANLI emir 15:37 başarılı: cycle 2, BTC-USDT BUY 2 USDT, filled (kullanıcı/planner bildirimi + yerel state eşleşmesi).
 - OKX: grail profili, gerçek para; örnek config dry_run=true. Yeni/sürekli runner için ek talimat yok. LLM_API_KEY eklendi (kullanıcı bildirimi; içerik okunmadı, sağlayıcı çağrısı doğrulanmadı).
 - Aktif sözleşme: contracts/VERSION 0.6; chain.json deployment 0.5, adres/ABI/hash/testVector değişmedi.
@@ -34,7 +34,7 @@
 | T-007 | LLM analist (yalnız BUY riskini azaltır; SELL exempt) | analyst (Claude Code · Max) | INTEGRATED | T-001; contracts 0.5 |
 | T-008 | Teslim metinleri: form açıklaması, README taslağı, pitch, demo | docs (Claude Code · Max) | INTEGRATED (taslaklar; freeze sonrası doğrulama açık) | T-003/T-006 gerçek değerleri; D-012 |
 | T-009 | Engine reason sade İngilizce | engine | INTEGRATED | b7e294b; pytest 104; main agents 78 |
-| T-010 | Explorer kaynak doğrulama + salt okunur cycle komutu | chain | INTEGRATED (R-006 teslimi sırada) | kod f36a95d; kanıt 2e45f77 (4 VERIFIED, cycle1 MATCH) |
+| T-010 | Explorer kaynak doğrulama + salt okunur cycle komutu | chain | INTEGRATED; R-006 APPROVE | kod f36a95d; kanıt 2e45f77 (4 VERIFIED, cycle1 MATCH) |
 | T-011 | Pitch outline → PowerPoint (docs/pitch/) | docs (Claude · Pro) | INTEGRATED (taslak; final hazırlığı açık) | caedc29; 10 slayt/not/render; README/kaynak notları/TBD/süreler bekler |
 | T-012 | 30-day replay: GRAIL vs eşit ağırlık | engine | INTEGRATED (kapanış-fill modeli) | b7e294b; 720 saat, ağsız tekrar; yöntem/kabul açıkları kartta |
 | T-013 | Plain English UI metinleri | docs | INTEGRATED (ilk kopya) | 1d411c0; 5 kart, 21 terim, ekran/boş/hata; web uygulaması ayrı |
@@ -43,7 +43,7 @@
 | R-004 | İlk T-006 incelemesi (tarihsel) | reviewer (Claude Code · Opus 5.5) | DONE; güncel karar R-004b | 62ef3c3; üç MAJOR R-004b ile kapandı |
 | R-005 | Public öncesi sır/anahtar/.env/gitignore taraması | reviewer (Codex · hesap 2) | TODO | coord/reviews/R-005-public.md; tüm ref geçmişi + güncel ağaç; yayınlanacak son SHA kontrolü |
 | R-004b | T-006 düzeltmeleri + sınırlı canlı kapı | reviewer (Claude Opus) | DONE / APPROVE | ac96902; 2bf5668; kullanıcı ilk canlıyı 15:37 yaptı |
-| R-006 | T-010 bağımsız inceleme | reviewer (Claude Pro) | TODO (paralel) | f36a95d, yalnız chain/ farkı; coord/reviews/R-006.md |
+| R-006 | T-010 bağımsız inceleme | docs/reviewer (Claude Opus) | DONE / APPROVE | e77eaed; gerçek rapor coord/reviews/T-010.md; 1 MINOR + 3 INFO |
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
 ## Kanıtlar / bu entegrasyon
@@ -52,7 +52,7 @@
 - T-005 57e2287: UI v2 + How it works; npm run build PASS (48 modül, 556ms). Gerçek Fuji fixture ve ekran kanıtları sahip teslimi; integrator bu tur tarayıcı/RPC açmadı. diff --check: Dashboard.tsx:321 fazladan EOF boş satırı (MINOR, hedef aynen alındı).
 - T-013 1d411c0: docs/ui-copy.md: 5 How it works kartı, 21 terim, ekran şablonları, boş/bekleme/hata metinleri. Belge/alan kapsamı okundu; web uygulaması ve ek tooltip/replay metni tamamlama ayrı. diff --check temiz.
 - T-009/T-012 b7e294b: Engine pytest 104; main agents pytest 78. Kayıtlı OKX verisiyle ağsız replay tekrarlandı, JSON/özet baytları aynı; 720 saatlik ortak bar. Engine reason EN. Replay: kapanış fiyatında dolum, %0.1 ücret varsayımı, slippage/AI yok; sonraki açılış modeli ve sıkı veri/provenance kabulü açık.
-- T-010 f36a95d: hardhat 38 test + typecheck PASS; 4 VERIFIED explorer kaydı ve cycle okuyucu geldi. Integrator bu tur explorer/RPC sorgusu veya tx çalıştırmadı. R-006 bağımsız incelemesi kullanıcı talimatıyla merge ile paralel, Claude Pro kartı açık.
+- T-010 f36a95d ürün kodu; 2e45f77 güncel kanıt/handoff: yalnız checkedAt değişti. R-006 e77eaed APPROVE; chain sahibi ve reviewer 4 VERIFIED/cycle1 MATCH kanıtı sundu. Integrator bu tur RPC/ürün testi tekrarlamadı.
 - R-004b ac96902: APPROVE tam agents@2bf5668 farkı için; R-004-1/2/3 kapalı. Reviewer 157 test + CLI kapı matrisi sundu; integrator'ın son birleşmiş ağaç kontrolleri T-006 satırında. Kullanıcının tek coin 2 USDT ilk canlı koşu talimatı D-015'te.
 - T-006 2bf5668: önceki birleşmiş main testleri agents 157 + agents ortamından engine/analyst 104 PASS; R-004b kaynakları aynı. İlk canlı 15:37 kullanıcı tarafından yapıldı; yeni koşu yetkisi yok.
 - Replay sonucu (tarihsel simülasyon): 50 → GRAIL 50.92 (+1.83%, DD 7.48%); equal weight 54.41 (+8.81%, DD 14.51%). Üstünlük iddiası yok; 5% kill switch zarar tavanı değildir. JSON/özet web/sunum sahiplerine aktarılacak.
@@ -63,9 +63,11 @@
 - LLM_API_KEY eklendi (kullanıcı bildirimi). Değer okunmadı/kopyalanmadı/loglanmadı; eklenmiş olması LLM sağlayıcısının çalıştığını veya cycle2 kararını incelediğini kanıtlamaz.
 - T-010 kanıt/handoff 2e45f77: JSON checkedAt yenilendi; diğer metadata ve bütün ürün kaynakları aynı. Scope, diff --check, JSON eşitliği doğrulandı.
 
+- R-006 gerçek çıktı coord/reviews/T-010.md (karttaki R-006.md yerine); docs rolü reviewer şapkasıyla, Codex implementer’dan farklı model. Kullanıcının açık e77eaed merge talimatıyla kabul edildi. RPC 429 MINOR; API önbelleği/.env yüklenmesi/test edilemeyen senaryo INFO; 4 Snowtrace #code sayfasının gözle kontrolü açık.
+
 ## Bekleyenler / sınırlar
 - Önceki altı ürün merge tamamlandı; bu teslim yalnız kanıt/inceleme/handoff ekidir.
 - T-011 sunum son hazırlığı: README/kaynak notları/süreler/TBD; T-013 ilk kopyasının eksik tooltip/replay/terimleri docs, uygulamasını web tamamlar.
 - T-012 kapanış-fill varsayımı açık; sonraki açılış, strict eksik/tekrar veri ve provenance/şema kabul maddeleri tamamlanmış sayılmaz.
-- R-005 public taraması bekler; R-006 e77eaed APPROVE teslimi sıradaki merge. Bu chat yeni emir/tx veya otomatik rol mesajı çalıştırmadı.
+- R-005 public taraması bekler; R-006 APPROVE e77eaed ile alındı. Bu chat yeni emir/tx veya otomatik rol mesajı çalıştırmadı.
 - R-004-4/5/6/7 ve R-002-3/4 MINOR/NIT açık. İlk canlı kanıtı alındı; gerçek runtime UI ve LLM sağlayıcısının fiili çalışması henüz doğrulanmadı.

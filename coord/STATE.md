@@ -1,9 +1,9 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r35 · 2026-10-17 16:37 (Europe/Istanbul)
+- Durum revizyonu: r36 · 2026-10-17 16:39 (Europe/Istanbul)
 - Ürün: ilk CANLI 15:37 cycle2 BTC BUY2 filled kanıtı korunur. Sürekli agents döngüsünde cycle3 5 BUY / 5 approved ve planner Gemini HTTP200 kullanıcı tarafından bildirildi; bu chat yeni koşu başlatmaz.
 - Aktif sözleşme: VERSION 0.6.1 (belge/eklemeli metrik); config/payload/state contract_version=0.6, chain.json deploy=0.5. Config/adres/ABI/hash değişmedi (D-017).
-- Bu teslim: web@c2a731b → mainca4b914 merge/push ve uzak eşitliği doğrulandı; R-007/ui-copy/replay/Ledger/public/UI-QA dahil. Chain@3c0f476 R-010 raporu bu ayrı merge'de; Verify düzeltmesi bekleniyor, NO-GO.
+- Bu teslim: web@c2a731b → mainca4b914, ardından chain@3c0f476 → mainedea67e ayrı merge/push tamamlandı. Her iki adımda temiz durum + HEAD=origin/main=uzak main doğrulandı. R-007/ui-copy/replay/Ledger/public/UI-QA alındı; Verify düzeltmesi bekleniyor, NO-GO.
 - Bu tur kontroller: iki web build exit0 (53 modül; normal731ms/public772ms); web ağacı c2a731b ile birebir; diff/sınır temiz. Contracts/config/agents/engine/analyst/chain ürün kaynakları başlangıç9756590 ile aynı. Önceki engine167/agents157/chain48 kanıtları bu tur tekrarlanmadı.
 - Public kapısı: R-005 PUBLIC GO yalnız taranan main9acec55/ref kümesi için; MINOR-1 kapandı. Yayınlanacak son HEAD değiştiği için farklar yeniden taranır; bu chat public ayarını değiştirmez.
 - Öncelik: **Verify düzeltmesi bekleniyor** (R-010, web, hedef ~17:15; NO-GO); docs Türkçe sunum; agents döngü yeniden başlatma (T-014). **17:00 freeze sonrası sadece hata düzeltme + UI.**
@@ -58,6 +58,7 @@
 ## Kanıtlar / bu teslim ve önceki doğrulamalar
 - Bu tur başlangıç main@9756590 temiz ve origin/main ile eşitti; c2a731b/3c0f476 uzak hedeflerle birebir. Web sınırı temiz, P0 slider/anchor kodda doğrulandı. Public snapshot'ta sır yok ve mobil/görsel QA kullanıcı/planner/sahip kanıtıdır; integrator bu tur tarayıcı/sır taraması yapmadı. Public build yayınlanmadı.
 - Chain merge farkı yalnız coord/reviews/R-010-web-verify.md + chain handoff; rapor/handoff3c0f476 ile birebir. Chain/contracts ve tüm ürün kaynakları web mergeca4b914 ile aynı; R-010 gerçek RPC/ABI/UI senaryoları inceleyen kanıtıdır, integrator tekrarlamadı. Chain handoff'undaki eski T-015 bekliyor ifadesi STATE/D-019'a göre geçersizdir.
+- İki hedef HEAD ancestor kontrolü PASS; webc2a731b ve rapor/handoff3c0f476 içerikleri birebir. Başlangıç9756590'a göre contracts/agents/engine/analyst/chain ürünleri aynı, diff --check temiz. Son koordinasyon commit'i bu doğrulama kanıtını taşır.
 - R-005 raporu: 100 commit / 535 blob desen + 537 blob gerçek sır eşleştirmesi, 0 gerçek sır; PUBLIC GO. Bunlar reviewer kanıtı; integrator bu tur anahtar/.env okumadı veya taramayı tekrar etmedi. MINOR-2/3/4 ve raporun kapsam sınırları korunur.
 - Ignore kontrolü: 18 sentetik riskli yol engellendi; 8 örnek/fixture/çıktı yolu açık. İstenen sqlite/runtime/fuji/live-config/envrc/pem/key/.claude kuralları var; public JSON fixtures istisnalı, PEM/key gibi sır türleri fixtures içinde de kapalı. Mevcut tracked fixture’lar korundu.
 - R-007 sözleşme istekleri: corr_matrix 5 coin/5x5 simetrik, diag1/offdiag0.62; avg_corr0.62/n_eff1.44/SR0.60 ile tutarlı. target_weight_pct normalde deploy_base=min(equity,max_deploy), koruma HOLD’unda equity; normal HOLD tek başına tabanı ayırt ettirmez. Kod/hash değişikliği yok.

@@ -17,6 +17,8 @@ export default function Ledger({ s, chainJson, now, demo }: Props) {
   const reveals = c.reveals ?? cycles.filter((x) => x.reveal_tx).length;
   const unrevealed = c.unrevealed ?? Math.max(0, commits - reveals);
   const agentId = c.agent_id ?? hints.agentId;
+  // v0.5: state.chain.agent_id / identity_registry; null until the deploy is verified → "not registered"
+  const showIdentity = agentId !== undefined || c.registered !== undefined;
   const address = c.address ?? hints.address;
 
   return (
@@ -47,7 +49,7 @@ export default function Ledger({ s, chainJson, now, demo }: Props) {
           </div>
         </div>
 
-        <div className={agentId !== undefined ? "cols two" : "cols"}>
+        <div className={showIdentity ? "cols two" : "cols"}>
           <Card title="Ledger contract">
             <div className="contract">
               <AvaxLogo />
@@ -70,22 +72,33 @@ export default function Ledger({ s, chainJson, now, demo }: Props) {
               </dl>
             </div>
           </Card>
-          {agentId !== undefined && (
-            <Card title="Agent identity" meta="ERC-8004">
+          {showIdentity && (
+            <Card title="Agent identity" meta="ERC-8004 IdentityRegistry">
               <dl className="kvrows">
                 <dt>Agent</dt>
                 <dd>{s.agent.name ?? "—"}</dd>
                 <dt>agentId</dt>
-                <dd style={{ fontSize: 20, fontWeight: 700 }}>#{agentId}</dd>
-                {c.identity_registry && (
-                  <>
-                    <dt>Registry</dt>
-                    <dd>
-                      <ExplorerLink explorer={c.explorer} kind="address" value={c.identity_registry} />
-                    </dd>
-                  </>
-                )}
+                <dd>
+                  {agentId !== undefined ? (
+                    <span style={{ fontSize: 20, fontWeight: 700 }}>#{agentId}</span>
+                  ) : (
+                    <span className="tag open">NOT REGISTERED</span>
+                  )}
+                </dd>
+                <dt>Registry</dt>
+                <dd>
+                  {c.identity_registry ? (
+                    <ExplorerLink explorer={c.explorer} kind="address" value={c.identity_registry} />
+                  ) : (
+                    <span className="muted">not registered</span>
+                  )}
+                </dd>
               </dl>
+              {agentId === undefined && (
+                <p className="muted" style={{ margin: "12px 0 0", fontSize: 13 }}>
+                  The identity appears here once the Fuji deploy is verified.
+                </p>
+              )}
             </Card>
           )}
         </div>

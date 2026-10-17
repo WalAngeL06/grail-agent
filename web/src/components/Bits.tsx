@@ -104,6 +104,27 @@ export function ModeTag({ dry }: { dry?: boolean }) {
   );
 }
 
+// v0.5 analist bayrağı (contracts/decision.md): LLM sadece BUY'ı onaylar, küçültür veya HOLD'a çevirir; SELL muaf.
+const LLM: Record<string, { label: string; title: string }> = {
+  approved: { label: "approved", title: "Analyst approved the BUY unchanged" },
+  reduced: { label: "reduced", title: "Analyst reduced the BUY size (it can never increase it)" },
+  vetoed: { label: "vetoed", title: "Analyst turned the BUY into HOLD" },
+  exempt: { label: "exempt", title: "SELLs bypass the analyst: reducing exposure is never blocked" },
+  skipped: { label: "skipped", title: "Analyst not applied; the engine decision stands" },
+};
+
+export function LlmBadge({ flag, note }: { flag: string; note?: string }) {
+  const known = LLM[flag];
+  return (
+    <span className={`llm ${known ? flag : "unknown"}`} title={[known?.title ?? `llm_flag: ${flag}`, note].filter(Boolean).join(" — ")}>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+        <path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2" strokeLinecap="round" />
+      </svg>
+      AI {known?.label ?? flag}
+    </span>
+  );
+}
+
 export function ActionChip({ action, size }: { action?: string; size?: string }) {
   const known = action === "BUY" || action === "SELL" || action === "HOLD";
   const amount = action !== "HOLD" && size && Number(size) > 0 ? `$${Number(size).toFixed(2)}` : null;

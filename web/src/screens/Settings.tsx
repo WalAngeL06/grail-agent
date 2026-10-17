@@ -23,6 +23,8 @@ const KNOWN: Record<string, Known> = {
   quote: { label: "Quote currency", fmt: (v) => String(v) },
 };
 const ORDER = Object.keys(KNOWN);
+// v0.5: state.config carries the effective spend limits (contracts/README.md)
+const LIMITS = ["max_order_usdt", "max_total_deploy_usdt", "kill_switch_drawdown_pct"];
 
 const GUARDS: { ok: boolean; title: string; text: string }[] = [
   { ok: true, title: "Spot only", text: "No derivatives, no margin." },
@@ -37,7 +39,7 @@ const GUARDS: { ok: boolean; title: string; text: string }[] = [
 export default function Settings({ s }: { s: GrailState }) {
   const cfg = s.config;
   const coins = Array.isArray(cfg.coins) ? (cfg.coins as unknown[]).filter((c): c is string => typeof c === "string") : [];
-  const keys = Object.keys(cfg).filter((k) => k !== "coins" && k !== "dry_run" && k !== "mode");
+  const keys = Object.keys(cfg).filter((k) => !["coins", "dry_run", "mode", ...LIMITS].includes(k));
   keys.sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
   const errors = [...s.errors].sort((a, b) => (b.at_ms ?? 0) - (a.at_ms ?? 0));
 
@@ -60,6 +62,24 @@ export default function Settings({ s }: { s: GrailState }) {
               {s.mode && <>Account: {s.mode === "live" ? "OKX TR live account" : s.mode}. </>}
               Switching to live is a human action (config), not a UI button.
             </span>
+          </div>
+        </Card>
+
+        <Card title="Spend limits" meta="enforced in code before every order · read-only">
+          <div className="cols three">
+            {LIMITS.map((k) => {
+              const v = cfg[k];
+              const missing = v === undefined || v === null || v === "";
+              return (
+                <div key={k} className="stat">
+                  <span className="label">{KNOWN[k].label}</span>
+                  <div className="v" style={{ fontSize: 28 }}>
+                    {missing ? <span className="dim">—</span> : KNOWN[k].fmt(v)}
+                  </div>
+                  <div className="sub">{missing ? `not reported by the agent (${k})` : KNOWN[k].hint}</div>
+                </div>
+              );
+            })}
           </div>
         </Card>
 

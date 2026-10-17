@@ -72,3 +72,8 @@ OKX TR katılımcılara gerçek bakiye verdi; emirler canlı hesapta. Erişim: `
 - RED: ayrı `ledger[]`. Sicil `decisions[]` içinden cycle_id'ye göre gruplanır; chain sayaçları korunur.
 - Kullanıcı onaylı T-002 istisnası kartına işlendi: kurulu CLI 1.4.8'de `--read-only` yok; yerine kapalı sorgu izin listesi (`market ticker/candles/instruments`, `account balance`, `spot get/orders`) kullanılır. `grail` profili, TR site/host ve JSON çıktı sabit; izin dışı sorgu reddedilir. T-002'nin okuduğu sürüm 0.4 olarak düzeltilir; 0.5 döngü entegrasyonunda alınır. Canlı emir onayı verilmedi.
 - `contracts/VERSION` ile config/state sürüm alanları 0.5. Engine/analyst/agents/web bir sonraki başlangıçta `git merge main` ile alır. T-005 v1'in gerçek state/Fuji doğrulaması bekliyor; 13:30 deploy kapısı kaçtı, chain Codex hesap 2 13:48'de başladı.
+
+## D-012 · T-008 teslim taslakları; README köke taşıma kapısı
+- Kullanıcı `role/web@9eb1b52` (v0.5 UI alanları) ve ardından `role/docs@d1e8ea0` (T-008 teslim metinleri) merge + push istedi. T-008 kartı bu teslimde açılır; contracts sürümü 0.5 kalır.
+- T-008 ilk teslimi docs/ altında dört İngilizce taslaktır: form açıklaması, README-draft, 10 slayt pitch, 2:00 demo senaryosu. Adresler ve henüz doğrulanmamış çalışma/ölçüm/komutlar açık yer tutucuyla kalır.
+- **README-draft.md köke taşıma kararı: 17:00 freeze SONRASI ve gerçek adresler doldurulup doğrulandığında.** Docs sahibi taslağı günceller ve RAPOR eder; köke taşıma integrator tarafından yapılır. Bu merge'de kök README değiştirilmez.

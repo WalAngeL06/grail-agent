@@ -143,6 +143,14 @@ const state = {
     hrp_weights_pct: hrp, target_weights_pct: tw, trend_pct: trend, vol_pct: vol,
     portfolio_vol_raw_pct: 41.3, portfolio_vol_pct: 18.5, psr: 0.71, psr_basis: "hrp_all_valid_in_sample",
     window_bars: 48, drawdown_pct: 0.8, kill_switch: false,
+    // T-014 shape (engine fixture pending): per-coin Hurst regime + breakout/retest setup
+    signals: {
+      "BTC-USDT": { hurst: 0.61, regime: "trending", setup: "retest" },
+      "ETH-USDT": { hurst: 0.57, regime: "trending", setup: "breakout" },
+      "SOL-USDT": { hurst: 0.42, regime: "ranging", setup: "none" },
+      "AVAX-USDT": { hurst: 0.51, regime: "unclear", setup: "breakout" },
+      "OKB-USDT": { hurst: 0.44, regime: "ranging", setup: "none" },
+    },
   },
   decisions: decisions.reverse(),
   chain: {

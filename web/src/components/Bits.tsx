@@ -193,6 +193,32 @@ export function LlmBadge({ flag, note }: { flag: string; note?: string }) {
   );
 }
 
+const REGIME_TXT = { trending: "Trend is clear", unclear: "Trend is unclear", ranging: "Market is ranging" } as const;
+const SETUP_TXT = { retest: "Breakout confirmed by retest", breakout: "Waiting for retest", none: "No breakout yet" } as const;
+
+/** T-014 entry signals in plain words; renders nothing when the engine wrote no signal for this coin. */
+export function SignalChips({ sig }: { sig?: { hurst?: number; regime?: keyof typeof REGIME_TXT; setup?: keyof typeof SETUP_TXT } }) {
+  if (!sig || (!sig.regime && !sig.setup)) return null;
+  return (
+    <span className="signal">
+      {sig.regime && (
+        <span
+          className={`sig ${sig.regime}`}
+          title={`Hurst exponent${sig.hurst !== undefined ? ` ${sig.hurst.toFixed(2)}` : ""}: above ~0.55 prices tend to keep going (trend), below ~0.45 they tend to snap back (range).`}
+        >
+          {REGIME_TXT[sig.regime]}
+          {sig.hurst !== undefined && <span className="tech">H {sig.hurst.toFixed(2)}</span>}
+        </span>
+      )}
+      {sig.setup && (
+        <span className={`sig ${sig.setup}`} title="Breakout = price closed above its recent range. Retest = it came back to that level and held, confirming the move.">
+          {SETUP_TXT[sig.setup]}
+        </span>
+      )}
+    </span>
+  );
+}
+
 /** Official Avalanche mark (cryptocurrency-icons, CC0). */
 export function AvalancheMark({ size = 40 }: { size?: number }) {
   return (

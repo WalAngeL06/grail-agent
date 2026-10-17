@@ -1,22 +1,27 @@
 # Handoff — web (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~15:15
-- Aktif görev / durum: T-005 v2 / READY_FOR_REVIEW — Claude Design uygulandı + sade dil + How it works. contracts v0.6 (origin/main merge).
+- Güncelleme zamanı: 2026-10-17 ~16:15
+- Aktif görev / durum: R-007 + ui-copy + replay + gerçek veri + T-014 sinyalleri / READY_FOR_REVIEW (planner "Orkestra Şefi - 2" işi)
 - Oturum: Claude Code · Max (Opus 5.5), durdu
 - Worktree / branch / son commit: `Agentic Hack-wt/web` / `role/web` / bu dosyayı içeren son commit (`git log -1`)
-- contracts okunan sürüm: v0.6
-- Tasarım paketi: Downloads/GRAIL Autonomous Trading Dashboard.zip → repo DIŞINDA açıldı (scratchpad), commit edilmedi.
-- v2 somut davranış:
-  - Kabuk: sidebar (altın elmas, "Read-only · no wallet, no orders"), 5. menü "How it works", Settings menüde "Safety limits"; <760 px alt sekme çubuğu; üst bar sarar (taşmaz); kopyala → toast.
-  - Her ekranda büyük tek cümle başlık + state'ten canlı özet; boyut: cevap > kanıt > detay.
-  - Dashboard: 5 adımlı akış şeridi (Market → Decision → Sealed → Order → Revealed, her adım ilgili ekrana link), "Independent bets" hero, sade KPI'lar, "Show the math".
-  - Sade dil: `Term` bileşeni (düz isim + küçük gri teknik isim + "?" ipucu). AI rozeti "AI second opinion: approved / reduced / vetoed / not needed".
-  - Verify sheet (sağdan): payload+salt reveal tx calldata'sından (R-003-1), `GrailLedger.decisions(agentId,cycleId)` eth_call, cycle_id/agent kontrolü (R-003-4), v0.6 okxOrderId coin başına, "Try to cheat". Fuji RPC rate limit → Routescan proxy yedeği. Yeni paket yok (@noble/hashes + elle ABI).
-  - Ledger: chain.json adresleri (GrailLedger 0x1B5f…8851, IdentityRegistry 0x120A…6721, agentId 1, kayıt tx), resmi Avalanche logosu (cryptocurrency-icons, CC0), sözleşmeden canlı commitCount/revealCount. ledger[] yok; decisions[] + state.chain.
-  - İlk ziyaret 3 adımlı tanıtım (localStorage `grail.intro.dismissed`, try/catch).
-  - Demo fixture v0.6: Fuji'deki GERÇEK döngü (agent 1, cycle 1; `fixtures/fuji-cycle-1.json`, reveal calldata'sından) + 4 sentetik döngü (`demo_synthetic: true` → zincirde aranmaz).
-- v2 kontroller: `npm run build` geçti; demo: gerçek döngü #1 Verify → ✅ Match (computed = state = on-chain 0xd906…5a83, cycle 1/GRAIL-01, 5× simulated), "Change one number" → ✕ Mismatch; mock: 5 ekran hata yok, Verify gri "Mock data", Ledger zincirden "1 sealed, 1 opened"; mobil 375 px tüm ekranlarda yatay taşma yok. Ekran görüntüleri `web/docs/screenshots/v2-*`.
-- Not: state.chain.agent_id null olsa da chain.json agentId (1) gösterilir (gerçek adresler chain.json'dan); ikisi de yoksa "NOT REGISTERED".
+- contracts okunan sürüm: v0.6 (origin/main@ad7edd1 merge)
+- Bu turun somut davranışı:
+  1. R-007 (origin/role/engine:coord/reviews/R-007-ui-math.md) — formül değişmedi, etiket/alan düzeltildi:
+     PSR → "Chance the coin basket's recent trend is real" (+ "> 99%"/"< 1%"); Sharpe KPI → "Diversification boost (illustration)" ×√n_eff, SR₁ 0.5 "assumed, not measured";
+     Positions hedefi = target_weights_pct (yoksa son karar target_weight_pct) × min(equity, max_total_deploy) ÷ equity; başlık "coin list offers", cap "(last 48h, equal weights)";
+     Show the math payda 4 ondalık; emergency stop "pauses new orders… does not sell"; target vol "at most"; vol ipucu "target mix (est.)"; HRP ipucu trend filtresi; pencere etiketi config'ten; diyagram ≈1.5.
+     Fixture: HRP trendi düşen coinlerde 0, gerekçeler engine'in İngilizce biçiminde (gerçek Fuji cycle 1 payload'ı değişmedi).
+  2. docs/ui-copy.md ile eşitleme: eyebrow + başlık + canlı özet (Dashboard/Decisions/On-chain record/Settings), Togetherness, Check-in, Seal/Open, Random code, On-chain ID card, MOCK DATA, hata metinleri.
+     ui-copy ile R-007 çelişen 2 yerde R-007 uygulandı: PSR ("Skill confidence… not luck" değil), emergency stop ("halts after a set loss" değil).
+     How it works: ui-copy 5 kartı + "Last 30 days" kartı (engine/out/replay.json; GRAIL vs eşit ağırlıklı al-tut çizgi grafiği, "Half the worst drop 7.5% vs 14.5%", getiri +1.8% vs +8.8% dürüstçe).
+  3. Gerçek dry-run state (agents/runtime/dryrun-5coin-20261017-1545/state.json, `npm --prefix web run dev -- --mode real` + web/.env.real [gitignore]):
+     5 ekran hata yok, AI rozeti "approved"; Verify cycle #15 → computed = state = on-chain, reveal calldata'sından.
+     Ledger artık GrailLedger event'lerinden (Routescan logs API, deploy bloğu 59595834) TÜM döngüleri okuyor; state'te olmayanlar "from chain" etiketiyle: canlı cycle #2 (LIVE, 1 buy) görünüyor,
+     Verify ✅ ve OKX order 4017748393474314240 reveal'den gösteriliyor. Simüle emirler "Order" adımını tamamlıyor (önce "pending" görünüyordu).
+  4. T-014 metrics.signals[inst] = {hurst, regime, setup}: yoksa hiçbir şey; varsa son check-in kartında coin başına sade çipler ("Trend is clear / Trend is unclear / Market is ranging",
+     "Breakout confirmed by retest / Waiting for retest / No breakout yet", H değeri gri) + How it works'te "6 · Smart entry" kartı (yalnız sinyal varsa). Demo fixture'da örnek sinyaller.
+- Kontroller: `npm run build` her adımda geçti; demo (5174), mock, real (5175) tarayıcıda; ekran görüntüleri web/docs/screenshots/v3-*.
+- Bilinen: replay.json bundle'a import ediliyor (+~125 KB). Engine fixture'ı (T-014) gelince sinyal alan adlarını doğrula.
 
 - v0.5 eklemeleri (bu tur):
   - Decisions: her satırda analist rozeti `AI approved|reduced|vetoed|exempt|skipped` (renkli; title = açıklama + llm_note) ve llm_note metni; bilinmeyen flag gri gösterilir.
@@ -49,4 +54,4 @@
   - Engine `reason` metinleri Türkçe ("-> nakit", "hedef"); UI İngilizce. Engine'e istek: reason'ı İngilizce yaz (UI metni olduğu gibi gösterir).
   - Brifte istenen "on-chain 0x…" satırı ABI ile kontrattan okunmuyor; commit tx calldata'sında hash aranıyor (ABI'siz). chain.json gelince `chainHints()` + gerekirse ABI okuması eklenecek.
 - TEKRARLANMAMASI gereken işlem: vite.config'te `new URL(...).pathname` (boşluklu yol → 404) — `fileURLToPath` kullan.
-- SIRADAKİ İLK ADIM: `git merge origin/main`; T-006 gerçek state yazınca GRAIL_STATE_PATH ile 5 ekranı ve gerçek bir döngünün Verify'ını dene; chain.json gelince src/verify.ts `chainHints()` anahtarlarını gerçek şekle göre düzelt; T-006 state yazınca `GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev` ile gerçek veriden ekran görüntüsü al; Claude Design çıktısı gelirse farkları uygula.
+- SIRADAKİ İLK ADIM: `git merge origin/main`; engine T-014 fixture'ı gelince sinyal alanlarını gerçek çıktıyla dene; canlı state için `GRAIL_STATE_PATH=.../runtime/live/state.json`; chain.json gelince src/verify.ts `chainHints()` anahtarlarını gerçek şekle göre düzelt; T-006 state yazınca `GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev` ile gerçek veriden ekran görüntüsü al; Claude Design çıktısı gelirse farkları uygula.

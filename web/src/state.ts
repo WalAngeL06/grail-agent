@@ -24,6 +24,25 @@ const numMap = (v: unknown): Record<string, number> => {
   return out;
 };
 
+export type Signal = { hurst?: number; regime?: "trending" | "unclear" | "ranging"; setup?: "none" | "breakout" | "retest" };
+const REGIMES = ["trending", "unclear", "ranging"] as const;
+const SETUPS = ["none", "breakout", "retest"] as const;
+function signals(v: unknown): Record<string, Signal> {
+  const out: Record<string, Signal> = {};
+  for (const [k, x] of Object.entries(obj(v))) {
+    const o = obj(x);
+    const r = str(o.regime);
+    const st = str(o.setup);
+    const sig: Signal = {
+      hurst: num(o.hurst),
+      regime: (REGIMES as readonly string[]).includes(r ?? "") ? (r as Signal["regime"]) : undefined,
+      setup: (SETUPS as readonly string[]).includes(st ?? "") ? (st as Signal["setup"]) : undefined,
+    };
+    if (sig.hurst !== undefined || sig.regime || sig.setup) out[k] = sig;
+  }
+  return out;
+}
+
 export type ErrorItem = { code?: string; message?: string; at_ms?: number; where?: string };
 export type Decision = {
   key: string;
@@ -81,6 +100,8 @@ export type GrailState = {
     drawdown_pct?: number;
     kill_switch?: boolean;
     window_bars?: number;
+    /** T-014 (optional): per-coin entry signals; empty when the engine doesn't write them */
+    signals: Record<string, Signal>;
   };
   decisions: Decision[];
   chain: {
@@ -152,6 +173,7 @@ export function normalize(raw: unknown): GrailState {
       drawdown_pct: num(m.drawdown_pct),
       kill_switch: bool(m.kill_switch),
       window_bars: num(m.window_bars),
+      signals: signals(m.signals),
     },
     decisions: arr(r.decisions).map((x, i) => {
       const o = obj(x);

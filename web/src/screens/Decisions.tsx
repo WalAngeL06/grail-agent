@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { groupCycles, type Cycle, type Decision } from "../state";
 import type { ScreenProps } from "../App";
-import { ActionChip, Empty, ExplorerLink, Hash, LlmBadge, ModeTag, PageHead, Term } from "../components/Bits";
+import { ActionChip, Empty, ExplorerLink, Hash, LlmBadge, ModeTag, PageHead, SignalChips, Term } from "../components/Bits";
+import type { Signal } from "../state";
 import VerifySheet from "../components/VerifySheet";
 import { clock, coin, countdown, dayClock, price } from "../format";
 
@@ -40,7 +41,15 @@ export default function Decisions({ s, chain, now, demo }: ScreenProps) {
       ) : (
         <div className="stack">
           {cycles.map((c) => (
-            <CycleCard key={c.id} c={c} explorer={s.chain.explorer ?? chain.explorer} onlyTrades={onlyTrades} flash={fresh.has(c.id)} onVerify={() => setVerify(c)} />
+            <CycleCard
+              key={c.id}
+              c={c}
+              explorer={s.chain.explorer ?? chain.explorer}
+              onlyTrades={onlyTrades}
+              flash={fresh.has(c.id)}
+              onVerify={() => setVerify(c)}
+              signals={c === cycles[0] ? s.metrics.signals : undefined}
+            />
           ))}
         </div>
       )}
@@ -69,7 +78,21 @@ function decisionsSummary(c: Cycle, dry?: boolean) {
   return `Check-in #${c.id} at ${clock(c.decided_at_ms)}: ${k("BUY")} buy · ${k("SELL")} sell · ${k("HOLD")} hold. Sealed${c.reveal_tx ? " and opened" : ", waiting to be opened"}.${dry ? " Practice mode — orders were simulated." : ""}`;
 }
 
-function CycleCard({ c, explorer, onlyTrades, flash, onVerify }: { c: Cycle; explorer?: string; onlyTrades: boolean; flash: boolean; onVerify: () => void }) {
+function CycleCard({
+  c,
+  explorer,
+  onlyTrades,
+  flash,
+  onVerify,
+  signals,
+}: {
+  c: Cycle;
+  explorer?: string;
+  onlyTrades: boolean;
+  flash: boolean;
+  onVerify: () => void;
+  signals?: Record<string, Signal>;
+}) {
   const [proof, setProof] = useState(false);
   const all = [...c.decisions].sort((a, b) => Number(isTrade(b)) - Number(isTrade(a)) || (a.inst_id ?? "").localeCompare(b.inst_id ?? ""));
   const rows = onlyTrades ? all.filter(isTrade) : all;
@@ -104,6 +127,7 @@ function CycleCard({ c, explorer, onlyTrades, flash, onVerify }: { c: Cycle; exp
                 {d.llm_note && !/^skipped|^exempt/.test(d.llm_note) && <span className="llm-note">{d.llm_note}</span>}
               </span>
             )}
+            {signals && d.inst_id && <SignalChips sig={signals[d.inst_id]} />}
           </span>
           <span className="px">
             at {price(d.ref_price)}

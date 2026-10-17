@@ -86,6 +86,8 @@ export default function HowItWorks({ s }: { s: GrailState | null }) {
         </article>
       </div>
 
+      {s && Object.keys(s.metrics.signals).length > 0 && <SmartEntry s={s} />}
+
       <section className="card replay" style={{ marginTop: 16 }} aria-label={`Last ${days} days`}>
         <div className="replay-head">
           <div>
@@ -158,6 +160,51 @@ export default function HowItWorks({ s }: { s: GrailState | null }) {
 
 const signed = (v?: number) => (v === undefined ? "—" : `${v > 0 ? "+" : v < 0 ? "−" : ""}${n(Math.abs(v), 1, 1)}%`);
 const R_START = () => (replaySummary() as unknown as { g: { start_usdt?: number } }).g.start_usdt ?? 50;
+
+function SmartEntry({ s }: { s: GrailState }) {
+  const sig = s.metrics.signals;
+  const coins = Object.keys(sig);
+  const trending = coins.filter((c) => sig[c].regime === "trending").length;
+  const confirmed = coins.filter((c) => sig[c].setup === "retest").length;
+  return (
+    <article className="card how-card" style={{ marginTop: 16 }}>
+      <EntryDiagram />
+      <h2>6 · Smart entry</h2>
+      <p>
+        First GRAIL asks whether the market is trending or just moving sideways, using the Hurst exponent. In a sideways market, breakouts usually fail,
+        so it waits.
+      </p>
+      <p>
+        When a price breaks out of its range, GRAIL waits for it to come back, test the old ceiling and hold. That retest confirms the move. Right now:{" "}
+        {trending} of {coins.length} coins trending, {confirmed} breakout{confirmed === 1 ? "" : "s"} confirmed by a retest.
+      </p>
+      <a className="linkbtn" href="#/decisions">
+        See the signals per coin →
+      </a>
+    </article>
+  );
+}
+
+function EntryDiagram() {
+  // range box, breakout above it, pullback to the old top (retest), then continuation
+  return (
+    <svg className="diagram" viewBox="0 0 240 80" aria-hidden="true">
+      <rect x="14" y="34" width="96" height="30" rx="3" fill="rgba(245,165,36,.08)" stroke="var(--warn)" strokeDasharray="3 3" />
+      <text x="62" y="76" textAnchor="middle" fontSize="9" fill="var(--muted)">
+        range (sideways)
+      </text>
+      <path d="M18 56 L30 42 L42 58 L54 40 L66 57 L78 41 L90 55 L104 38 L122 18 L138 34 L154 34 L170 16 L196 8 L226 4" fill="none" stroke="var(--grail)" strokeWidth="2" strokeLinejoin="round" />
+      <circle cx="122" cy="18" r="3.5" fill="var(--proof)" />
+      <text x="122" y="12" textAnchor="middle" fontSize="9" fill="var(--proof)">
+        breakout
+      </text>
+      <circle cx="146" cy="34" r="3.5" fill="var(--buy)" />
+      <text x="146" y="48" textAnchor="middle" fontSize="9" fill="var(--buy)">
+        retest holds
+      </text>
+    </svg>
+  );
+}
 
 function CorrDiagram() {
   // five coins: four clustered (move together) + one apart → "≈ 1.4 bets"

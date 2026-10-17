@@ -59,7 +59,7 @@ export function ago(ms: number | undefined, now: number): string {
 export function countdown(target: number | undefined, now: number): string | null {
   if (target === undefined) return null;
   const s = Math.round((target - now) / 1000);
-  if (s <= 0) return "due now";
+  if (s <= 0) return null;
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 

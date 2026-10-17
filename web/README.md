@@ -1,6 +1,6 @@
 # GRAIL web (T-005)
 
-Vite + React + TypeScript. Dört ekran: Portföy (Holy Grail eğrisi + ρ kaydırıcısı), Karar akışı ("Kendin doğrula"), On-chain sicil, Yetki ve limitler.
+Vite + React + TypeScript, docs/ui-brief.md (T-004) ile hizalı; arayüz dili İngilizce. Dört ekran: Dashboard (Holy Grail eğrisi + ρ slider), Decisions ("Verify yourself", döngü başına), On-chain Ledger, Settings (salt okunur).
 
 ```bash
 npm install

@@ -52,8 +52,8 @@ export default function App() {
               {r.icon}
               <span>{r.label}</span>
               {r.id === "ledger" && open !== undefined && open > 0 && (
-                <span className="badge" title="Open (unrevealed) commits">
-                  {open} open
+                <span className="badge" title={`${open} open (unrevealed) commit${open === 1 ? "" : "s"}`}>
+                  {open}
                 </span>
               )}
             </a>

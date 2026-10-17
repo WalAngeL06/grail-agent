@@ -1,32 +1,33 @@
 # Handoff — web (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 13:40
-- Aktif görev / durum: T-005 / READY_FOR_REVIEW (ilk sürüm; tasarım docs/ui-brief.md olmadan BRIEF + state.example.json'dan yapıldı)
+- Güncelleme zamanı: 2026-10-17 ~14:00
+- Aktif görev / durum: T-005 / READY_FOR_REVIEW — docs/ui-brief.md (origin/role/docs@1b61651, merge EDİLMEDİ, sadece okundu) ile hizalandı
 - Oturum: Claude Code · Max (Opus 5.5), durdu
 - Worktree / branch / son commit: `Agentic Hack-wt/web` / `role/web` / bu dosyayı içeren son commit (`git log -1`)
 - contracts okunan sürüm: v0.4
-- Tamamlanan somut davranış:
-  - `web/`: Vite 5 + React 18 + TS. 4 ekran, hash route: `#/dashboard`, `#/kararlar`, `#/sicil`, `#/limitler`.
-  - Portföy: "5 coin → 1,44 bahis" + Holy Grail eğrisi (N_eff, stats.py formülü), ρ kaydırıcısı (senaryo), hover tooltip, korelasyon ısı haritası, rejim (trend/vol/HRP/hedef), piyasa, hata günlüğü.
-  - Karar akışı: döngü başına gruplu; AL/SAT/BEKLE, gerekçe, dry_run etiketi; her satırda "Kendin doğrula": keccak256(payload‖salt) tarayıcıda → ✅/❌, payload düzenlenebilir (tek karakter → ❌), payload↔satır kontrolü, Fuji RPC'den commit tx calldata'sında hash arama (ABI gerekmez).
-  - Sicil: commit/reveal/açıkta kalan sayaçları, ERC-8004 agentId, kontrat/registry Snowtrace linkleri (sadece geçerli hex ise link), döngü akış tablosu.
-  - Yetki ve limitler: config guardrail'leri, izinli coinler, yetki listesi (withdraw/kaldıraç yok), hata davranışı.
-  - Veri: Vite middleware `/api/state` ← `GRAIL_STATE_PATH` (yoksa contracts/state.example.json + uyarı bandı), `/api/chain` ← `GRAIL_CHAIN_PATH` | contracts/chain.json (yoksa `null`). 3 sn polling. Bozuk JSON/sunucu yok → son durum kalır / paketlenmiş örnek.
-  - `npm run dev:demo`: `web/fixtures/demo-state.json` (gerçek hash, uydurma tx; UI "demo verisi" etiketler). `npm run fixture` zamanları tazeler.
-- Commit edilmemiş / izlenmeyen dosyalar: worktree kökünde `.claude/launch.json` (sadece önizleme aracı için, commit EDİLMEDİ, web/ dışı).
+- Tamamlanan somut davranış (brife göre):
+  - Arayüz İngilizce. Sol menü: Dashboard · Decisions · On-chain Ledger · Settings; altta "Avalanche Fuji · OKX TR".
+  - Üst bar (56 px, sabit): agent + durum noktası, DRY RUN/LIVE rozeti, MOCK DATA / DEMO DATA rozeti, Cycle #, "next in m:ss", zincir sayaçları c/r/u, hata rozeti (→ #/settings/system), "updated Xs ago".
+  - Palet + Inter / JetBrains Mono brifteki token'larla (`src/styles.css` :root).
+  - Dashboard: 64 px altın n_eff hero, son döngü çipleri, PSR ("— (needs history)"), 4 KPI kartı, Holy Grail (Y = portföy Sharpe, X = 1..20, referans ρ 0/0.2/0.4/0.8, canlı ρ̄ kalın altın, engine noktaları, tavan SR₁/√ρ, nabızlı "You are here", ρ slider 0–0.95 + what-if + reset), pozisyonlar (ağırlık vs HRP çift çubuk, last, 24h), ısı haritası (köşegen soluk), coin sinyalleri (metrics.trend_pct varsa).
+  - Decisions: döngü kartları (yeni üstte), 5 adımlı akış göstergesi (Decided→Committed→Ordered→Revealed→Verified; commit yoksa kırmızı "commit failed → no order (fail-closed)"), satırlar (aksiyon çipi, gerekçe, ref → fill, SIMULATED/filled + OKX id), yeni satır 1,5 sn altın parlama, "Payload & proof" detay, döngü başına "Verify yourself".
+  - Verify: 400 ms "computing…", sonra computed / stated / on-chain satırları + "✅ Match — you didn't have to trust us" / "❌ Mismatch"; mock → gri "Mock data — cannot verify"; reveal edilmemiş → "Not revealed yet"; demo verisinde zincir okunmaz (tx'ler uydurma); "Try tampering" textarea.
+  - Ledger: 3 büyük sayaç (unrevealed amber + "no cherry-picking"), kontrat kartı (Avalanche logosu, Snowtrace), ERC-8004 kartı sadece agent_id varsa, sicil tablosu (OPEN, SIM/LIVE, "1 BUY · 4 HOLD", ✅/❌/—, satır içi Verify).
+  - Settings salt okunur: mod rozeti + "Switching to live is a human action", config'te OLAN bütün anahtarlar (bilinenler etiketli, bilinmeyenler ham; olmayan limit gizli), guardrail listesi, System › Errors tablosu / "No errors".
+  - Durumlar: iskelet + "connecting…", bayat veri (> 3 × cycle_seconds, sadece canlı kaynakta), okuma hatası şeridi (son iyi state kalır), boş karar "Waiting for first cycle — next in …", pozisyon yok "All cash — trend filter is risk-off".
+- Commit edilmemiş / izlenmeyen dosyalar: worktree kökünde `.claude/launch.json` (sadece önizleme aracı için; web/ dışı, commit edilmez).
 - Çalıştırılan kontroller (komut → sonuç):
-  - `cd web && npm run build` → geçti (tsc + vite, 202 kB js).
-  - `npm run dev` (mock) ve `npm run dev:demo` → 4 ekran açıldı, konsolda hata yok; ekran görüntüleri `web/docs/screenshots/`.
-  - Kendin doğrula: demo döngü #11 ✅; payload'a 1 boşluk → ❌; Fuji RPC erişildi, demo tx "bulunamadı" (beklenen).
-  - normalize(): null/sayı/dizi/yanlış tipli 7 girdi → hiçbiri fırlatmadı.
-  - Kanonik payload: demo üreticisinin JSON'u Python `json.dumps(sort_keys, separators, ensure_ascii)` ile birebir; keccak256("") test vektörü doğru.
-  - `GRAIL_STATE_PATH` var → `X-Grail-Source: live`; yok → mock + `X-Grail-Missing`.
-- Çalıştırılmayan kontroller ve nedeni: gerçek `runtime/state.json` yok (agent T-006 henüz yazmıyor); gerçek Fuji commit tx ile zincir kontrolü (T-003 deploy bekleniyor).
-- Devam eden süreçler / portlar: önizleme sunucuları 5173 (mock) ve 5174 (demo) açık kalmış olabilir; kapatmak serbest.
+  - `cd web && npm run build` → geçti.
+  - `npm run dev:demo` (5174) → 4 ekran açıldı; döngü #11 Verify → ✅ Match, "all 5 decisions match the sealed payload".
+  - `npm run dev` (mock, 5173) → 4 ekran açıldı, hata bandı yok, yatay taşma yok; mock Verify → "Mock data — cannot verify".
+  - Mobil 375 px → menü/üst bar yatay kayar, içerik tek sütun.
+  - Ekran görüntüleri: `web/docs/screenshots/` (1-dashboard, 2-decisions, 2b-verify-match, 3-ledger, 4-settings, mobile-decisions).
+  - Önceki turdan: normalize() 7 bozuk girdi → hata fırlatmadı; GRAIL_STATE_PATH var → live, yok → mock + uyarı; Fuji RPC tarayıcıdan erişilebilir.
+- Çalıştırılmayan kontroller ve nedeni: gerçek runtime/state.json yok (T-006); gerçek Fuji commit tx'iyle zincir kontrolü (T-003 chain.json bekleniyor).
+- Devam eden süreçler / portlar: önizleme sunucuları 5173 (mock), 5174 (demo) açık olabilir; kapatmak serbest.
 - Dış eylemler (emir id, tx hash) ve durumu: yok.
 - Açık sorun / denenenler:
-  - UI dili Türkçe. Jüri İngilizce isterse metinler bileşenlerde düz string (i18n yok).
-  - state.config örnekte sadece 4 alan taşıyor; limit ekranı eksik alanları "agent bu değeri state'e yazmıyor" diye gösterir → istek: agent tam config'i state.config'e yazsın.
-  - state.chain'de `agent_id` (ERC-8004) ve `identity_registry` alanları sözleşmede yok; UI okuyor (agent_id | agentId) → istek.
-- TEKRARLANMAMASI gereken işlem: vite.config'te yol için `new URL(...).pathname` kullanma (boşluklu klasörde %20 → 404); `fileURLToPath` kullan. Gövdeye global `tabular-nums` koyma (Schibsted'de noktalama aralanıyor).
-- SIRADAKİ İLK ADIM: `git merge main`; docs/ui-brief.md veya docs/design/ geldiyse farkları uygula; T-006 state.json yazınca `GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev` ile gerçek veriyle ekran görüntüsü al; chain.json gelince `chainHints()` (src/verify.ts) anahtarlarını gerçek şekle göre düzelt.
+  - Engine `reason` metinleri Türkçe ("-> nakit", "hedef"); UI İngilizce. Engine'e istek: reason'ı İngilizce yaz (UI metni olduğu gibi gösterir).
+  - Brifte istenen "on-chain 0x…" satırı ABI ile kontrattan okunmuyor; commit tx calldata'sında hash aranıyor (ABI'siz). chain.json gelince `chainHints()` + gerekirse ABI okuması eklenecek.
+- TEKRARLANMAMASI gereken işlem: vite.config'te `new URL(...).pathname` (boşluklu yol → 404) — `fileURLToPath` kullan.
+- SIRADAKİ İLK ADIM: `git merge main` (ui-brief main'e gelmiş olabilir); chain.json gelince src/verify.ts `chainHints()` anahtarlarını gerçek şekle göre düzelt; T-006 state yazınca `GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev` ile gerçek veriden ekran görüntüsü al; Claude Design çıktısı gelirse farkları uygula.

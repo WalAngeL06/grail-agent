@@ -63,7 +63,7 @@ export default function Dashboard({ s }: { s: GrailState }) {
         </Card>
 
         <Card title="Holy Grail: Sharpe vs number of assets" meta={m.window_bars ? `correlation over ${m.window_bars} bars` : undefined}>
-          <HolyGrail nAssets={N} rho={m.avg_corr} srSingle={m.sr_single_assumed} srNow={m.sr_portfolio_est} curve={m.holy_grail_curve} />
+          <HolyGrail nAssets={N} rho={m.avg_corr} srSingle={m.sr_single_assumed} srNow={m.sr_portfolio_est} nEffNow={ne} curve={m.holy_grail_curve} />
         </Card>
       </div>
 

@@ -14,9 +14,9 @@ const M = { l: 44, r: 64, t: 16, b: 36 };
 const X_MAX = 20;
 const REFS = [0, 0.2, 0.4, 0.8];
 
-type Props = { nAssets?: number; rho?: number; srSingle?: number; srNow?: number; curve: { n: number; sr: number }[] };
+type Props = { nAssets?: number; rho?: number; srSingle?: number; srNow?: number; nEffNow?: number; curve: { n: number; sr: number }[] };
 
-export default function HolyGrail({ nAssets, rho, srSingle, srNow, curve }: Props) {
+export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curve }: Props) {
   const live = rho !== undefined ? clamp(round2(rho), 0, 0.95) : undefined;
   const [what, setWhat] = useState<number | null>(null);
   const [hover, setHover] = useState<number | null>(null);
@@ -37,7 +37,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, curve }: Prop
   for (let t = 0; t <= yMax + 1e-9; t += 0.5) yTicks.push(Number(t.toFixed(1)));
 
   const nowSr = N !== undefined ? (!isWhatIf && srNow !== undefined ? srNow : srP(sr1, N, r)) : undefined;
-  const nowBets = N !== undefined ? nEff(N, r) : undefined;
+  const nowBets = N !== undefined ? (!isWhatIf && nEffNow !== undefined ? nEffNow : nEff(N, r)) : undefined;
   const ceiling = r > 0 ? sr1 / Math.sqrt(r) : undefined;
 
   const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
@@ -107,12 +107,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, curve }: Prop
 
           <g clipPath="url(#hg-plot)">
             {REFS.map((rr) => (
-              <g key={rr}>
-                <path d={path(rr)} fill="none" stroke="var(--dim)" strokeWidth="1" opacity="0.7" />
-                <text x={W - M.r + 6} y={y(srP(sr1, X_MAX, rr)) + 4} fontSize="11" fill="var(--dim)">
-                  ρ {rr}
-                </text>
-              </g>
+              <path key={rr} d={path(rr)} fill="none" stroke="var(--dim)" strokeWidth="1" opacity="0.7" />
             ))}
             {ceiling !== undefined && ceiling < yMax && (
               <g>
@@ -132,6 +127,12 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, curve }: Prop
                 .map((p) => <circle key={p.n} cx={x(p.n)} cy={y(p.sr)} r="3.5" fill="var(--bg)" stroke="var(--grail)" strokeWidth="1.5" />)}
           </g>
 
+          {REFS.map((rr) => (
+            <text key={rr} x={W - M.r + 6} y={y(srP(sr1, X_MAX, rr)) + 4} fontSize="11" fill="var(--dim)">
+              ρ {rr}
+            </text>
+          ))}
+
           {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={M.t} y2={H - M.b} stroke="var(--border-strong)" />}
 
           {N !== undefined && nowSr !== undefined && Number.isFinite(nowSr) && (
@@ -139,7 +140,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, curve }: Prop
               <circle className="pulse" cx={x(N)} cy={y(nowSr)} r="7" fill="none" stroke="var(--grail)" strokeWidth="2" />
               <circle cx={x(N)} cy={y(nowSr)} r="6" fill="var(--grail)" stroke="var(--bg)" strokeWidth="2" />
               <text x={x(N) + 12} y={y(nowSr) - 12} fontSize="12" fontWeight="600" fill="var(--text)">
-                You are here: {N} coins ≈ {fmt(nowBets, 2)} bets
+                You are here: {N} coins ≈ {fmt(nowBets, 2, 2)} bets
               </text>
             </g>
           )}
@@ -169,7 +170,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, curve }: Prop
           aria-valuetext={`ρ ${fmt(r, 2)}: ${N ?? 5} coins give ${fmt(nEff(N ?? 5, r), 2)} effective bets`}
         />
         <span className="val">
-          ρ {fmt(r, 2, 2)} → {fmt(nEff(N ?? 5, r), 2)} bets
+          ρ {fmt(r, 2, 2)} → {fmt(!isWhatIf && nowBets !== undefined ? nowBets : nEff(N ?? 5, r), 2, 2)} bets
         </span>
       </div>
       <div className="whatif">

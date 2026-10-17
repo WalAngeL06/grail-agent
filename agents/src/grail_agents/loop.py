@@ -196,7 +196,11 @@ class AgentLoop:
                         try:
                             outcome = self.orders.execute(deepcopy(decision), portfolio, client_order_id=record["client_order_ids"][inst], live_confirmed=self.live_confirmed)
                             if outcome["order_status"] in {"simulated", "filled", "canceled", "pending", "partial", "unknown"}:
-                                outcome = self.orders.query(record["client_order_ids"][inst])
+                                try:
+                                    outcome = self.orders.query(record["client_order_ids"][inst])
+                                except Exception as error:
+                                    self._error(error, "agents.order.query", cycle_id)
+                                    outcome = {**outcome, "order_status": "unknown"}
                         except Exception as error:
                             self._error(error, "agents.order", cycle_id)
                             outcome = {"okx_order_id": None, "order_status": "blocked" if isinstance(error, GrailError) else "unknown", "fill_price": None}

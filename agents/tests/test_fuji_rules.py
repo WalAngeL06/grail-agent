@@ -4,6 +4,7 @@ from grail_agents.loop import AgentLoop
 from grail_agents.storage import CycleStore
 from test_loop import fixed_decide, Market, rig
 from grail_agents.chain import SimulatedChain
+from grail_agents.config import GrailError
 
 
 def test_cycle_floor_survives_restart_and_never_moves_backwards(tmp_path):
@@ -43,3 +44,17 @@ def test_simulated_orders_are_queried_before_reveal(rig, monkeypatch):
     assert events.count('query') == 2
     assert events.index('execute') < events.index('query') < events.index('reveal')
     assert json.loads(chain.lookup(1)['okx_order_id']) == {'BTC-USDT': 'simulated', 'ETH-USDT': 'simulated'}
+
+
+def test_status_query_failure_retains_the_known_order_identity(rig, monkeypatch):
+    _, _, chain, orders, _, create = rig
+    # Model the exchange boundary only; no network or actual live execution.
+    monkeypatch.setattr(orders, 'execute', lambda *a, **kw: {'order_status': 'filled', 'okx_order_id': '42', 'fill_price': '100'})
+    def failed_query(client_id):
+        raise GrailError('ATK_TIMEOUT: status read unavailable')
+    monkeypatch.setattr(orders, 'query', failed_query)
+    state = create().run_once()
+    row = next(d for d in state['decisions'] if d['inst_id'] == 'BTC-USDT')
+    assert row['order_status'] == 'unknown'
+    assert row['okx_order_id'] == '42'
+    assert json.loads(chain.lookup(1)['okx_order_id'])['BTC-USDT'] == '42'

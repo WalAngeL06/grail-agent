@@ -1,4 +1,4 @@
-"""Read-only account smoke and an explicit simulated-chain agent runner."""
+"""Read-only account smoke and dry-run agent with explicit simulated/Fuji ledger."""
 import argparse
 import json
 import os
@@ -8,7 +8,7 @@ from dotenv import dotenv_values
 from grail_analyst import make_provider
 
 from .atk import AtkClient
-from .chain import SimulatedChain
+from .chain import SimulatedChain, FujiChain
 from .config import AgentConfig, GrailError, money, number
 from .loop import AgentLoop
 from .market import fetch_snapshot
@@ -47,7 +47,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="GRAIL read-only data + dry-run agent (no live orders)")
     parser.add_argument("command", choices=["smoke", "run"])
     parser.add_argument("--config", required=True, type=Path)
-    parser.add_argument("--chain", choices=["simulated"], help="explicit fake chain; real adapter awaits chain.json")
+    parser.add_argument("--chain", choices=["simulated", "fuji"], help="explicit offline simulation or real Fuji transactions")
+    parser.add_argument("--chain-file", type=Path, default=Path(__file__).resolve().parents[3] / 'contracts/chain.json')
     parser.add_argument("--runtime", type=Path, default=Path("runtime"))
     parser.add_argument("--cycles", type=int, help="positive cycle count; omit for continuous execution")
     args = parser.parse_args(argv)
@@ -59,14 +60,14 @@ def main(argv=None):
             cfg = AgentConfig.from_mapping(mapping)
             if not cfg.dry_run:
                 raise GrailError("RUN_DRY_RUN: this command requires dry_run=true")
-            if args.chain != "simulated":
-                raise GrailError("CHAIN_REQUIRED: explicitly choose --chain simulated; real adapter is pending")
+            if args.chain is None:
+                raise GrailError("CHAIN_REQUIRED: explicitly choose --chain simulated or --chain fuji")
             if args.cycles is not None and args.cycles < 1:
                 raise GrailError("CONFIG_CYCLES: cycles must be positive")
-            chain = SimulatedChain(args.runtime / "simulated-chain.json")
+            chain = SimulatedChain(args.runtime / "simulated-chain.json") if args.chain == 'simulated' else FujiChain(args.chain_file, args.runtime)
             loop = AgentLoop(mapping, AtkClient(), chain, args.runtime, provider=load_provider())
             state = loop.run(cycles=args.cycles)
-            result = {"ok": state["agent"]["status"] != "degraded", "chain_simulated": True, "state_path": str((args.runtime / "state.json").resolve()), "cycle_id": state["agent"]["cycle_id"], "errors": len(state["errors"]), "commits": state["chain"]["commits"], "reveals": state["chain"]["reveals"]}
+            result = {"ok": state["agent"]["status"] != "degraded", "chain_simulated": state['chain'].get('simulated', args.chain == 'simulated'), "state_path": str((args.runtime / "state.json").resolve()), "cycle_id": state["agent"]["cycle_id"], "errors": len(state["errors"]), "commits": state["chain"].get("commits"), "reveals": state["chain"].get("reveals")}
     except (OSError, json.JSONDecodeError):
         print(json.dumps({"ok": False, "error": "CONFIG_FILE: cannot read valid config JSON"}))
         return 1

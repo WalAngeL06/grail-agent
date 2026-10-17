@@ -6,6 +6,7 @@ from typing import Protocol
 from .config import GrailError
 from .payload import commitment
 from .storage import atomic_json, read_json
+from .fuji import FujiChain
 
 
 class ChainAdapter(Protocol):

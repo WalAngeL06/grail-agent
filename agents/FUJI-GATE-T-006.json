@@ -1,0 +1,37 @@
+{
+  "verified_at": "2026-10-17T14:50:50.639007+03:00",
+  "descriptor_main_commit": "9bc78e3",
+  "contracts_version": "0.5",
+  "network": "fuji",
+  "chain_id": 43113,
+  "ledger": "0x1B5fcf6DeFf2F9375338A2C35932224522118851",
+  "agent_id": "1",
+  "dry_run": true,
+  "cycle_id": 1,
+  "commit_hash": "0xd9064ac4000cae4637a50cd3f25b4ae7c9612e9c9600772f7468533371785a83",
+  "commit": {
+    "tx_hash": "0x7b47c4f313ffa5630d1acfff6411f11c6d13c321bbc69649ec8c90976995f728",
+    "status": 1,
+    "block": 59596837
+  },
+  "reveal": {
+    "tx_hash": "0x541cb8ff88aac0248fbf79d7997915b62bb08fb873e226bbefc35cbcec77cf45",
+    "status": 1,
+    "block": 59596842
+  },
+  "okxOrderId": "{\"AVAX-USDT\":\"simulated\",\"BTC-USDT\":\"simulated\",\"ETH-USDT\":\"simulated\",\"OKB-USDT\":\"simulated\",\"SOL-USDT\":\"simulated\"}",
+  "simulated_order_count": 5,
+  "errors": 0,
+  "pending_count": 0,
+  "state_path": "C:\\Users\\Serdar Arif\\Desktop\\Agentic Hack-wt\\agents\\agents\\runtime\\t006-fuji-gate\\state.json",
+  "verified_checks": [
+    "chainId",
+    "receipt status/from/to/blockHash",
+    "agentId and cycleId events",
+    "reveal payload bytes",
+    "independent Web3.keccak(payload+salt)",
+    "canonical order summary",
+    "onchain committed/revealed flags",
+    "empty pending"
+  ]
+}

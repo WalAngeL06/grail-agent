@@ -46,3 +46,21 @@ def test_grail_env_only_passes_llm_settings_to_provider(tmp_path, monkeypatch):
     assert captured[0]["LLM_API_KEY"] == "fake-value"
     assert captured[0]["LLM_MODEL"] == "test-model"
     assert set(captured[0]) <= {"LLM_API_KEY", "LLM_MODEL", "LLM_PROVIDER"}
+
+
+def test_cli_reports_degraded_chain_without_traceback(cfg_dict, tmp_path, monkeypatch, capsys):
+    from grail_agents.chain import SimulatedChain
+    from grail_agents.config import GrailError
+    path = tmp_path / 'config.json'
+    path.write_text(json.dumps(cfg_dict))
+    class UnavailableChain(SimulatedChain):
+        def next_cycle_id(self):
+            raise GrailError('CHAIN_RPC: read unavailable')
+        def info(self):
+            raise GrailError('CHAIN_RPC: read unavailable')
+    monkeypatch.setattr(cli, 'SimulatedChain', lambda path: UnavailableChain())
+    monkeypatch.setattr(cli, 'AtkClient', lambda: Market(cfg_dict['coins']))
+    monkeypatch.setattr(cli, 'load_provider', lambda: None)
+    assert cli.main(['run', '--config', str(path), '--chain', 'simulated', '--cycles', '1', '--runtime', str(tmp_path / 'runtime')]) == 1
+    result = json.loads(capsys.readouterr().out)
+    assert result['ok'] is False and result['errors'] > 0

@@ -1,17 +1,15 @@
 # Handoff — integrator (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 14:43 (Europe/Istanbul)
-- Aktif görev / durum: R-003 DONE; T-003 INTEGRATED. Kullanıcı role/review@a6044d7 merge + push ve iki koşulun işlenmesini istedi.
-- Oturum: Codex · hesap 1 / integrator; worktree Agentic Hack (ana), branch main; son commit bu handoff'u içeren merge commit'i (git log -1).
-- contracts okunan: 0.5 → teslim 0.6 (D-013). VERSION/config/state örnekleri aynı sürüm; dry_run=true. chain.json.contractVersion=0.5 deploy anının kaydıdır; ABI/hash/testVector değişmedi.
-- Teslim: a6044d7 = origin/role/review; yalnız coord/reviews/T-003.md + coord/handoffs/reviewer.md. R-003 APPROVE koşullu, BLOCKER/MAJOR yok; yeniden deploy gerekmez.
-- Koşul 1: decision.md kanonik okxOrderId JSON eşlemesi inst_id → ordId|simulated|unknown; emir yoksa boş string. Normal/kurtarma aynı; sorgu sonra reveal. Coin başına state.decisions[].okx_order_id biçimi aynı.
-- Koşul 2: T-006 kabulünde R-003-3 kalıcı/monoton cycle_id; restart, tamamlanmış pending temizliği ve dry_run/canlı geçişi kimlikleri yeniden kullanmaz. Uygulama/test kanıtı agents sahibinin T-006 tesliminde aranır.
-- Kontroller (birleşmiş main/v0.6): chain 25 passing (1s), engine+analyst 84 passed (1.70s), agents 78 passed (0.22s), web build geçti (45 modül, 644ms). v0.6 config/state/VERSION, validate_config, dry_run ve kanonik map örnekleri doğrulandı; git diff --check geçti.
-- Sınır: ürün kaynakları chain/agents/engine/analyst/web + contracts/chain.json 9bc78e3 ile aynı. Integrator yalnız sözleşme/koordinasyon dosyalarını güncelledi; review dosyaları dalın merge'inden.
-- Fuji önceki kanıt (14:36): dört receipt/ABI/runtime + agent 1 sahip/kayıt/registry/hash doğrulandı; sayaçlar 0/0. Ledger 0x1B5fcf6DeFf2F9375338A2C35932224522118851; IdentityRegistry 0x120A4E53A24ddd09991633b4Cb88c3feA6166721. Yeni RPC verify bu oturumda çalıştırılmadı.
-- Çalıştırılmayanlar: T-006 uçtan uca, gerçek state/Fuji UI, Snowtrace tarayıcı görünümü, canlı emir. Yeni dış tx/emir/süreç/port yok; sırlar okunmadı/çıktıya verilmedi.
-- Korunan kapılar: R-002-1 canlıdan önce agents sahibi düzeltmeli; R-002-2 T-006 kabulünde. R-003-1/4 UI doğrulama önerileri ve R-003-5/6 opsiyonel notları inceleme dosyasında. README köke taşıma: 17:00 freeze SONRASI + gerçek değerler doğrulanınca (D-012).
-- TEKRARLAMA: Fuji deploy, yeni agent kaydı, deployment journal silme yok; belirsiz tx/emir yeniden gönderilmez, önce kimliğiyle sorgulanır. Canlı moda geçiş yetkisi yok.
-- Teslim kontrolü: commit/push sonrasında status temiz ve HEAD = origin/main doğrulanır; sonuç RAPOR'da.
-- SIRADAKİ İLK ADIM: Kullanıcı v0.6/D-013 RAPOR'unu agents ve web'e taşısın; temiz worktree'de git merge main ile alsınlar. Agents T-006/R-002/R-003 kabul kanıtını teslim edince sınır + kart komutlarını doğrula, merge/push; ardından gerçek state/Fuji UI.
+- Güncelleme zamanı: 2026-10-17 14:56 (Europe/Istanbul)
+- Aktif görev / durum: T-009 kart açma tamam; uygulama TODO, sahibi engine. Kullanıcı engine reason metinlerinin sade İngilizce olmasını istedi; UI doğrudan gösteriyor, tasarım + web talebi.
+- Oturum: Codex · hesap 1 / integrator; worktree Agentic Hack (ana), branch main; son commit bu handoff'u içeren görev kartı commit'i (git log -1).
+- contracts okunan/teslim: 0.6 (değişmedi); alan/API aynı. dry_run=true; chain.json.contractVersion=0.5 deploy anının kaydı, ABI/hash/testVector korunur.
+- Teslim: coord/tasks/T-009.md + coord/STATE.md + bu handoff. Engine/agents/web/chain/analyst koduna yazılmadı.
+- T-009: bütün decisions[].reason dalları ve _analyze why/fallback'leri kısa, tek satır, ASCII İngilizce; karar sebebi ve sayısal bağlam doğru. Alan, imza, hesap, karar, guardrail ve hata kodları aynı. Reason hash'e girdiğinden yeni karar hash'i değişebilir; geçmiş/pending payload ve golden vector yeniden yazılmaz.
+- T-009 kabulü: önce bilinen girdilerle İngilizce gerekçe beklentileri, sonra metin değişikliği; cd engine && uv run pytest -q. Sınır engine/ + coord/handoffs/engine.md. Bağımsız reviewer Codex · hesap 2; engine commit/push ve READY_FOR_REVIEW RAPOR'u bekleniyor.
+- Kontroller: kaynakta Türkçe reason üretimi ve web'in doğrudan d.reason gösterimi doğrulandı; kart/STATE tutarlılığı + git diff --check + yalnız üç koordinasyon dosyası sınırı kontrol edilir. Bu tur ürün testleri çalıştırılmadı (ürün kodu değişmedi).
+- Önceki kanıt: main@5db51a2 R-003 merge/push tamam; iki koşul decision.md/T-006 kabulünde, yeniden deploy gerekmez. v0.6 ağacında chain 25, engine+analyst 84, agents 78 test ve web build 14:43'te geçti; yeni kanıt sayılmaz.
+- Açık kapılar: agents T-006 uçtan uca + R-002-1/2 + R-003-2/3 uygulama/test kanıtı; gerçek state/Fuji UI. R-002-1 kapanmadan canlı yok. T-008 README köke: 17:00 freeze SONRASI + gerçek değerler doğrulanınca (D-012).
+- TEKRARLAMA: Fuji yeniden deploy/kayıt, journal silme veya emir gönderme yok. Belirsiz tx/emir önce kimliğiyle sorgulanır; canlı mod yetkisi yok. Bu tur dış tx/emir, sır okuma veya yeni süreç/port yok.
+- Teslim kontrolü: commit/push sonrası status temiz, HEAD = origin/main ve uzak main hash'i doğrulanır; sonuç RAPOR'da.
+- SIRADAKİ İLK ADIM: Kullanıcı T-009 RAPOR'unu engine'e taşısın; temiz role/engine worktree'de git merge main ile kartı alıp uygulasın. T-009 veya T-006 READY_FOR_REVIEW teslimi gelince kapsam + kabul komutunu doğrula, bağımsız inceleme sonrası merge/push.

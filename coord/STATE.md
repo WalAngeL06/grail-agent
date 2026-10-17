@@ -1,13 +1,13 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r13 · 2026-10-17 14:43 (Europe/Istanbul)
+- Durum revizyonu: r14 · 2026-10-17 14:56 (Europe/Istanbul)
 - Ürün: `coord/BRIEF.md` kesinleşti; Fuji 43113'te dört kontrat + ERC-8004 agentId 1 deploy/kayıt doğrulandı. `contracts/chain.json` adres/ABI/testVector hazır.
 - OKX: `grail` profili bağlı (gerçek para; `dry_run` açık).
 - Entegrasyon: T-001/002/003/004/005(v0.5 UI)/007/008(taslaklar), R-002/R-003 main'de. R-003 (`role/review@a6044d7`) APPROVE koşullu; iki merge koşulu D-013 ile işlendi, yeniden deploy gerekmez.
 - Son doğrulama: birleşmiş main + v0.6: chain 25, agents 78, engine+analyst 84 test ve web build geçti (14:43). Fuji salt okunur RPC + çapraz hash 14:36 kanıtı aynı; uçtan uca döngü / gerçek state-Fuji UI henüz doğrulanmadı.
 - Aktif sözleşme: `contracts/VERSION` = 0.6 (D-013: reveal sonuç eşlemesi; T-006 kalıcı/monoton cycle_id kabulü). D-011 payload/hash ve state alanları aynı; chain.json deploy sürümü 0.5, dry_run açık.
 - Kaynak: Avalanche workshop slaytı (ERC-8004 boilerplate) ve ATK yapılandırması → D-006
-- Sıradaki öncelik: agents temiz worktree'de `git merge main` ile v0.6'yı alıp T-006'yı (analist + R-002-1/2 + R-003-2/3) tamamlasın → UI gerçek state/Fuji. README taşıma kapısı D-012; R-002-1 çözülmeden canlı yok.
+- Sıradaki öncelik: agents T-006'yı (analist + R-002-1/2 + R-003-2/3) tamamlasın → UI gerçek state/Fuji. Engine T-009'da UI'ın doğrudan gösterdiği reason metinlerini sade İngilizceye çevirsin (alan/API aynı). README kapısı D-012; R-002-1 çözülmeden canlı yok.
 
 ## Zaman kapıları
 | Saat | Kapı | Ölçüt |
@@ -33,6 +33,7 @@
 | T-006 | Agent döngüsü: decide → analyst review_payload → commit → ATK → reveal → state | agents (Codex · hesap 1) | TODO | T-001, T-002, T-003, T-007; contracts 0.6; R-002-1/2 + R-003-2/3 |
 | T-007 | LLM analist (yalnız BUY riskini azaltır; SELL exempt) | analyst (Claude Code · Max) | INTEGRATED | T-001; contracts 0.5 |
 | T-008 | Teslim metinleri: form açıklaması, README taslağı, pitch, demo | docs (Claude Code · Max) | INTEGRATED (taslaklar; freeze sonrası doğrulama açık) | T-003/T-006 gerçek değerleri; D-012 |
+| T-009 | Engine reason metinleri: sade İngilizce; alan/API aynı | engine (Claude Code · Max) | TODO | T-001; contracts 0.6; tasarım + web talebi |
 | R-002 | T-002 incelemesi: APPROVE koşullu, BLOCKER yok | Claude Code · Max (Opus 5.5) | DONE | bad30c3; R-002-1/2 T-006 kabulünde |
 | R-003 | T-003 incelemesi: APPROVE koşullu, yeniden deploy yok | reviewer (Claude Code · Opus 5.5) | DONE | a6044d7; R-003-2 decision.md v0.6, R-003-3 T-006 kabulünde |
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
@@ -57,6 +58,7 @@
 - R-003: `a6044d7` = origin/role/review; sınır yalnız coord/reviews/T-003.md + coord/handoffs/reviewer.md. R-003-2 kanonik okxOrderId eşlemesi ve R-003-3 kalıcı/monoton cycle_id kabulü işlendi; T-006 uygulama/test kanıtı henüz yok.
 - v0.6 birleşmiş ağaç: `cd chain && npx hardhat test` → 25 passing (1s); `cd engine && uv run pytest -q` → 84 passed (1.70s); `cd agents && uv run pytest -q` → 78 passed (0.22s); `cd web && npm run build` → geçti (45 modül, 644ms).
 - v0.6 config/state/VERSION eşleşmesi, validate_config, dry_run=true ve kanonik sonuç örnekleri doğrulandı; chain.json v0.5/golden payload korundu. chain/agents/engine/analyst/web ürün kaynakları 9bc78e3 ile aynı; yeni dış tx/emir yok.
+- T-009 kartı kullanıcı talebiyle açıldı (14:56): tüm engine reason/fallback metinleri sade İngilizce; alan/API/karar mantığı aynı. Sahip engine; bu teslim yalnız kart/STATE/integrator handoff'u, uygulama ve test kanıtı bekleniyor.
 
 ## Bekleyen merge'ler
 - (yok)

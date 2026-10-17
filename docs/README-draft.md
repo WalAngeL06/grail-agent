@@ -50,14 +50,30 @@ Built for the OKX ATK × Avalanche Agentic Hackathon (Ankara, 17 Oct 2026).
 - **Contracts:** ERC-8004 registries (based on `ava-labs/8004-boilerplate`) plus our `GrailLedger`.
 - **Why on chain:** the commit happens *before* the trade, so the decision can't be changed after the market moves. The chain is the agent's tamper-proof résumé, not just a place to log results.
 
-| Item | Value |
-|---|---|
-| GrailLedger | `<CHAIN_ADDRESS>` |
-| IdentityRegistry (ERC-8004) | `<CHAIN_ADDRESS>` |
-| ReputationRegistry | `<CHAIN_ADDRESS>` |
-| ValidationRegistry | `<CHAIN_ADDRESS>` |
-| Agent id (ERC-8004) | `<TBD>` |
-| Example commit / reveal tx | `<TBD>` / `<TBD>` |
+All four contracts are deployed on Fuji, and their source code is verified on Snowtrace.
+
+| Contract | Address | Verified source |
+|---|---|---|
+| GrailLedger (commit-reveal) | `0x1B5fcf6DeFf2F9375338A2C35932224522118851` | [Snowtrace #code](https://testnet.snowtrace.io/address/0x1B5fcf6DeFf2F9375338A2C35932224522118851#code) |
+| IdentityRegistry (ERC-8004) | `0x120A4E53A24ddd09991633b4Cb88c3feA6166721` | [Snowtrace #code](https://testnet.snowtrace.io/address/0x120A4E53A24ddd09991633b4Cb88c3feA6166721#code) |
+| ReputationRegistry | `0x326671e1e2e80121C3Cd53a9b9fA5751a669596F` | [Snowtrace #code](https://testnet.snowtrace.io/address/0x326671e1e2e80121C3Cd53a9b9fA5751a669596F#code) |
+| ValidationRegistry | `0x1a9c67CA99391812D7b157748fB814F6c7dADf0C` | [Snowtrace #code](https://testnet.snowtrace.io/address/0x1a9c67CA99391812D7b157748fB814F6c7dADf0C#code) |
+
+- **Agent identity:** ERC-8004 agent **#1** (`GRAIL-01`), wallet `0x0660f43f5307Ea7C5Dbb6685FEEB648eD9620fcf`.
+
+### On-chain proof
+| Cycle | What happened | Commit (before the order) | Reveal (after the order) |
+|---|---|---|---|
+| 1 | First Fuji cycle, practice mode: 5 simulated BUYs | [0x7b47c4f3…f728](https://testnet.snowtrace.io/tx/0x7b47c4f313ffa5630d1acfff6411f11c6d13c321bbc69649ec8c90976995f728) | [0x541cb8ff…cf45](https://testnet.snowtrace.io/tx/0x541cb8ff88aac0248fbf79d7997915b62bb08fb873e226bbefc35cbcec77cf45) |
+| 2 | **First live order**, 17 Oct 2026 15:37 (UTC+3): BUY 2 USDT of BTC-USDT on OKX TR, filled at 81,538.6, OKX order id `4017748393474314240` | [0x16f2d129…9569](https://testnet.snowtrace.io/tx/0x16f2d1294cda0181cf94dd50f7cfccf90b449e2a7534b5eccb6aa5a1a96e9569) | [0xae6537e9…41f7](https://testnet.snowtrace.io/tx/0xae6537e9acc9e66accfe5d0fe61b2f9a858460d7c42cf3d25f0acafa378541f7) |
+
+### Verify it yourself (read-only, no wallet, no keys)
+```bash
+cd chain && npm ci
+npm run verify:cycle:1        # → MATCH agent=1 cycle=1, keccak(payload||salt) == on-chain commitHash
+npm run verify:cycle -- --cycle 2   --commit-tx 0x16f2d1294cda0181cf94dd50f7cfccf90b449e2a7534b5eccb6aa5a1a96e9569   --reveal-tx 0xae6537e9acc9e66accfe5d0fe61b2f9a858460d7c42cf3d25f0acafa378541f7
+```
+The script decodes the payload and salt from the reveal transaction's calldata, recomputes the hash and compares it with the commit stored on chain. It exits with a non-zero code on any mismatch, and when the cycle has not been revealed yet. Public RPCs can rate-limit; set `FUJI_RPC_URL` to another Fuji endpoint if that happens.
 
 ## Repository layout
 | Path | What |
@@ -87,16 +103,21 @@ uv run python -m grail_agents smoke --config ../contracts/config.example.json
 
 # contracts
 cd chain && npx hardhat test
-<TBD: Fuji deploy command>
+npm run deploy:fuji            # already done; addresses are in contracts/chain.json
+npm run verify:sources         # checks that all 4 sources are verified on the explorer
 
-# autonomous agent loop (writes runtime/state.json)
-<TBD: loop command>
+# autonomous agent loop (writes <runtime>/state.json); practice mode, real Fuji commit/reveal
+cd agents
+uv run python -m grail_agents run --config ../contracts/config.example.json --chain fuji --runtime runtime/demo
+#   add --cycles 1 for a single cycle; omit it to run every cycle_seconds
+# live trading needs a config with dry_run=false AND both flags (see agents/README.md):
+#   --chain fuji --live --confirm-live GRAIL-LIVE-SPOT
 
 # dashboard
 cd web && npm install
 npm run dev                                   # mock state (contracts/state.example.json)
 npm run dev:demo                              # demo fixture with real hashes
-GRAIL_STATE_PATH=../runtime/state.json npm run dev   # live agent state
+GRAIL_STATE_PATH=../agents/runtime/demo/state.json npm run dev   # live agent state
 ```
 
 Config (`contracts/config.example.json`): coins, `cycle_seconds`, `candle_bar`, `lookback_bars`, `risk_budget_pct`, `max_position_pct`, `target_vol_pct`, `min_order_usdt`, `max_order_usdt`, `max_total_deploy_usdt`, `kill_switch_drawdown_pct`, `dry_run`.
@@ -110,7 +131,10 @@ Config (`contracts/config.example.json`): coins, `cycle_seconds`, `candle_bar`, 
 - **No secrets in the repo:** `.env` is git-ignored, and the code never prints or logs keys.
 
 ## Status at submission
-`<TBD: what ran live — cycles committed/revealed, dry_run or live orders, test counts at freeze>`
+- **On chain (Fuji):** 2 cycles committed, 2 revealed, 0 open. Cycle 1 was in practice mode; cycle 2 was the first live order (see "On-chain proof").
+- **Live trading:** one live order so far: BUY 2 USDT of BTC-USDT, filled. A person switched on live mode for that run with a 2 USDT cap.
+- **Tests (offline):** engine + analyst 104 · agents (OKX adapter + loop) 157 · contracts 38.
+- **30-day replay** (simulation on real OKX 1H candles, 17 Sep → 17 Oct 2026, 50 USDT, 0.1% fees, no orders sent): GRAIL's worst drop was **7.5%** vs **14.5%** for an equal-weight buy-and-hold of the same 5 coins. Return was +1.8% vs +8.8%; we don't claim GRAIL beats buy-and-hold. The 5 coins averaged **1.36 independent bets**. Details: `engine/out/replay-summary.md`.
 
 ## Team
 `<TBD>`

@@ -2,9 +2,14 @@
 from __future__ import annotations
 
 import math
+from functools import lru_cache
 
 import numpy as np
 from scipy import stats as _st
+
+DFA_MIN_SCALE = 4  # en küçük DFA penceresi (bar)
+DFA_BIAS_SIMS = 400  # küçük örnek düzeltmesi için beyaz gürültü simülasyonu (sabit seed)
+DFA_BIAS_SEED = 20261017
 
 
 def sr_portfolio(sr_i: float, n: int, rho: float) -> float:
@@ -52,6 +57,67 @@ def avg_corr(corr) -> float | None:
     if n < 2:
         return None
     return float(c[~np.eye(n, dtype=bool)].mean())
+
+
+def _dfa_slope(x) -> float:
+    """DFA-1 ham üssü: profil y = cumsum(x - ort), pencerelerde doğrusal trend çıkarılır, log F(s) ~ H log s."""
+    x = np.asarray(x, dtype=float)
+    n = x.size
+    smax = n // 4
+    if smax <= DFA_MIN_SCALE:
+        return math.nan
+    scales = np.unique(np.floor(np.geomspace(DFA_MIN_SCALE, smax, num=6)).astype(int))
+    y = np.cumsum(x - x.mean())
+    fs = []
+    for s in scales:
+        k = n // s
+        segs = np.concatenate([y[:k * s].reshape(k, s), y[n - k * s:].reshape(k, s)])  # baştan + sondan
+        t = np.arange(s, dtype=float)
+        A = np.column_stack([t, np.ones(s)])
+        coef, *_ = np.linalg.lstsq(A, segs.T, rcond=None)
+        fs.append(math.sqrt(float(np.mean((segs.T - A @ coef) ** 2))))
+    fs = np.array(fs)
+    if not (fs > 0).all():
+        return math.nan
+    return float(np.polyfit(np.log(scales), np.log(fs), 1)[0])
+
+
+@lru_cache(maxsize=64)
+def _dfa_bias(n: int) -> float:
+    """n uzunluklu beyaz gürültüde DFA ortalamasının 0.5'ten sapması (sabit seed → deterministik)."""
+    rng = np.random.default_rng(DFA_BIAS_SEED)
+    hs = [_dfa_slope(rng.standard_normal(n)) for _ in range(DFA_BIAS_SIMS)]
+    return float(np.nanmean(hs)) - 0.5
+
+
+def hurst_dfa(returns) -> float:
+    """Getirilerden Hurst üssü (DFA-1, küçük örnek düzeltmeli: H_ham - E[H_ham | beyaz gürültü, n] + 0.5).
+    ~0.5 rastgele yürüyüş, >0.5 süreklilik (trend), <0.5 ortalamaya dönüş. Hesaplanamazsa NaN."""
+    r = np.asarray(returns, dtype=float)
+    if r.size < 4 * (DFA_MIN_SCALE + 1) or not np.isfinite(r).all() or not r.std() > 1e-15:
+        return math.nan
+    h = _dfa_slope(r)
+    return h - _dfa_bias(r.size) if math.isfinite(h) else math.nan
+
+
+def breakout_setup(closes, tol: float) -> str:
+    """Artan sıralı kapanışlarda (son bar dahil, sonrası yok) kırılım durumu.
+    Range tepesi = pencerenin ilk 2/3'ünün en yükseği. Son kapanış tepenin üstünde değilse "none";
+    üstündeyse ve kırılım barından SONRA bir kapanış tepeye (±tol oranı) geri gelip son kapanış yine üstteyse "retest";
+    aksi halde "breakout"."""
+    c = np.asarray(closes, dtype=float)
+    k = max(2, c.size // 3)
+    if c.size < k + 2:
+        return "none"
+    level = float(c[:-k].max())
+    if not c[-1] > level:
+        return "none"
+    recent = c[-k:]
+    first = int(np.nonzero(recent > level)[0][0])
+    after = recent[first + 1:]
+    if after.size and (np.abs(after / level - 1.0) <= tol).any():
+        return "retest"
+    return "breakout"
 
 
 def psr(returns, sr_benchmark: float = 0.0) -> float | None:

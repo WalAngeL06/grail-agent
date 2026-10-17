@@ -6,6 +6,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
+    "audit": "ts-node scripts/audit-ledger.ts",
     "deploy:fuji": "hardhat run scripts/deploy.ts --network fuji",
     "verify:fuji": "hardhat run scripts/verify-deployment.ts --network fuji",
     "verify:sources": "hardhat run scripts/check-source-verification.ts --network fuji",

@@ -37,11 +37,11 @@ def significant(f):
 
 @pytest.fixture(autouse=True)
 def mr_enabled(monkeypatch):
-    """Bu dosya MR kolunun davranışını sınar: bayrağı aç (varsayılan kapalı, test_mr_disabled_by_default)."""
+    """Bu dosya MR kolunun davranışını sınar: bayrak açık (varsayılan da açık; kapalı hali test_mr_disabled_behaves_like_t014)."""
     monkeypatch.setattr(mod, "MR_ENABLED", True)
 
 
-def test_mr_disabled_by_default_behaves_like_t014(cfg, monkeypatch):
+def test_mr_disabled_behaves_like_t014(cfg, monkeypatch):
     monkeypatch.setattr(mod, "MR_ENABLED", False)
     monkeypatch.setattr(mod, "hurst_dfa", lambda r: 0.40)
     closes = ou_closes(HL2, seed=5)  # ranging + anlamlı + z ≤ −1.5: kol açık olsa küçük BUY olurdu
@@ -55,10 +55,10 @@ def test_mr_disabled_by_default_behaves_like_t014(cfg, monkeypatch):
     assert {k: held[k] for k in ("action", "size_usdt", "reason")} == {k: ref[k] for k in ("action", "size_usdt", "reason")}
 
 
-def test_mr_flag_default_is_off():
+def test_mr_flag_default_is_on():
     import importlib
 
-    assert importlib.reload(mod).MR_ENABLED is False
+    assert importlib.reload(mod).MR_ENABLED is True
 
 
 @pytest.fixture

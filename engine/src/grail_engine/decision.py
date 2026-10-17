@@ -24,8 +24,9 @@ SETUP_SIZE = {"retest": 1.0, "none": 0.5, "breakout": 0.0}  # hedefin çarpanı;
 SIGNAL_FALLBACK = {"hurst": 0.5, "regime": "unclear", "setup": "none"}  # veri yetersiz/geçersiz (contracts 0.6.1)
 # T-017 ortalamaya dönüş (O-U) kolu: sadece ranging + anlamlı O-U. Spot, açığa satış yok.
 # Kapalıyken O-U yine hesaplanır ve signals'ta raporlanır (sleeve "none"), kararı T-014 verir.
-# Varsayılan kapalı: 180 günlük backtest'te lookback 168'de T-017, T-014'ten kötü (engine/out/lookback-168.md).
-MR_ENABLED = False
+# Varsayılan AÇIK (kullanıcı kararı). Not: 180 günlük backtest'te lookback 168'de T-017, T-014'ten kötü
+# (engine/out/lookback-168.md, kill-switch-168.md).
+MR_ENABLED = True
 OU_T_MAX = -2.5  # b'nin t istatistiği en fazla bu (Hurst'ten bağımsız ikinci kanıt)
 OU_HL_MIN_H, OU_HL_MAX_H = 1.0, 12.0  # anlamlı yarı ömür aralığı (saat)
 MR_ENTRY_Z, MR_EXIT_Z = -1.5, -0.25  # giriş z ≤ −1.5; elde pozisyon varken z ≥ −0.25 → çıkış; arası tut

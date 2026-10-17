@@ -82,6 +82,21 @@ def _iso(ms: int) -> str:
     return datetime.fromtimestamp(ms / 1000, timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
 
 
+class PeakTracker:
+    """Analiz için kayan pencere zirvesi (son 168 saatin en yüksek equity'si). Motora girmedi (kullanıcı kararı:
+    canlıda eski kural, tüm zamanlar zirvesi); sadece out/kill-switch-168.md ölçümü için burada."""
+
+    def __init__(self, window_h: float = 168):
+        from collections import deque
+        self.window_ms, self.points = int(window_h * 3_600_000), deque()
+
+    def update(self, t_ms: int, equity: float) -> float:
+        self.points.append((int(t_ms), float(equity)))
+        while self.points and self.points[0][0] <= t_ms - self.window_ms:
+            self.points.popleft()
+        return max(e for _, e in self.points)
+
+
 # ---------------------------------------------------------------- simülasyon
 def simulate(job: dict) -> dict:
     """Tek koşu (ayrı süreçte): job = {strategy, cfg_overrides, mod_overrides, n_bars}."""
@@ -120,6 +135,7 @@ def simulate(job: dict) -> dict:
         setattr(mod, k, v)
 
     cash, qty, peak = capital, {c: 0.0 for c in coins}, capital
+    tracker = PeakTracker() if job.get("peak") == "rolling_168h" else None  # yoksa tüm zamanlar zirvesi (eski)
     mr_qty = {c: 0.0 for c in coins}
     px: dict[str, float] = {}
     by_last: dict[float, str] = {}
@@ -146,14 +162,15 @@ def simulate(job: dict) -> dict:
         by_last.clear()
         by_last.update({float(closes[c][t]): c for c in coins})
         e0 = cash + sum(qty[c] * px[c] for c in coins)
-        peak = max(peak, e0)
+        peak = tracker.update(times[k], e0) if tracker else max(peak, e0)
         snap = {"cycle_id": k + 1, "at_ms": times[k], "closes": {c: closes[c][t - lb:t + 1] for c in coins}}
         port = {"equity_usdt": e0, "cash_usdt": cash, "peak_equity_usdt": peak,
                 "positions": [{"inst_id": c, "size_base": qty[c], "value_usdt": qty[c] * px[c]} for c in coins if qty[c] > 0]}
         res = decide(snap, port, cfg)
         kill.append(bool((res["metrics"] or {}).get("kill_switch")))
         n_tr, f_bar = 0, 0.0
-        for d in res["payload"]["decisions"]:
+        frozen = job.get("kill_freeze") and kill[-1]  # eski davranış: tetikliyken hiç işlem yok (ayrıştırma için)
+        for d in ([] if frozen else res["payload"]["decisions"]):
             c, size = d["inst_id"], float(d["size_usdt"])
             if d["action"] == "BUY":
                 spend = min(size, cash)

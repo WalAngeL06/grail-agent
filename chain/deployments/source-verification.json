@@ -1,7 +1,7 @@
 {
   "network": "fuji",
   "chainId": 43113,
-  "checkedAt": "2026-10-17T12:18:59.509Z",
+  "checkedAt": "2026-10-17T12:34:58.412Z",
   "contracts": {
     "IdentityRegistry": {
       "address": "0x120A4E53A24ddd09991633b4Cb88c3feA6166721",

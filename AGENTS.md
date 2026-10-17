@@ -69,7 +69,11 @@ Mesajlaşma yok. Tek iletişim yolu: **dosyalar + kullanıcının taşıdığı 
 3. **Önce test:** davranışı bilinen girdi → beklenen çıktı örnekleriyle teste yaz, sonra kodu yaz.
 4. **Kontrol:** kartta yazan komutu çalıştır; çıktıyı RAPOR'a koy. Çalıştırmadığın kontrolü geçti diye yazma.
 5. **Sınır kontrolü:** `git diff --name-only main...HEAD` sadece senin yazabildiğin yolları göstermeli.
-6. **Teslim:** küçük commit'ler at, handoff'u güncelle, RAPOR yaz. Durum READY_FOR_REVIEW olur.
+6. **Teslim — COMMIT + PUSH ZORUNLU:** her anlamlı adımda ve HER RAPOR'dan önce kendi branch'ine commit at ve push'la
+   (`git add <kendi yolların>` → `git commit -m "<rol>: <ne>"` → `git push`). Commit'lenmemiş iş "yapıldı" sayılmaz;
+   RAPOR'daki `branch@commit` push'lanmış commit olmalı (`git status` temiz, `git log origin/<branch> -1` aynı hash).
+   Handoff'u güncelle (o da commit'e girer), RAPOR yaz. Durum READY_FOR_REVIEW olur.
+   Remote: `origin` = github.com/WalAngeL06/grail-agent (private). Sadece kendi branch'ine push; `main`'e sadece integrator.
 7. **Döngüye girme:** aynı hata 2 denemede çözülmediyse dur; hata + denenenler + hipotezle RAPOR yaz (BLOCKED).
 
 ## RAPOR biçimi (her turun sonunda, kullanıcı bunu integrator'a yapıştırır)
@@ -87,7 +91,8 @@ sıradaki ilk adım: <...>
 
 ## Integrator'ın merge kuralı
 Merge öncesi: sınır kontrolü (sadece sahibin yolları), görev kartındaki kontrol komutu kendi tarafında da geçer,
-sözleşme sürümü uyumlu. Merge sonrası `main` çalışır ve demo edilebilir kalmalı; `coord/STATE.md` güncellenir.
+sözleşme sürümü uyumlu. Merge sonrası `main` çalışır ve demo edilebilir kalmalı; `coord/STATE.md` güncellenir,
+commit'lenir ve `git push origin main` yapılır. Her merge'den sonra push; yerelde bekleyen merge yok.
 Durumlar: TODO → IN_PROGRESS → READY_FOR_REVIEW → INTEGRATED (ya da BLOCKED).
 
 ## Hesap / limit değişimi

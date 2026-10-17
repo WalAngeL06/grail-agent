@@ -18,6 +18,14 @@
 - Kontroller: `npm test` 22/22; `npm run build` + `npm run build:public` geçti; `--mode real` (cycle #70–72) tarayıcıda TR/EN 5 ekran;
   Verify #70 TR → Eşleşti, "Bir sayıyı değiştir" → Uyuşmadı + 4 TR sebep; 375 px'te 5 ekranda yatay taşma yok (scrollWidth 375), dil düğmesi x=12.
   Görüntüler: `web/docs/screenshots/v4-tr-{dashboard,decisions,ledger,verify,how,mobile-dashboard}.jpg`, `v4-en-{dashboard,decisions,ledger,verify,how}.jpg`.
+- Ek iş (planner, jüri önerisi):
+  - Motto: `<title>` "GRAIL — Proof before profit"; sidebar logosunun altında "Proof before profit." (+ TR'de "Önce kanıt, sonra kâr."), ≤760 px'te gizli;
+    Panel başlığının üstünde ince satır "GRAIL — Proof before profit." (+ TR alt cümle).
+  - Rehber / Tutorial sayfası `web/src/screens/Guide.tsx`, route `#/guide`, menüde How it works'ün üstünde (TR "Rehber", EN "Tutorial"); 6 adım kartı + "3 dakikada dene" kutusu;
+    intro şeridinde "Rehber" düğmesi How it works'ün yanında. TR metinde ekran adları menüdeki TR adlarla (Panel/Kararlar/Zincir Kaydı/Güvenlik limitleri) ve akış şeridi TR etiketleriyle eşitlendi.
+    Verify'da "Try to cheat" başlığı TR'de "Try to cheat · hile yapmayı dene" (Rehber bu adı kullanıyor). docs/TUTORIAL.md gelince metin farkı eşitlenecek.
+  - Kontrol: npm test 22/22, build + build:public geçti; 375 px'te guide/dashboard/decisions scrollWidth 375, alt menü 6 öğe sığıyor (en uzun "Kararlar" 42/63 px).
+    Görüntüler: v4-tr-tutorial.jpg, v4-tr-tutorial-try.jpg, v4-tr-tutorial-mobile.jpg, v4-en-tutorial.jpg, v4-tr-dashboard-motto.jpg.
 - Bilinen / küçük: masaüstünde (1280 px) üst bar hem TR hem EN'de iki satıra sarıyor (dil düğmesi 2. satırda) — önceden de flex-wrap tasarımı; taşma yok.
   Pozisyon tablosu "Miktar" (size_base) agent'ın ham string'i, biçimlenmiyor.
 - Devam eden süreçler / portlar: önizleme 5175 (`grail-web-real`) açık olabilir; kapatmak serbest.

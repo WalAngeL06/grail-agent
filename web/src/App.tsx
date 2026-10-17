@@ -9,13 +9,15 @@ import Decisions from "./screens/Decisions";
 import Ledger from "./screens/Ledger";
 import Settings from "./screens/Settings";
 import HowItWorks from "./screens/HowItWorks";
+import Guide from "./screens/Guide";
 
-export type Route = "dashboard" | "decisions" | "ledger" | "settings" | "how";
+export type Route = "dashboard" | "decisions" | "ledger" | "settings" | "guide" | "how";
 const ROUTES: { id: Route; label: () => string; short: () => string; icon: JSX.Element }[] = [
   { id: "dashboard", label: () => T("Dashboard", "Panel"), short: () => T("Home", "Panel"), icon: <IconGrid /> },
   { id: "decisions", label: () => T("Decisions", "Kararlar"), short: () => T("Decisions", "Kararlar"), icon: <IconList /> },
   { id: "ledger", label: () => T("On-chain Ledger", "Zincir Kaydı"), short: () => T("Ledger", "Kayıt"), icon: <IconSeal /> },
   { id: "settings", label: () => T("Safety limits", "Güvenlik limitleri"), short: () => T("Limits", "Limitler"), icon: <IconShield /> },
+  { id: "guide", label: () => T("Tutorial", "Rehber"), short: () => T("Guide", "Rehber"), icon: <IconBook /> },
   { id: "how", label: () => T("How it works", "Nasıl çalışır"), short: () => T("How", "Nasıl"), icon: <IconHelp /> },
 ];
 
@@ -68,7 +70,11 @@ export default function App() {
       <aside className="side">
         <a className="brand" href="#/dashboard" aria-label="GRAIL dashboard">
           <i className="diamond" aria-hidden="true" />
-          <b>GRAIL</b>
+          <span className="brand-name">
+            <b>GRAIL</b>
+            <small className="motto">Proof before profit.</small>
+            {lang === "tr" && <small className="motto tr">Önce kanıt, sonra kâr.</small>}
+          </span>
         </a>
         <nav className="nav" aria-label="Screens">
           {ROUTES.map((r) => (
@@ -96,9 +102,11 @@ export default function App() {
         <TopBar feed={feed} now={now} />
         <main className="content">
           <Strips feed={feed} now={now} />
-          {route !== "how" && <Intro />}
+          {route !== "how" && route !== "guide" && <Intro />}
           {route === "how" ? (
             <HowItWorks s={s} />
+          ) : route === "guide" ? (
+            <Guide />
           ) : !props ? (
             <div className="stack" aria-busy="true" aria-label="Loading">
               <p className="muted">{T("Connecting to the agent… the first reading usually takes a second.", "Agent'a bağlanılıyor… ilk okuma genelde bir saniye sürer.")}</p>
@@ -169,6 +177,9 @@ function Intro() {
         </li>
       </ol>
       <div className="intro-actions">
+        <a className="btn sm" href="#/guide" onClick={close}>
+          {T("Tutorial", "Rehber")}
+        </a>
         <a className="btn sm" href="#/how" onClick={close}>
           {T("How it works", "Nasıl çalışır")}
         </a>
@@ -359,6 +370,14 @@ function IconShield() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
       <path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.3 7.5 9.5 4.4-1.2 7.5-4.9 7.5-9.5V6L12 3Z" />
       <path d="M12 8v5M12 16v.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconBook() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v15H5.5c-.8 0-1.5.7-1.5 1.5V5.5Z" />
+      <path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v15h5.5c.8 0 1.5.7 1.5 1.5V5.5Z" />
     </svg>
   );
 }

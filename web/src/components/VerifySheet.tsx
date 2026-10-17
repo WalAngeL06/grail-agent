@@ -260,7 +260,7 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
 
           {phase === "done" && usable && (
             <div className="cheat">
-              <b>{T("Try to cheat", "Hile yapmayı dene")}</b>
+              <b>{T("Try to cheat", "Try to cheat · hile yapmayı dene")}</b>
               <p className="muted">{T("Change one number and check again.", "Tek bir sayıyı değiştir ve yeniden kontrol et.")}</p>
               {tamper ? (
                 <>

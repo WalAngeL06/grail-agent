@@ -4,7 +4,7 @@ import HolyGrail, { nEff } from "../components/HolyGrail";
 import type { ReactNode } from "react";
 import { Card, Empty, PageHead, Term } from "../components/Bits";
 import { ago, coin, countdown, n, pct, price, psrText, signedPct, usd, windowLabel } from "../format";
-import { P, T } from "../i18n";
+import { P, T, isTr } from "../i18n";
 
 export default function Dashboard({ s, now }: ScreenProps) {
   const m = s.metrics;
@@ -16,6 +16,10 @@ export default function Dashboard({ s, now }: ScreenProps) {
 
   return (
     <div className="stack">
+      <div className="motto-line">
+        GRAIL — <b>Proof before profit.</b>
+        {isTr() && <span> Önce kanıt, sonra kâr.</span>}
+      </div>
       <PageHead
         eyebrow={T("Dashboard", "Panel")}
         title={T("How many independent bets GRAIL's coin list really offers, and what the agent is doing right now.", "GRAIL'in coin listesi gerçekte kaç bağımsız bahis sunuyor ve agent şu an ne yapıyor.")}

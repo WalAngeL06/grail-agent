@@ -1,13 +1,13 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r14 · 2026-10-17 14:56 (Europe/Istanbul)
-- Ürün: `coord/BRIEF.md` kesinleşti; Fuji 43113'te dört kontrat + ERC-8004 agentId 1 deploy/kayıt doğrulandı. `contracts/chain.json` adres/ABI/testVector hazır.
+- Durum revizyonu: r17 · 2026-10-17 15:20 (Europe/Istanbul)
+- Ürün: Fuji 43113'te dört kontrat + ERC-8004 agentId 1; agents@dcf68db 14:50 dry_run kapısı geçti. R-004 incelemesi tamam; T-006 merge R-004-1/2/3 düzeltmeleri bekliyor. Canlı emir NO-GO.
 - OKX: `grail` profili bağlı (gerçek para; `dry_run` açık).
-- Entegrasyon: T-001/002/003/004/005(v0.5 UI)/007/008(taslaklar), R-002/R-003 main'de. R-003 (`role/review@a6044d7`) APPROVE koşullu; iki merge koşulu D-013 ile işlendi, yeniden deploy gerekmez.
-- Son doğrulama: birleşmiş main + v0.6: chain 25, agents 78, engine+analyst 84 test ve web build geçti (14:43). Fuji salt okunur RPC + çapraz hash 14:36 kanıtı aynı; uçtan uca döngü / gerçek state-Fuji UI henüz doğrulanmadı.
+- Entegrasyon: T-001/002/003/004/005(v0.5 UI)/007/008(taslaklar)/011(pptx taslağı), R-002/R-003/R-004 main'de. Docs caedc29 kullanıcının talimatıyla alındı; agents ürün dalı alınmadı. Üç MAJOR düzeltmesi merge öncesi (D-014).
+- Son doğrulama: T-011 birleşmiş ağaç/v0.6: engine+analyst 84, agents 78, chain 25 test ve web build geçti (15:16). PowerPoint 10 slayt/10 not + 10 render görsel kontrolü geçti. Bu tur RPC/emir yok; gerçek state/Fuji UI kontrolü açık.
 - Aktif sözleşme: `contracts/VERSION` = 0.6 (D-013: reveal sonuç eşlemesi; T-006 kalıcı/monoton cycle_id kabulü). D-011 payload/hash ve state alanları aynı; chain.json deploy sürümü 0.5, dry_run açık.
 - Kaynak: Avalanche workshop slaytı (ERC-8004 boilerplate) ve ATK yapılandırması → D-006
-- Sıradaki öncelik: agents T-006'yı (analist + R-002-1/2 + R-003-2/3) tamamlasın → UI gerçek state/Fuji. Engine T-009'da UI'ın doğrudan gösterdiği reason metinlerini sade İngilizceye çevirsin (alan/API aynı). README kapısı D-012; R-002-1 çözülmeden canlı yok.
+- Sıradaki öncelik: agents R-004-1/2/3 düzeltme → bağımsız inceleme/test → T-006 merge. T-009/010/012/013 ve gerçek state/Fuji UI açık; T-011 final hazırlığı bekler. Public öncesi R-005 + son HEAD kontrolü; README D-012, canlı NO-GO.
 
 ## Zaman kapıları
 | Saat | Kapı | Ölçüt |
@@ -15,7 +15,7 @@
 | 13:30 | Fuji deploy — GEÇ TAMAMLANDI | Kapı kaçtı; chain 13:48 başladı. fdd4bf0 push'lu; 14:36 dört deploy + kayıt RPC receipt/bytecode ile doğrulandı |
 | 14:00 | Engine testleri | `engine` test komutu geçer (golden değerler) |
 | 14:00 | ATK veri + dry_run emir | bakiye + ticker + simüle emir çalışıyor |
-| 15:00 | Uçtan uca ilk döngü | 1 commit tx + 1 ATK (dry_run) emri + 1 reveal tx; ardından kullanıcı onayıyla 1 küçük canlı emir |
+| 15:00 | Uçtan uca dry_run — GEÇTİ (14:50) | agents@dcf68db; kullanıcı/planner tx doğrulaması; gerçek ATK okuma + Fuji commit/reveal + 5 simulated BUY. Canlı ayrı kullanıcı kapısı |
 | 15:00 | UI inşası başlar | proje %80 olmasa bile; tasarım ~14:00 Claude Design; Antigravity UI testi + yedek |
 | 17:00 | Feature freeze | sadece hata düzeltme + UI güncelleme |
 | 18:00 | Yedek demo videosu | kayıt hazır |
@@ -30,12 +30,18 @@
 | T-003 | ERC-8004 kimlik + GrailLedger + Fuji deploy | chain (Codex · hesap 2) | INTEGRATED (R-003 koşulları işlendi) | deploy contracts 0.5; v0.6 ile ABI/hash uyumlu |
 | T-004 | UI brifi (ekranlar, palet, alan eşlemesi) | docs (Claude · Pro) | INTEGRATED | contracts 0.3 |
 | T-005 | UI v0.5 (LLM not/rozet, limitler, ERC-8004 kimlik) | web (Claude Code · Max) · QA: Antigravity | INTEGRATED (gerçek state/Fuji açık) | T-004; gerçek veri T-003/T-006 |
-| T-006 | Agent döngüsü: decide → analyst review_payload → commit → ATK → reveal → state | agents (Codex · hesap 1) | TODO | T-001, T-002, T-003, T-007; contracts 0.6; R-002-1/2 + R-003-2/3 |
+| T-006 | Agent döngüsü: decide → analyst → commit → ATK → reveal → state | agents (Codex · hesap 1) | BLOCKED (merge kapısı) | R-004-1/2/3 düzeltme + yeniden inceleme/test; canlı NO-GO |
 | T-007 | LLM analist (yalnız BUY riskini azaltır; SELL exempt) | analyst (Claude Code · Max) | INTEGRATED | T-001; contracts 0.5 |
 | T-008 | Teslim metinleri: form açıklaması, README taslağı, pitch, demo | docs (Claude Code · Max) | INTEGRATED (taslaklar; freeze sonrası doğrulama açık) | T-003/T-006 gerçek değerleri; D-012 |
 | T-009 | Engine reason metinleri: sade İngilizce; alan/API aynı | engine (Claude Code · Max) | TODO | T-001; contracts 0.6; tasarım + web talebi |
+| T-010 | Snowtrace kaynak doğrulama + verify-cycle.ts okuma komutu | chain (Codex · hesap 2) | TODO | T-003 mevcut deploy; yeni deploy/tx yok; contracts 0.6 |
+| T-011 | Pitch outline → PowerPoint (docs/pitch/) | docs (Claude · Pro) | INTEGRATED (taslak; final hazırlığı açık) | caedc29; 10 slayt/not/render; README/kaynak notları/TBD/süreler bekler |
+| T-012 | 30-day replay: GRAIL vs eşit ağırlık | engine (Claude Code · Max) | TODO | T-009 ile sırayla; gerçek OKX mumları, engine/out/replay.json + kısa EN özet; yalnız okuma |
+| T-013 | Plain English UI metinleri | docs (Claude · Pro) | TODO | docs/ui-copy.md; How it works, sözlük, ipucu, boş/hata ekranları; web uygulaması ayrı |
 | R-002 | T-002 incelemesi: APPROVE koşullu, BLOCKER yok | Claude Code · Max (Opus 5.5) | DONE | bad30c3; R-002-1/2 T-006 kabulünde |
 | R-003 | T-003 incelemesi: APPROVE koşullu, yeniden deploy yok | reviewer (Claude Code · Opus 5.5) | DONE | a6044d7; R-003-2 decision.md v0.6, R-003-3 T-006 kabulünde |
+| R-004 | T-006 incelemesi: APPROVE koşullu; 3 MAJOR; canlı NO-GO | reviewer (Claude Code · Opus 5.5) | DONE | 62ef3c3; dcf68db incelendi; D-014 üçü de merge öncesi |
+| R-005 | Public öncesi sır/anahtar/.env/gitignore taraması | reviewer (Codex · hesap 2) | TODO | coord/reviews/R-005-public.md; tüm ref geçmişi + güncel ağaç; yayınlanacak son SHA kontrolü |
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
 ## Kanıtlar (tx hash, emir kimliği, test çıktıları)
@@ -59,10 +65,19 @@
 - v0.6 birleşmiş ağaç: `cd chain && npx hardhat test` → 25 passing (1s); `cd engine && uv run pytest -q` → 84 passed (1.70s); `cd agents && uv run pytest -q` → 78 passed (0.22s); `cd web && npm run build` → geçti (45 modül, 644ms).
 - v0.6 config/state/VERSION eşleşmesi, validate_config, dry_run=true ve kanonik sonuç örnekleri doğrulandı; chain.json v0.5/golden payload korundu. chain/agents/engine/analyst/web ürün kaynakları 9bc78e3 ile aynı; yeni dış tx/emir yok.
 - T-009 kartı kullanıcı talebiyle açıldı (14:56): tüm engine reason/fallback metinleri sade İngilizce; alan/API/karar mantığı aynı. Sahip engine; bu teslim yalnız kart/STATE/integrator handoff'u, uygulama ve test kanıtı bekleniyor.
+- T-006 kapısı 14:50: agents@dcf68db, kullanıcı/planner receipt doğrulaması + dalın FUJI-GATE-T-006.json kanıtı; cycle 1 dry_run=true, 5 simulated BUY, errors=0, commits/reveals=1/1, pending boş. Integrator bu tur yeniden sorgulamadı.
+- Commit tx: 0x7b47c4f313ffa5630d1acfff6411f11c6d13c321bbc69649ec8c90976995f728 (status=1, block 59596837); reveal tx: 0x541cb8ff88aac0248fbf79d7997915b62bb08fb873e226bbefc35cbcec77cf45 (status=1, block 59596842). commitHash=0xd9064ac4000cae4637a50cd3f25b4ae7c9612e9c9600772f7468533371785a83.
+- Önceki görülen agents adayı a7312a3 (15:08): main senkronu + v0.6 uyumu; agents raporu 136 test, integrator çalıştırmadı. R-004 dcf68db'yi inceler; adayın yeniden onayı yok. Bu tur yeni agents farkı incelenmedi. Tarihsel v0.5 UI state: Agentic Hack-wt/agents/agents/runtime/t006-fuji-gate/state.json.
+- T-010/T-011 kartları açıldı: chain mevcut Snowtrace kaynakları + bağımsız salt okunur verify-cycle.ts; docs outline'dan docs/pitch/grail-pitch.pptx. Bu teslim yalnız koordinasyon, yeni deploy/tx/emir veya sunum üretimi yok.
+- R-004 62ef3c3 = origin/role/review; sınır yalnız coord/reviews/T-006.md + coord/handoffs/reviewer.md. Reviewer dcf68db arşivinde 135 test (kısa basetemp), salt okunur Fuji receipt/hash, dry_run 3 döngü repro kanıtı sundu; integrator bu tur ürün testi/RPC çalıştırmadı.
+- R-004 R-002-1/2 ve R-003-2/3'ü kapattı. MAJOR: v0.6 config/state, dry_run rezerv birikmesi, geçmişle büyüyen RPC maliyeti. Kullanıcı üçünü de merge öncesine aldı; T-006 kabulü/D-014 güncellendi, canlı NO-GO; ürün kaynakları b806aff ile aynı.
+- T-011 caedc29 = origin/role/docs; sınır yalnız docs/pitch/ + docs handoff. PowerPoint salt okunur açılış, 10/10 PNG ve görsel kontrol; ZIP/XML: 10 slayt, 16:9, 10 not. Birleşmiş ağaç: engine 84 (1.70s), agents 78 (0.25s), chain 25 (1s), web build (646ms). Ürün/contracts 6e9fc40 ile aynı; sunum README/kaynak notları/TBD/süre finalizasyonu kartta açık.
+- T-012/T-013/R-005 kullanıcı isteğiyle açıldı: replay sonuçları/sade UI metinleri/güvenlik bulguları henüz üretilmedi. Engine/docs/reviewer temiz worktree'de main'i alır; otomatik mesaj yok. Public GO ancak gerçek R-005 raporu ve yayınlanacak son SHA kontrolüyle.
 
 ## Bekleyen merge'ler
-- (yok)
+- T-006: R-004-1/2/3 düzeltilmeden merge YOK. Yeni hedef düzeltme commit'i + bağımsız ek-fark onayı + integrator testleri beklenir; a7312a3 önceki adaydır.
 
 ## Engeller
-- Fuji deploy doğrulandı; R-003 merge koşulları kapandı. Gerçek state/Fuji UI ve R-003-3 uygulama kanıtı T-006 döngüsünü bekliyor.
-- Canlı mod kapısı: R-002-1 kesin red → kalıcı unknown kilidi agents sahibince düzeltilmeli; R-002-2 pending/partial rezerv uzlaştırması T-006'da doğrulanmalı. dry_run=true.
+- Fuji dry_run kapısı geçti; T-006 üç MAJOR düzeltmesi nedeniyle main'de değil. Gerçek state/Fuji UI ve Snowtrace kaynak doğrulama (T-010) açık.
+- Canlı emir NO-GO (kullanıcı açık talimatı + R-004); dry_run=true ve CLI canlı reddi korunur. İncelemedeki --live önerisi yetki değildir; ayrı kullanıcı talimatı olmadan canlı yol/koşu yok.
+- Public öncesi R-005 TODO; repo görünürlüğü değişmedi. T-011 merge'i final sunum/yayın onayı değil; docs son hazırlıklarını tamamlar.

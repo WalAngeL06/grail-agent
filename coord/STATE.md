@@ -1,9 +1,9 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r27 · 2026-10-17 16:05 (Europe/Istanbul)
+- Durum revizyonu: r28 · 2026-10-17 16:07 (Europe/Istanbul)
 - Ürün: ilk CANLI 15:37 başarılı; agent1/cycle2, BUY BTC-USDT 2 USDT, filled (kullanıcı/planner + yerel state eşleşmesi). Yeni/sürekli koşu yetkisi yok.
 - Aktif sözleşme: VERSION 0.6.1 (belge/eklemeli metrik); config/payload/state contract_version=0.6, chain.json deploy=0.5. Config/adres/ABI/hash değişmedi (D-017).
-- Bu teslim: T-014 kartı + eklemeli signals/5x5 corr/target tabanı + ignore sertleştirmesi; R-005 4927557 merge edildi, R-007 2682d99 sırada. Her merge sonrası push.
+- Bu teslim tamam: T-014 kartı + eklemeli signals/5x5 corr/target tabanı + ignore sertleştirmesi; R-005 4927557 ve R-007 2682d99 merge edildi. Her merge sonrası push.
 - Güncel yerel kontroller: engine 104 (4.42s), agents 157 (17.93s), web build (633ms); JSON/sinyal/matris ve 26 ignore yolu geçti. T-014 motoru henüz uygulanmadı.
 - Public kapısı: R-005 PUBLIC GO yalnız taranan main9acec55/ref kümesi için; MINOR-1 kapandı. Yayınlanacak son HEAD değiştiği için farklar yeniden taranır; bu chat public ayarını değiştirmez.
 - Öncelik: engine T-014 teslim 16:30 → chain/Codex-2 inceleme → integrator merge <=16:50; yetişmezse özellik dışarıda. R-007 web etiket/taban MAJOR’ları sahipte açık.
@@ -47,7 +47,7 @@
 | R-005 | Public öncesi sır/anahtar taraması | reviewer (Claude Opus) | DONE / PUBLIC GO (taranan kapsam) | 4927557; main9acec55 + ref kümesi; MINOR-1 kapandı, son HEAD tekrar taraması açık |
 | R-004b | T-006 düzeltmeleri + sınırlı canlı kapı | reviewer (Claude Opus) | DONE / APPROVE | ac96902; 2bf5668; kullanıcı ilk canlıyı 15:37 yaptı |
 | R-006 | T-010 bağımsız inceleme | docs/reviewer (Claude Opus) | DONE / APPROVE | e77eaed; gerçek rapor coord/reviews/T-010.md; 1 MINOR + 3 INFO |
-| R-007 | UI matematiği ve etiket/taban incelemesi | engine/reviewer (Claude Opus) | READY_FOR_REVIEW | 2682d99 sıradaki merge; sözleşme istekleri 0.6.1’de işlendi; web MAJOR’ları açık |
+| R-007 | UI matematiği ve etiket/taban incelemesi | engine/reviewer (Claude Opus) | DONE (inceleme; 4 MAJOR açık) | 2682d99; sözleşme istekleri 0.6.1’de işlendi; web düzeltmeleri ayrı |
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
 ## Kanıtlar / bu teslim
@@ -56,12 +56,13 @@
 - Ignore kontrolü: 18 sentetik riskli yol engellendi; 8 örnek/fixture/çıktı yolu açık. İstenen sqlite/runtime/fuji/live-config/envrc/pem/key/.claude kuralları var; public JSON fixtures istisnalı, PEM/key gibi sır türleri fixtures içinde de kapalı. Mevcut tracked fixture’lar korundu.
 - R-007 sözleşme istekleri: corr_matrix 5 coin/5x5 simetrik, diag1/offdiag0.62; avg_corr0.62/n_eff1.44/SR0.60 ile tutarlı. target_weight_pct normalde deploy_base=min(equity,max_deploy), koruma HOLD’unda equity; normal HOLD tek başına tabanı ayırt ettirmez. Kod/hash değişikliği yok.
 - T-014: metrics.signals coin başına sonlu hurst + rejim + setup. 0.45 ve 0.55 dahil unclear; setup none/breakout/retest yalnız mevcut BUY’ı azaltır, BUY üretmez. Örnek alan eklendi; engine uygulaması/bağımsız inceleme ayrı ve süre kapılı.
+- R-007 2682d99: yalnız coord/reviews/R-007-ui-math.md + engine handoff; kullanıcı açık inceleme teslimi talimatıyla rol sınırı istisnası kabul edildi. Matematik formülleri doğru, 4 MAJOR metrik/etiket/taban bulgusu açık; integrator yalnız iki sözleşme isteğini uyguladı.
 - Güncel kontroller: uv run --no-sync pytest -q engine104 / agents157; npm run build PASS. İlk sandbox denemeleri uv cache erişiminden başlamadı; izinli aynı komutlar geçti. JSON/matris/signals + config/chain.json değişmezliği doğrulandı. T-014 testleri gelecekte engine teslimindedir.
 - İlk canlı OKX 4017748393474314240 filled; commit 0x16f2d1294cda0181cf94dd50f7cfccf90b449e2a7534b5eccb6aa5a1a96e9569 → reveal 0xae6537e9acc9e66accfe5d0fe61b2f9a858460d7c42cf3d25f0acafa378541f7. Planner Fuji doğrulaması kullanıcı kanıtı; bu tur yeni RPC/runner/emir/tx yok.
 - LLM_API_KEY eklendi kullanıcı bildirimi; değer okunmadı, fiili provider/cycle2 LLM kullanımı henüz doğrulanmadı. Runtime/journal/pending korunur.
 
 ## Bekleyenler / sınırlar
-- R-007 2682d99 merge/push; dört MAJOR web etiketi/target tabanı bulgusu bu sözleşme açıklamasıyla düzelmiş sayılmaz. Ürün sahipleri RAPOR ile alır, otomatik mesaj yok.
+- R-007 2682d99 raporu alındı; dört MAJOR web etiketi/target tabanı bulgusu bu sözleşme açıklamasıyla düzelmiş sayılmaz. Ürün sahipleri RAPOR ile alır, otomatik mesaj yok.
 - T-014 engine teslim 16:30, chain/Codex-2 yalnız inceleme raporu/handoff; integrator <=16:50. Geç kalırsa main/demo dışında; yeni özellik için zaman kapısı uzatılmaz.
 - Public öncesi son SHA fark taraması; R-006 RPC429 + 3 INFO ve dört Snowtrace #code görsel kontrolü açık. Repo görünürlüğü aynı.
 - T-011 final sunum, T-013 web uygulaması/metin tamamlaması, T-012 kapanış-fill/provenance kabul açıkları ve gerçek runtime UI takibi sürer. README D-012 freeze sonrası.

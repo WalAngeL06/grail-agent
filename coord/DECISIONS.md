@@ -22,3 +22,14 @@ Geçen hackathon dersi. Engine canlı/son veriden karar üretir; tarihsel kontro
 ## D-005 · Kimlik = rol + worktree; iki Codex hesabı
 "GPT Plus 2" ayrı bir araç değil, ikinci hesapla açılan Codex'tir. Roller araç adıyla değil rol + worktree + branch ile ayrılır.
 İki Codex hesabı aynı anda çalışacaksa her biri ayrı `CODEX_HOME` ile oturum açar. Integrator yedeği önce Codex · hesap 2.
+
+## D-006 · Zincir tabanı ERC-8004 boilerplate; ATK yapılandırması (workshop slaytı, 17.10)
+- Avalanche workshop'u ERC-8004 tabanlı agent'ı Fuji'de çalıştırmayı gösterdi (github.com/ava-labs/8004-boilerplate, Hardhat).
+  Önerilen 1. proje yönü bizimkiyle aynı: "ATK demo'da işlem yapan agent'ı ERC-8004 ile kaydet, karar ve sonuçlarını zincire yaz".
+- Karar: chain = boilerplate registry'leri (Identity/Reputation/Validation) + bizim GrailLedger (commit-reveal). Agent IdentityRegistry'de kayıtlı;
+  GrailLedger sadece kayıtlı agent'ı kabul eder. Boilerplate'in frontend/backend'i kullanılmaz.
+- Farkımız: diğer takımlar "sonucu zincire yaz" yapacak; biz kararı emirden ÖNCE commit ediyoruz (sonradan değiştirilemez) + quant engine.
+- Uzatma (vakit kalırsa): ikinci bir "risk bekçisi" agent (slayttaki 2. yön) kararları ValidationRegistry'de doğrular.
+- ATK: `@okx_ai/okx-trade-cli` / `okx-trade-mcp`; site `tr`; anahtarlar `~/.okx/config.toml` profilinde (`demo = true`), `.env`'de değil.
+- Jüri sorusu listesi (slayt 16): canlı mı çalışıyor; yetki/limitler; kimlik ve geçmiş doğrulanabilir mi; hata/beklenmedik girdide ne yapıyor;
+  problem ve hedef kullanıcı. Demo ve UI bu beş soruya cevap verecek şekilde kurulur.

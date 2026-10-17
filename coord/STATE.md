@@ -4,6 +4,7 @@
 - Entegrasyon: `main` @ ilk commit (iskelet)
 - Son doğrulanmış çalışan sürüm: yok (henüz ürün kodu yok)
 - Aktif sözleşme: `contracts/VERSION` = 0.1
+- Kaynak: Avalanche workshop slaytı (ERC-8004 boilerplate) ve ATK yapılandırması → D-006
 - Sıradaki öncelik: T-001, T-002, T-003 paralel başlar; T-004 (UI brifi) paralel; T-005 (UI) 15:00'te.
 
 ## Zaman kapıları
@@ -23,7 +24,7 @@
 |---|---|---|---|---|
 | T-001 | Quant engine çekirdeği + golden testler | engine (Claude Code · Max) | TODO | contracts 0.1 |
 | T-002 | ATK veri çekme + ilk demo emri | agents (Codex · hesap 1) | TODO | contracts 0.1 |
-| T-003 | GrailLedger kontratı + Fuji deploy | chain (Codex · hesap 2) | TODO | contracts 0.1 |
+| T-003 | ERC-8004 kimlik + GrailLedger + Fuji deploy | chain (Codex · hesap 2) | TODO | contracts 0.1 |
 | T-004 | UI brifi (ekranlar, palet, alan eşlemesi) | docs (Claude · Pro) | TODO | contracts 0.1 |
 | T-005 | UI inşası | web (Antigravity) | TODO (15:00) | T-004, state.example.json |
 | T-006 | Agent döngüsü: veri → engine → commit → ATK → reveal → state.json | agents (Codex · hesap 1) | TODO | T-001, T-002, T-003 |

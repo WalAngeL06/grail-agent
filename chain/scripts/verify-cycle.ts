@@ -2,13 +2,15 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types";
 import fs from "node:fs";
 import path from "node:path";
 import { parseCycle, verifyCycle } from "./lib/verify-cycle";
+import type { CycleHints } from "./lib/verify-cycle";
 
-export async function runVerifyCycle(hre: HardhatRuntimeEnvironment, cycle: string | undefined): Promise<void> {
+export async function runVerifyCycle(hre: HardhatRuntimeEnvironment, cycle: string | undefined, hints: CycleHints = {}): Promise<void> {
   const cycleId = parseCycle(cycle);
   const deployment = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../contracts/chain.json"), "utf8"));
   if (hre.network.name !== "fuji" || deployment.chainId !== 43113) throw new Error("Cycle CLI requires --network fuji (43113)");
-  const result = await verifyCycle(hre.ethers.provider, deployment, cycleId);
+  const result = await verifyCycle(hre.ethers.provider, deployment, cycleId, hints);
   console.log(`${result.status} agent=${result.agentId} cycle=${result.cycleId}`);
+  if (result.dryRun !== undefined) console.log(`payload dry_run=${result.dryRun}${result.dryRun ? " (SIMULATED)" : ""}`);
   if (result.commitHash) console.log(`commitHash=${result.commitHash}`);
   if (result.computedHash) console.log(`keccak(payload||salt)=${result.computedHash}`);
   if (result.saltHex) console.log(`salt(calldata)=${result.saltHex}`);

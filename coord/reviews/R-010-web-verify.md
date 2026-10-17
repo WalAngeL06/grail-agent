@@ -1,5 +1,7 @@
 # R-010 — Web zincir doğrulama incelemesi
 
+> **Güncel karar — c1c2361: Verify jüriye gösterilebilir: GO.** Aşağıdaki ilk inceleme 0197fe9 için tarihsel NO-GO kaydıdır; güncel sonuç en sondaki **Tekrar inceleme** bölümündedir.
+
 **Verify butonu jüriye güvenle gösterilebilir: NO-GO.**
 
 Karar: **REQUEST_CHANGES — 3 MAJOR, 2 MINOR.** Gerçek cycle 1/2/3 için ABI ve hash doğru; hata ve olumsuz doğrulama sonuçları son yeşil karara doğru taşınmıyor. Kriptografik hash uyuşmazlığı bulunmadı.
@@ -103,3 +105,61 @@ Temel fixture, gerçek cycle 1'in payload/salt/commitHash/karar satırlarıdır.
 ## Sonuç
 
 **Verify butonu jüriye güvenle gösterilebilir: NO-GO.** Gerçek kayıtların hash'leri doğru, fakat bir doğrulama butonu başarısız/eksik kontrolü yeşil başarıya çevirememeli. R-010-1/2/3 kapanıp aynı olumsuz senaryolar son web SHA'sında tekrar geçmeden GO verilmez. Düzeltme sahibi web; bu inceleme ürün kodunu değiştirmedi.
+
+## Tekrar inceleme — c1c2361
+
+2026-10-17 16:43 Europe/Istanbul · chain / Codex hesap 2.
+
+**Verify jüriye gösterilebilir: GO. Karar: APPROVE — incelenen düzeltme hedefi c1c236128713e9d4e4e82a9012d9e5afcc4f9af4.** Önceki beş bulgunun tekrar üretim koşulları bu SHA'da karşılandı; önceki NO-GO bu hedef için kaldırıldı. Sonuç kodun ileride değişecek sürümlerine otomatik onay değildir.
+
+### Bağımsız kontroller
+
+- `git fetch origin` → `origin/role/web` tam olarak c1c2361. Testten önce ve sonra web worktree HEAD'i aynı; test/package/verdict kaynaklarında çalışma kopyası farkı yok.
+- Hedef web worktree'de **`npm test` → 22 test, 22 pass, 0 fail, exit 0**. İlk sandbox denemesinde test runner spawn EPERM verdi; izinli aynı komut geçti. Bu testler saf `decideVerdict` fonksiyonunu kapsıyor; aşağıdaki bağımsız kontroller ayrıca gerçek chain fonksiyonlarını ve bileşenleri çalıştırdı.
+- Önceki incelemenin sabit-SHA Node/TypeScript/VM yöntemiyle gerçek `VerifySheet.tsx`, `chain.ts`, `verify.ts`, yeni `verifyLogic.ts` ve `Ledger.tsx` çalıştırıldı. Hook yaşam döngüsü ve tamamlanmış JSX ağacı denetlendi; Result alt bileşeni de gerçekten yürütüldü. Ledger'ın Vite ortam değeri harness'te test modu olarak sağlandı; ürün dosyaları değiştirilmedi.
+- **9 olumsuz VerifySheet senaryosunun tamamı beklenen sonuca geçti; hiçbirinde `result ok` yok.** Ayrıca eski/eksik history ve history bağlantı hatası için iki Ledger fixture'ı ile büyük ID kontrolü çalıştırıldı.
+
+| Senaryo | c1c2361 sonucu | Yeşil Match | Ek kanıt |
+| --- | --- | --- | --- |
+| Primary + fallback RPC kesintisi | Unverified | Hayır | Retry var |
+| Primary HTTP 429/HTML + fallback 429 | Unverified | Hayır | Retry var |
+| agentId yok | Unverified | Hayır | RPC çağrısı yok, Retry var |
+| Yanlış numeric agentId=2 | Mismatch | Hayır | Getter/reveal kimliği reddediliyor |
+| cycleNo=2, payload cycle_id=1 | Mismatch | Hayır | Yanlış check-in reddediliyor |
+| OTHER-AGENT | Mismatch | Hayır | Agent kontrolü son karara katılıyor |
+| Ekran satırı SELL/999 | Mismatch | Hayır | Satır kontrolü son karara katılıyor |
+| FAKE-LIVE; reveal agent99/cycle99/to0x0 | Mismatch | Hayır | FAKE-LIVE emir metni gösterilmiyor |
+| Reverted reveal receipt status=0 | Mismatch | Hayır | Başarısız receipt reddediliyor |
+| Eski liste 23, canlı sayaç 25 | Görünür eksik geçmiş uyarısı | Doğrulama kararı üretilmez | Retry ve her iki GET'te nocache parametresi var |
+| History fetch başarısız | Görünür history unavailable uyarısı | Doğrulama kararı üretilmez | Hata yutulmuyor, Retry var |
+| cycleId=9007199254740993 | Desteklenen aralık dışında hata | Hayır | Yanlış ID ile RPC çağrısı yok |
+
+Büyük ID için ek kontrol: `readDecision(Number(9007199254740993n))` **RPC'ye gitmeden** reddedildi (0 çağrı). `readReveal` aynı uint256'ı string **9007199254740993** olarak kayıpsız döndürdü; history'deki büyük ID de Map'e yuvarlanarak yazılmadan hata verdi. Bu düzeltme tam uint256 için numeric UI desteği eklemiyor, desteklenmeyen aralığı açıkça reddediyor.
+
+### Gerçek cycle 1 / 2 / 3
+
+Üç mevcut Fuji döngüsü hem PublicNode üzerinden hem uygulamanın **varsayılan Fuji RPC/fallback yolu** üzerinden gerçek VerifySheet ile çalıştırıldı. Üçünde de `Result.kind=match`, `result ok` ve yeşil Match var. `checkReveal` üçünde de boş problems listesi döndürdü. Aynı payload/salt/hash mevcut ethers decode, `verifyCycle` ve audit-latest.md kanıtıyla tekrar karşılaştırıldı:
+
+| Cycle | Mod | Web hash = audit = verifyCycle | Gerçek bileşen |
+| --- | --- | --- | --- |
+| 1 | dry_run=true | 0xd9064ac4000cae4637a50cd3f25b4ae7c9612e9c9600772f7468533371785a83 | Match |
+| 2 | LIVE / dry_run=false | 0x7d8116a5636537e03e3b875d2a25b149760b0510d67e0ec00ba61f2a7b070e30 | Match |
+| 3 | dry_run=true | 0xf428098883ff2f0398cb846ab80548b2807f680da3c2b586ff67e521a77e649a | Match |
+
+Cycle 2'nin açılan sonucu hâlâ `{"BTC-USDT":"4017748393474314240"}`; cycle 1/3 beş simulated sonuç taşıyor. Emir gönderilmedi veya exchange fill sorgulanmadı.
+
+Gerçek history tekrarında **snapshot block 59601414**, bağımsız deployBlock→head RPC taraması **38 döngü**, yeni web okuyucu **38 döngü**, eksik ID **0**. Önceki audit'in 16 döngüsü bu listenin içinde. Artan sayı, çalışan agent'ın yeni döngüleridir; eski raporun snapshot'ı değiştirilmedi.
+
+### Bulguların kapanışı ve kapsam
+
+| Bulgu | Tekrar inceleme sonucu |
+| --- | --- |
+| R-010-1 | Kapandı: chain error / 429 / kimlik eksikliği Unverified; state içi hash eşleşmesi on-chain Match sayılmıyor. |
+| R-010-2 | Kapandı: agentOk/rowsOk başarısızlığı verdict'i Mismatch yapıyor. |
+| R-010-3 | Eski reproducer ve başarısız receipt senaryosu kapandı: ledger/agent/cycle/wallet/receipt status/DecisionRevealed topic kontrolleri var; doğrulanmamış opening'in emir sonuçları gizleniyor. |
+| R-010-4 | Kapandı: nocache sorgusu + eksik liste/sayaç uyarısı + fetch hata görünürlüğü/Retry; gerçek okuma 38/38. |
+| R-010-5 | Kapandı: safeCycle açık aralık reddi; reveal cycle ID string olarak kayıpsız. |
+
+Bu GO, istenen web doğrulama akışı ve tekrar üretim koşulları içindir. Node bileşen testi yapıldı; gerçek tarayıcı/DOM/CORS ve görsel kontrol çalıştırılmadı. Web `checkReveal`, CLI `verifyCycle` fonksiyonunun birebir kopyası değildir: CLI ayrıca canonical blockHash ve receipt/event data eşlemelerini denetler; web helper'ı receipt status/adres/sender/kimlik/topic bağını kontrol eder. Yukarıdaki başarılı gerçek UI kontrolleri ve olumsuz fixture sonuçları bu ayrım korunarak raporlanmıştır.
+
+**Verify jüriye gösterilebilir: GO — c1c2361.** İnceleme yalnız rapor/handoff günceller; web veya chain ürün kodu değiştirilmedi.

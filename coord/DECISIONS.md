@@ -35,7 +35,7 @@ Geçen hackathon dersi. Engine canlı/son veriden karar üretir; tarihsel kontro
   problem ve hedef kullanıcı. Demo ve UI bu beş soruya cevap verecek şekilde kurulur.
 
 ## D-007 · Gerçek para (OKX TR hackathon bakiyesi) · contracts 0.2
-OKX TR katılımcılara gerçek bakiye verdi; emirler canlı hesapta. Demo profili yok, erişim `okx auth login` (site tr).
+OKX TR katılımcılara gerçek bakiye verdi; emirler canlı hesapta. Erişim: `~/.okx/config.toml` → `grail` profili (alt hesap API key, Read+Trade, Withdraw yok).
 - Kod yazan AI araçları emir veremez (MCP sadece `market`). Emri sadece agent kodu verir.
 - `dry_run` bayrağı (varsayılan true): karar + zincir commit/reveal çalışır, emir simüle edilir. Canlıya kullanıcı geçirir; ilk canlı emri kullanıcı izler.
 - Kod tarafında zorunlu guardrail: sadece spot, kaldıraç yok, sadece config coinleri, `max_order_usdt`, `max_total_deploy_usdt`, kill switch.

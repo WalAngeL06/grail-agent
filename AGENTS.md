@@ -53,7 +53,7 @@ Kimliğin araç adı DEĞİL, **rol + worktree**'dir. İki Codex oturumu (iki ay
 - Bağımlılık: her Python paketi kendi `pyproject.toml`'una sahip (`engine/`, `agents/`). Kökte ortak lock dosyası yok.
 - Sırlar (API key, private key) sadece `.env` içinde. Asla commit edilmez, asla rapora/loga yazılmaz.
   Tek `.env`: ana klasördeki `Agentic Hack/.env` (worktree'lerde kopya açma; yolu `GRAIL_ENV` ile ver).
-  OKX erişimi ATK'nın kendi girişinden (`okx auth login`, site `tr`) gelir; kodda/`.env`'de OKX anahtarı yok.
+  OKX erişimi ATK'nın `~/.okx/config.toml` → `grail` profilinden (API key, site `tr`) gelir; kodda/`.env`'de OKX anahtarı yok.
 
 ## İletişim — araçlar birbirini OTOMATİK görmez
 Mesajlaşma yok. Tek iletişim yolu: **dosyalar + kullanıcının taşıdığı RAPOR**.

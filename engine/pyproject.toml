@@ -16,4 +16,5 @@ build-backend = "hatchling.build"
 packages = ["src/grail_engine"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "../analyst/tests"]
+pythonpath = ["../analyst/src"]

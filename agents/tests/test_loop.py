@@ -284,6 +284,7 @@ def test_two_cycles_are_scheduled_and_use_distinct_salts(rig):
     assert state["agent"]["cycle_id"] == 2 and len(state["decisions"]) == 6
     assert len(scheduler.waits) == 1 and 0 < scheduler.waits[0] <= 90
     assert chain.lookup(1)["salt_hex"] != chain.lookup(2)["salt_hex"]
+    assert state["agent"]["status"] == "stopped" and state["agent"]["next_cycle_at_ms"] is None
 
 
 def test_real_process_exit_after_commit_recovers_with_fresh_adapters(rig):
@@ -313,3 +314,26 @@ AgentLoop(cfg, Market(cfg["coins"]), chain, root, decide_fn=fixed_decide).run_on
     assert fresh_chain.info()["commits"] == fresh_chain.info()["reveals"] == 1
     assert recovered["decisions"][0]["payload_utf8"] == saved["payload_utf8"]
     assert recovered["decisions"][0]["salt_hex"] == saved["salt_hex"]
+
+
+def test_continuous_runner_keeps_lease_between_cycles(rig):
+    _, _, _, _, _, create = rig
+    class Scheduler:
+        def is_set(self):
+            return False
+        def wait(self, seconds):
+            with pytest.raises(GrailError, match="RUNTIME_LOCK"):
+                create().run(cycles=1)
+    assert create().run(cycles=2, stop_event=Scheduler())["agent"]["cycle_id"] == 2
+
+
+def test_hold_only_cycle_commits_and_reveals_without_order(rig):
+    cfg, client, chain, orders, events, _ = rig
+    def all_hold(snapshot, portfolio, cfg):
+        result = fixed_decide(snapshot, portfolio, cfg)
+        for decision in result["payload"]["decisions"]:
+            decision.update({"action": "HOLD", "size_usdt": "0"})
+        return result
+    state = AgentLoop(cfg, client, chain, chain.root, orders=orders, decide_fn=all_hold).run_once()
+    assert events == ["commit", "reveal"] and orders.seen == []
+    assert all(d["action"] == "HOLD" and d["order_status"] == "hold" for d in state["decisions"])

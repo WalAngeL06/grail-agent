@@ -1,13 +1,32 @@
-# GRAIL agents — T-002
+# GRAIL agents — T-002 + T-006
 
-Python 3.11+ thin adapter over installed OKX Agent Trade Kit CLI (`@okx_ai/okx-trade-cli`, verified 1.4.8). No runtime Python dependencies. Uses `grail` profile; never reads or stores its API keys. Current contracts: 0.4. Does not implement the agent loop/commit/reveal (T-006).
+Python 3.11+ integration over installed OKX Agent Trade Kit CLI (`@okx_ai/okx-trade-cli`, verified 1.4.8), local editable `grail-engine` / `grail-analyst`, Ethereum Keccak (`eth-hash`) and dotenv parsing. Uses `grail` profile; never reads or stores its API keys. Current contracts: 0.5. T-006 includes the autonomous cycle and recovery with a confirmed-chain interface; the real Fuji adapter awaits `contracts/chain.json`.
 
 From the repository's `agents/` directory:
 
 ```powershell
 uv run pytest -q
 uv run python -m grail_agents smoke --config ../contracts/config.example.json
+uv run python -m grail_agents run --config ../contracts/config.example.json --chain simulated --cycles 1 --runtime runtime/demo
 ```
+
+## Agent cycle (T-006, simulated chain phase)
+
+The `run` command requires an explicit `--chain simulated` and refuses `dry_run=false`. It reads real ATK market/account data; the chain and order effects are simulations. Omit `--cycles` for continuous execution at the configured interval (example: 90 seconds). Ctrl+C stops the process and updates agent status. Only one continuous runner can own a runtime, including between cycles; the OS releases its lock after a crash.
+
+The cycle validates engine config, fetches market/portfolio data, runs the quant engine, applies `analyst.review_payload`, then writes the **final** canonical payload and a fresh 32-byte salt to `runtime/pending/<cycle_id>.json` before commit. A confirmed commit is required before any BUY/SELL execution. HOLD-only cycles also commit and reveal. Order guard failure is an outcome and never rewrites the committed decision. The reveal uses exactly the recorded bytes/salt; a deterministic JSON map of instrument -> order ID/status occupies GrailLedger's single `okxOrderId` string.
+
+`AgentLoop(config, client, chain, runtime, provider=None, news_source=None)` exposes `run_once()`, `recover()` and `run(cycles=None, stop_event=None)`. Real engine/analyst are defaults. A missing provider yields `skipped`; SELL remains `exempt`. To enable the configured provider, set `GRAIL_ENV` to the **existing main checkout's** `.env` path, or provide LLM settings through the process environment. Only `LLM_API_KEY`, `LLM_MODEL`, `LLM_PROVIDER` are extracted; no `.env` copy is made and the wallet key is not passed to the provider. Process LLM values take precedence. Provider timeout is enforced by the analyst (at most 8 seconds). No news provider is invented: absent `news_source` supplies an empty news list.
+
+Runtime files: atomic `state.json`, `control.json` (next cycle ID / persisted peak equity), private `pending/*.json`, persistent `simulated-chain.json`, and for future live execution `orders.sqlite3`. Keep this directory across restarts. Recovery queries chain state first, reveals confirmed outstanding commits, queries missing/uncertain live order identities by their recorded client IDs, and never recommits, resends an order or reruns the analyst. A missing/unknown chain commitment remains pending for later checks; the cycle ID is never reused. Corrupt pending JSON blocks new effects but reports an error without killing the runner. Replacement of a locally locked Windows JSON file gets one bounded retry; network/order/chain effects are never retried automatically.
+
+State follows contracts 0.5: configured limits and verified identity fields, analyst fields preserved in `decisions[]`, no separate `ledger[]`. Only successfully revealed cycles publish `payload_utf8`/`salt_hex`; private pending records cover unrevealed cycles, visible through chain counters/errors. Execution rounding is recorded separately as `execution_size_usdt` / `execution_size_base`. History is bounded to 500 decision rows and 100 errors. `SimulatedChain` uses `simulated:` transaction identifiers, null identity/address/network ID and `verified=false`, so it cannot masquerade as a Fuji confirmation. `GRAIL_STATE_PATH` in the web process can point to this runner's absolute `state.json` path; no web files are changed here.
+
+### Real chain handoff
+
+`chain.py` defines `ChainAdapter.lookup(cycle_id)`, `commit(cycle_id, commit_hash)`, `reveal(cycle_id, payload_utf8, salt_hex, okx_order_id)` and `info()`. Commit/reveal return only after successful confirmation; an RPC timeout must first be reconciled by cycle/transaction identity, never resent blindly. `lookup` returns confirmed commit hash/transaction and revealed/reveal transaction fields. `info` supplies the v0.5 chain metadata and confirmed counters, with string `agent_id` / actual registry address from verified deployment data.
+
+The `contracts/chain.json` testVector check is explicitly skipped while that file is absent; it becomes an assertion against `payloadUtf8`, `saltHex`, `commitHash` once supplied. Real Fuji RPC/ABI/wallet behavior and real transactions have **not** been validated in this phase. The command exposes no live order or real-chain option. A later adapter must verify deployment identity, run that vector, then demonstrate one real Fuji commit/reveal while order dry-run remains enabled.
 
 Tests are offline and use fake exchange responses. The smoke reads the real trading account and configured spot instruments/tickers/closed candles, then simulates one minimum-config-size BUY. It refuses `dry_run: false` before contacting ATK. Its output contains account balances, so keep it private. No secret is printed. Test/runtime files stay under ignored `runtime/`.
 

@@ -33,8 +33,8 @@ Interface: AgentLoop(config, client, chain, runtime, provider=None, news_source=
 
 ## Step 3 — command and handoff
 Files: src/grail_agents/__main__.py, README.md, ACCEPTANCE-T-006.md.
-- [ ] Add explicit simulated-chain run command, refuse dry_run=false, read user config and optional GRAIL_ENV LLM fields without copying .env.
-- [ ] CLI validation/help + full offline suite; scope/status/origin checks; final RAPOR with actual fake-chain evidence and real-chain limits.
+- [x] Add explicit simulated-chain run command, refuse dry_run=false, read user config and optional GRAIL_ENV LLM fields without copying .env.
+- [x] CLI validation/help + full offline suite; scope/status/origin checks; final RAPOR with actual fake-chain evidence and real-chain limits.
 
 ## Review focus
 - Crash after chain confirmation and before its receipt is saved: lookup by cycle, never recommit.
@@ -51,3 +51,6 @@ Files: src/grail_agents/__main__.py, README.md, ACCEPTANCE-T-006.md.
 - Step 2: agents 114 passed + 1 intentional skip (chain.json vector unavailable), engine+analyst 84 passed. Actual subprocess os._exit(23) immediately after persisted fake-chain commit was recovered with fresh adapters, exact payload/salt, one commit and one reveal. Three final regression tests exposed and fixed public decision field overwrites, recovery of saved live unknown/pending IDs, and corrupt-pending handling (process survives without new effects).
 - Ruling: public state lists only revealed cycles; pending salts/payload stay in private runtime/pending until successful reveal. Unrevealed counts/errors remain visible. This preserves the commit/reveal privacy purpose; cost is delayed decision-row visibility during reveal failures.
 - Ruling: execution rounding fields use execution_size_usdt/execution_size_base so v0.5 decision fields stay exactly those in the committed payload. Both are additive fields; cost is UI must opt in to display actual order sizing separately.
+- Step 3: CLI guards and selective GRAIL_ENV parsing first failed (missing command/helper), then passed. Runner lease/status regressions first failed, then passed. Final agents suite: 121 passed, 1 skipped (3.38s); engine+analyst 84 passed (1.13s). CLI --help exit 0.
+- One full run observed STORAGE_WRITE (old error hid exception class); isolated rerun passed. Added safe exception-type diagnostics and a regression for one transient PermissionError during atomic replacement, with one local 20ms retry. Original event's precise cause was not proven; subsequent suites and actual-read smoke passed.
+- Actual ATK-read smoke with explicit simulated chain and dry_run=true: exit 0, cycle 1, 5 market/decision rows, 1 simulated commit + 5 simulated BUYs + 1 simulated reveal, 0 errors; status stopped. No real order or chain tx. State under agents/runtime/t006-smoke/state.json (ignored).

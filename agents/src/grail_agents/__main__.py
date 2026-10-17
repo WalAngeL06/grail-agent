@@ -1,10 +1,16 @@
-"""Read-only live-account smoke. There is deliberately no live-trading CLI."""
+"""Read-only account smoke and an explicit simulated-chain agent runner."""
 import argparse
 import json
+import os
 from pathlib import Path
 
+from dotenv import dotenv_values
+from grail_analyst import make_provider
+
 from .atk import AtkClient
+from .chain import SimulatedChain
 from .config import AgentConfig, GrailError, money, number
+from .loop import AgentLoop
 from .market import fetch_snapshot
 from .orders import OrderService
 
@@ -23,22 +29,55 @@ def run_smoke(mapping, client=None):
     return {"ok": True, "contract_version": mapping.get("contract_version"), "mode": "live", "dry_run": True, "market": snapshot["market"], "portfolio": snapshot["portfolio"], "instruments": instruments, "candle_counts": {key: len(rows) for key, rows in snapshot["candles"].items()}, "order": order}
 
 
+def load_provider():
+    fields = ("LLM_API_KEY", "LLM_MODEL", "LLM_PROVIDER")
+    settings = {key: os.environ[key] for key in fields if key in os.environ}
+    path = os.environ.get("GRAIL_ENV")
+    if path:
+        if not Path(path).is_file():
+            raise GrailError("GRAIL_ENV: configured environment file is missing")
+        values = dotenv_values(path, interpolate=False)
+        for key in fields:
+            if key not in settings and values.get(key):
+                settings[key] = values[key]
+    return make_provider(settings)
+
+
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="GRAIL ATK data + simulated-order smoke (never places a live order)")
-    parser.add_argument("command", choices=["smoke"])
+    parser = argparse.ArgumentParser(description="GRAIL read-only data + dry-run agent (no live orders)")
+    parser.add_argument("command", choices=["smoke", "run"])
     parser.add_argument("--config", required=True, type=Path)
+    parser.add_argument("--chain", choices=["simulated"], help="explicit fake chain; real adapter awaits chain.json")
+    parser.add_argument("--runtime", type=Path, default=Path("runtime"))
+    parser.add_argument("--cycles", type=int, help="positive cycle count; omit for continuous execution")
     args = parser.parse_args(argv)
     try:
         mapping = json.loads(args.config.read_text(encoding="utf-8"))
-        result = run_smoke(mapping)
+        if args.command == "smoke":
+            result = run_smoke(mapping)
+        else:
+            cfg = AgentConfig.from_mapping(mapping)
+            if not cfg.dry_run:
+                raise GrailError("RUN_DRY_RUN: this command requires dry_run=true")
+            if args.chain != "simulated":
+                raise GrailError("CHAIN_REQUIRED: explicitly choose --chain simulated; real adapter is pending")
+            if args.cycles is not None and args.cycles < 1:
+                raise GrailError("CONFIG_CYCLES: cycles must be positive")
+            chain = SimulatedChain(args.runtime / "simulated-chain.json")
+            loop = AgentLoop(mapping, AtkClient(), chain, args.runtime, provider=load_provider())
+            state = loop.run(cycles=args.cycles)
+            result = {"ok": state["agent"]["status"] != "degraded", "chain_simulated": True, "state_path": str((args.runtime / "state.json").resolve()), "cycle_id": state["agent"]["cycle_id"], "errors": len(state["errors"]), "commits": state["chain"]["commits"], "reveals": state["chain"]["reveals"]}
     except (OSError, json.JSONDecodeError):
         print(json.dumps({"ok": False, "error": "CONFIG_FILE: cannot read valid config JSON"}))
         return 1
     except GrailError as error:
         print(json.dumps({"ok": False, "error": str(error)}))
         return 1
+    except KeyboardInterrupt:
+        print(json.dumps({"ok": True, "stopped": True}))
+        return 130
     print(json.dumps(result, ensure_ascii=True, indent=2))
-    return 0
+    return 0 if result["ok"] else 1
 
 
 if __name__ == "__main__":

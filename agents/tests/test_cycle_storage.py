@@ -87,3 +87,21 @@ def test_deployed_chain_test_vector_when_available():
         pytest.skip("T-003 chain.json is not available; deployment vector pending")
     vector = json.loads(path.read_text(encoding="utf-8"))["testVector"]
     assert commitment(vector["payloadUtf8"], vector["saltHex"]) == vector["commitHash"]
+
+
+def test_atomic_write_retries_one_transient_windows_file_lock(tmp_path, monkeypatch):
+    import os
+    from grail_agents.storage import atomic_json
+    path = tmp_path / "state.json"
+    atomic_json(path, {"value": "before"})
+    original = os.replace
+    attempts = []
+    def replace(source, target):
+        attempts.append(target)
+        if len(attempts) == 1:
+            raise PermissionError(13, "sharing violation")
+        return original(source, target)
+    monkeypatch.setattr(os, "replace", replace)
+    atomic_json(path, {"value": "after"})
+    assert json.loads(path.read_text()) == {"value": "after"}
+    assert len(attempts) == 2

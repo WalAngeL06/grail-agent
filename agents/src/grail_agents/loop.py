@@ -208,11 +208,19 @@ class AgentLoop:
         if cycles is not None and (type(cycles) is not int or cycles < 1):
             raise GrailError("CONFIG_CYCLES: cycles must be positive or None")
         stop_event = stop_event or Event()
-        completed = 0
-        while not stop_event.is_set() and (cycles is None or completed < cycles):
-            started = time.monotonic()
-            self.run_once()
-            completed += 1
-            if cycles is None or completed < cycles:
-                stop_event.wait(max(0, self.config["cycle_seconds"] - (time.monotonic() - started)))
-        return deepcopy(self.state)
+        with self.store.lock("runner.lock"):
+            completed = 0
+            try:
+                while not stop_event.is_set() and (cycles is None or completed < cycles):
+                    started = time.monotonic()
+                    self.run_once()
+                    completed += 1
+                    if cycles is None or completed < cycles:
+                        stop_event.wait(max(0, self.config["cycle_seconds"] - (time.monotonic() - started)))
+            finally:
+                with self.store.lock():
+                    if self.state["agent"]["status"] != "degraded":
+                        self.state["agent"]["status"] = "stopped"
+                    self.state["agent"]["next_cycle_at_ms"] = None
+                    self._save_state()
+            return deepcopy(self.state)

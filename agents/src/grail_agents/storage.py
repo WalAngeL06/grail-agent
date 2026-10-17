@@ -3,6 +3,7 @@ from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
+import time
 import uuid
 
 from .config import GrailError, money, number
@@ -16,9 +17,15 @@ def atomic_json(path: Path, value):
             json.dump(value, handle, ensure_ascii=True, allow_nan=False, sort_keys=True, separators=(",", ":"))
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
-    except (OSError, TypeError, ValueError):
-        raise GrailError("STORAGE_WRITE: cannot atomically persist runtime data") from None
+        try:
+            os.replace(temporary, path)
+        except PermissionError:
+            # Windows readers/indexers can briefly deny replacement; retry only
+            # this local atomic operation, never a chain/order submission.
+            time.sleep(0.02)
+            os.replace(temporary, path)
+    except (OSError, TypeError, ValueError) as error:
+        raise GrailError(f"STORAGE_WRITE: atomic runtime write failed ({type(error).__name__})") from None
     finally:
         temporary.unlink(missing_ok=True)
 
@@ -39,8 +46,10 @@ class CycleStore:
         self.pending_dir.mkdir(parents=True, exist_ok=True)
 
     @contextmanager
-    def lock(self):
-        with (self.root / "agent.lock").open("a+b") as handle:
+    def lock(self, name="agent.lock"):
+        if name not in {"agent.lock", "runner.lock"}:
+            raise GrailError("RUNTIME_LOCK: unsupported lock name")
+        with (self.root / name).open("a+b") as handle:
             handle.seek(0, 2)
             if handle.tell() == 0:
                 handle.write(b"0")

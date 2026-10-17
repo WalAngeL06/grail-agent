@@ -22,6 +22,22 @@ res["errors"]    # contracts hata nesneleri; res["ok"] False ise state.errors'a 
 (risk bütçesi yorumu: coin başına yıllık vol katkısı tavanı) · hedef = `w * min(equity, max_total_deploy_usdt)` ·
 `|fark| < min_order` → HOLD, BUY/SELL `<= max_order_usdt`; BUY'lar toplamda kalan deploy bütçesi ve nakitle sınırlı (inst_id sırasıyla).
 Bozuk veri (pencerede NaN/≤0, std=0, < 11 kapanış) → o coin HOLD, pozisyon olsa da satış yok. Kill switch → hepsi HOLD.
+**Kapılar (T-014)** — sadece trendi pozitif coinlerde, sadece ALIMI azaltır (satış üretmez; nakit/bütçe kapısız alım boyutuyla tüketilir,
+bir coinin kapısı boşalttığı pay başka coine geçmez). Sabitler kodda (`decision.py`), config'te değil. Look-ahead yok: sadece lookback penceresi.
+- Rejim: lookback getirilerinden Hurst, DFA-1 (pencereler 4..n/4, baştan+sondan), küçük örnek düzeltmesi
+  `H = H_ham − E[H_ham | beyaz gürültü, n] + 0.5` (400 sim, sabit seed, önbellekli). En az 20 getiri; yoksa/NaN → 0.5.
+  Raporlanan H `[0,1]`'e kırpılır, 2 ondalık; rejim bu sayıdan: `H<0.45` ranging, `0.45–0.55` unclear, `H>0.55` trending.
+  48 barda H gürültülüdür (beyaz gürültüde σ≈0.19); etiket "tespit" değil, temkin sinyalidir.
+- Setup: range tepesi = pencerenin ilk 2/3'ünün en yüksek kapanışı; retest bandı `±max(%0.2, 0.5 × bar vol)`.
+
+| Durum | Hedef çarpanı | reason |
+|---|---|---|
+| ranging | 0 | `Market is ranging (Hurst 0.42), momentum buys paused` |
+| breakout (retest yok) | 0 | `Breakout not retested yet` |
+| none (kırılım yok) | 0.5 | `...; no breakout yet, half size` |
+| retest | 1.0 | `...; breakout + retest confirmed` |
+
+`metrics.signals[inst] = {hurst, regime, setup}` bütün config coinleri için; geçersiz veri → `0.5/unclear/none`.
 **Replay (T-012)** — son 30 günün OKX mumlarıyla kararları geriye oynatır, eşit ağırlıklı al-tut ile karşılaştırır. Emir/tx yok.
 ```
 uv run python scripts/replay_okx.py --fetch   # `okx market candles` (salt okunur) → data/okx-candles-1H.json, sonra oynat

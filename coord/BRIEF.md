@@ -11,12 +11,14 @@ yetkilerle işlem yapan, her kararını emirden ÖNCE Avalanche'a mühürleyen v
 
 ## Ürünün dört parçası
 1. **Algı (OKX ATK):** OKX TR'den mum, ticker, bakiye (`grail` profili, `--read-only`); emirler ayrı ve guardrail'li.
-2. **Beyin (quant engine, deterministik):** korelasyon → ortalama ρ, **Holy Grail / efektif N**, HRP ağırlıkları, volatilite hedefi,
-   pozisyon limitleri. Her döngü coin başına BUY/SELL/HOLD üretir. LLM parayı yönetmez.
+2. **Beyin (quant engine, deterministik):** *ne zaman* → trend filtresi (time-series momentum: trendi negatif coin nakde çekilir);
+   *ne kadar* → HRP ağırlıkları + volatilite hedefi + pozisyon limitleri; *yön* → hedef ağırlık ile mevcut pozisyon farkı (yeniden dengeleme).
+   Metrik: korelasyon → ortalama ρ, **Holy Grail / efektif N**. Her döngü coin başına BUY/SELL/HOLD üretir. LLM parayı yönetmez.
 3. **Hesap verebilirlik (Avalanche Fuji):** agent ERC-8004 IdentityRegistry'de kayıtlı; her döngü kararı `commit` (emirden önce) →
    ATK emri → `reveal` (payload + salt + OKX emir id). `dry_run` hash'in içinde: simüle ve gerçek karar zincirde ayırt edilir.
    Açıkta kalan (reveal edilmemiş) commit'ler görünür → seçici gösterim yapılamaz.
 4. **Arayüz:** Dashboard · Karar akışı · On-chain sicil · Ayarlar/limitler. Holy Grail eğrisi ve "efektif bahis sayısı".
+   **"Kendin Doğrula":** her kararda tarayıcı hash'i kendisi hesaplayıp zincirdeki commit'le karşılaştırır — "bize güvenme, kendin hesapla".
 
 ## Yetki ve limitler (jüri sorusu 2 — slayt 10 "yetkiyi daralt, harcamayı sınırla, izi tut, insan onayı")
 - API key: Read + Trade, Withdraw YOK. Sadece spot, kaldıraç yok, sadece config'teki coinler.
@@ -25,6 +27,8 @@ yetkilerle işlem yapan, her kararını emirden ÖNCE Avalanche'a mühürleyen v
 
 ## Hata davranışı (jüri sorusu 4)
 - Herhangi bir adım hata → döngü atlanır, hata state'e yazılır, agent durmaz. Commit başarısız → emir yok (fail-closed).
+- Bozuk / eksik veri, sıfır volatilite → o coin için HOLD (sebep `reason`'da), istisna yok.
+- Çökme güvenli: salt commit'ten önce diske yazılır; agent yeniden başlayınca açıkta kalan commit'leri önce reveal eder.
 - Belirsiz emir/tx → önce kimlikle sorgu, tekrar gönderme yok.
 
 ## Demo hikâyesi (10 dk)

@@ -1,5 +1,5 @@
 {
-  "contract_version": "0.2",
+  "contract_version": "0.3",
   "generated_at_ms": 1760700090000,
   "mode": "live",
   "dry_run": true,
@@ -31,8 +31,9 @@
     {
       "cycle_id": 12, "inst_id": "BTC-USDT", "action": "BUY", "size_usdt": "5", "ref_price": "67250.1",
       "reason": "trend+, n_eff=1.9", "decided_at_ms": 1760700000000,
-      "commit_tx": "0xabc...", "okx_order_id": "1234567890", "order_status": "filled", "fill_price": "67248.0",
-      "reveal_tx": "0xdef...", "verified": true
+      "commit_tx": "0xabc...", "commit_hash": "0x9f...", "okx_order_id": "1234567890", "order_status": "filled", "fill_price": "67248.0",
+      "reveal_tx": "0xdef...", "verified": true,
+      "payload_utf8": "{\"agent\":\"GRAIL-01\",\"cycle_id\":12,...}", "salt_hex": "0x5a..."
     }
   ],
   "chain": {

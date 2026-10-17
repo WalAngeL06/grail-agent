@@ -40,3 +40,11 @@ OKX TR katılımcılara gerçek bakiye verdi; emirler canlı hesapta. Erişim: `
 - `dry_run` bayrağı (varsayılan true): karar + zincir commit/reveal çalışır, emir simüle edilir. Canlıya kullanıcı geçirir; ilk canlı emri kullanıcı izler.
 - Kod tarafında zorunlu guardrail: sadece spot, kaldıraç yok, sadece config coinleri, `max_order_usdt`, `max_total_deploy_usdt`, kill switch.
 - Çekim/transfer/kaldıraç/hesap ayarı çağrısı yok. Bu, slayt 10'daki "yetkiyi daralt, harcamayı sınırla, izi tut, insan onayı" ilkesinin karşılığı ve sunumda gösterilir.
+
+## D-008 · Yön sinyali, çökme-güvenli reveal, "Kendin Doğrula" (contracts 0.3)
+- Engine yön sinyali: trend filtresi (time-series momentum) + HRP/vol hedefi ile hedef ağırlık; karar = hedef ile mevcut farkı
+  (`min_order_usdt` bandı, `max_order_usdt` tavanı). Yeni config alanı yok. Z-skoru/kırılım vetosu gibi ek sinyaller bugün kapsam dışı.
+- Salt + payload commit'ten ÖNCE `runtime/pending/`'e yazılır; açılışta açıkta kalan commit'ler reveal edilir.
+- state.decisions[]'e `commit_hash`, `payload_utf8`, `salt_hex` eklendi (eklemeli değişiklik; okuyucular bilinmeyen alanda çökmez).
+- UI'da "Kendin Doğrula": tarayıcı keccak256(payload‖salt) hesaplar, zincirdeki commit'le karşılaştırır.
+- Kaynak: Gemini eleştirisinden alınan 3 fikir; "4. jüri sorusu brief'te yok" iddiası yanlıştı (BRIEF'te vardı).

@@ -35,6 +35,32 @@ def significant(f):
     return f["t"] <= mod.OU_T_MAX and f["half_life_h"] is not None and 1 <= f["half_life_h"] <= 12
 
 
+@pytest.fixture(autouse=True)
+def mr_enabled(monkeypatch):
+    """Bu dosya MR kolunun davranışını sınar: bayrağı aç (varsayılan kapalı, test_mr_disabled_by_default)."""
+    monkeypatch.setattr(mod, "MR_ENABLED", True)
+
+
+def test_mr_disabled_by_default_behaves_like_t014(cfg, monkeypatch):
+    monkeypatch.setattr(mod, "MR_ENABLED", False)
+    monkeypatch.setattr(mod, "hurst_dfa", lambda r: 0.40)
+    closes = ou_closes(HL2, seed=5)  # ranging + anlamlı + z ≤ −1.5: kol açık olsa küçük BUY olurdu
+    d, s = one(dict(cfg), closes)
+    assert s["ou"]["significant"] and s["ou"]["z"] <= -1.5 and s["ou"]["sleeve"] == "none"
+    assert d["action"] == "HOLD" and "mean-reversion" not in d["reason"]
+    pos = [{"inst_id": "BTC-USDT", "value_usdt": "3"}]
+    held, _ = one(dict(cfg), ou_closes(HL2, seed=2), pos, cash="97")  # kol açık olsa "mean-reversion exit"
+    monkeypatch.setattr(mod, "_mr_target", lambda *a, **k: None)  # T-014 referansı
+    ref, _ = one(dict(cfg), ou_closes(HL2, seed=2), pos, cash="97")
+    assert {k: held[k] for k in ("action", "size_usdt", "reason")} == {k: ref[k] for k in ("action", "size_usdt", "reason")}
+
+
+def test_mr_flag_default_is_off():
+    import importlib
+
+    assert importlib.reload(mod).MR_ENABLED is False
+
+
 @pytest.fixture
 def ranging(monkeypatch):
     """Rejimi ranging'e sabitle (H 0.40): O-U kolunu tek başına sına."""

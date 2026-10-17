@@ -36,13 +36,13 @@ def test_hurst_small_sample_correction_centers_white_noise():
 
 def test_random_walk_is_unclear_and_not_blocked(cfg):
     d, s = one(cfg, ar_closes(0.0, seed=2))
-    assert s["regime"] == "unclear" and 0.45 <= s["hurst"] < 0.55
+    assert s["regime"] == "unclear" and 0.45 <= s["hurst"] <= 0.55
     assert d["action"] == "BUY" and not d["reason"].startswith("Market is ranging")
 
 
 def test_persistent_trend_is_trending(cfg):
     d, s = one(cfg, ar_closes(0.7, seed=2))
-    assert s["regime"] == "trending" and s["hurst"] >= 0.55
+    assert s["regime"] == "trending" and 0.55 < s["hurst"] <= 1.0
     assert d["action"] == "BUY"
 
 
@@ -130,11 +130,71 @@ def test_gates_only_reduce(cfg, monkeypatch, seed, held):
     assert gated["target_weight_pct"] <= ungated["target_weight_pct"]
 
 
-def test_signals_in_metrics_for_every_valid_coin(cfg):
+def test_signals_in_metrics_for_every_config_coin(cfg):
+    """R-009-3: anahtarlar config coinleri; geçersiz coin 0.5/unclear/none (contracts 0.6.1)."""
     snap = make_snapshot({c: make_closes(seed=i + 1) for i, c in enumerate(sorted(cfg["coins"]))})
+    snap["closes"]["BTC-USDT"] = [100.0] * 49  # düz → geçersiz
+    del snap["closes"]["SOL-USDT"]  # veri yok
     m = decide(snap, make_portfolio(), cfg)["metrics"]
     assert set(m["signals"]) == set(cfg["coins"])
+    assert m["signals"]["BTC-USDT"] == m["signals"]["SOL-USDT"] == {"hurst": 0.5, "regime": "unclear", "setup": "none"}
     for s in m["signals"].values():
         assert set(s) == {"hurst", "regime", "setup"}
-        assert isinstance(s["hurst"], float)
+        assert isinstance(s["hurst"], float) and 0.0 <= s["hurst"] <= 1.0
         assert s["regime"] in {"trending", "unclear", "ranging"} and s["setup"] in {"none", "breakout", "retest"}
+
+
+# --- R-009-2: raporlanan H [0,1]'de, rejim raporlanan sayıyla tutarlı ---
+@pytest.mark.parametrize("raw, rep, regime", [
+    (0.449996, 0.45, "unclear"), (0.4449, 0.44, "ranging"), (0.550004, 0.55, "unclear"),
+    (0.5551, 0.56, "trending"), (1.37, 1.0, "trending"), (-0.2, 0.0, "ranging"), (float("nan"), 0.5, "unclear"),
+])
+def test_reported_hurst_clipped_and_consistent(cfg, monkeypatch, raw, rep, regime):
+    monkeypatch.setattr(mod, "hurst_dfa", lambda r: raw)
+    d, s = one(cfg, ar_closes(0.0, seed=2))
+    assert s["hurst"] == rep and s["regime"] == regime
+    if regime == "ranging":
+        assert d["reason"] == f"Market is ranging (Hurst {rep:.2f}), momentum buys paused"
+
+
+# --- R-009-1: bir coinin kapısının boşalttığı nakit/bütçe başka coine geçmez ---
+def five_coin_snap():
+    """AVAX ayırt edilebilsin diye 200'den başlar (breakout_setup sadece kapanışları görür)."""
+    coins = sorted(["AVAX-USDT", "BTC-USDT", "ETH-USDT", "OKB-USDT", "SOL-USDT"])
+    return make_snapshot({c: make_closes(seed=i + 1, start=200.0 if c == "AVAX-USDT" else 100.0)
+                          for i, c in enumerate(coins)})
+
+
+def test_reviewer_scenario_freed_cash_does_not_turn_hold_into_buy(cfg, monkeypatch):
+    port = make_portfolio(equity="50", cash="5", positions=[{"inst_id": "OKB-USDT", "value_usdt": "45"}])
+    monkeypatch.setattr(mod, "hurst_dfa", lambda r: 0.6)
+    monkeypatch.setattr(mod, "breakout_setup", lambda c, tol: "retest")
+    ungated = {d["inst_id"]: d for d in decide(five_coin_snap(), port, cfg)["payload"]["decisions"]}
+    assert ungated["AVAX-USDT"]["action"] == "BUY" and ungated["AVAX-USDT"]["size_usdt"] == "5.00"
+    assert ungated["BTC-USDT"]["action"] == "HOLD"
+    monkeypatch.setattr(mod, "breakout_setup", lambda c, tol: "breakout" if c[-1] > 150 else "retest")
+    gated = {d["inst_id"]: d for d in decide(five_coin_snap(), port, cfg)["payload"]["decisions"]}
+    assert gated["AVAX-USDT"]["action"] == "HOLD" and gated["AVAX-USDT"]["reason"] == "Breakout not retested yet"
+    assert gated["BTC-USDT"]["action"] == "HOLD"
+    assert not [c for c, d in gated.items() if d["action"] == "BUY"]
+
+
+@pytest.mark.parametrize("seed", range(1, 6))
+@pytest.mark.parametrize("cash", ["4", "9", "30", "100"])
+def test_gates_only_reduce_multi_coin(cfg, monkeypatch, seed, cash):
+    """Gerçek kapılar vs nötr kapılar (çarpan 1), 5 coin, nakit kısıtlı/kısıtsız: coin başına BUY ≤ kapısız, yeni BUY yok."""
+    snap = make_snapshot({c: ar_closes(0.0, seed=seed * 10 + i) for i, c in enumerate(sorted(cfg["coins"]))})
+    port = make_portfolio(equity="100", cash=cash,
+                          positions=[] if cash == "100" else [{"inst_id": "OKB-USDT", "value_usdt": str(100 - int(cash))}])
+    gated = {d["inst_id"]: d for d in decide(snap, port, cfg)["payload"]["decisions"]}
+    monkeypatch.setattr(mod, "hurst_dfa", lambda r: 0.6)
+    monkeypatch.setattr(mod, "breakout_setup", lambda c, tol: "retest")
+    ungated = {d["inst_id"]: d for d in decide(snap, port, cfg)["payload"]["decisions"]}
+    for c in gated:
+        g, u = gated[c], ungated[c]
+        if g["action"] == "BUY":
+            assert u["action"] == "BUY" and Decimal(g["size_usdt"]) <= Decimal(u["size_usdt"]), c
+        if g["action"] == "SELL":
+            assert u["action"] == "SELL" and g["size_usdt"] == u["size_usdt"], c
+    total = lambda res: sum(Decimal(d["size_usdt"]) for d in res.values() if d["action"] == "BUY")
+    assert total(gated) <= total(ungated)

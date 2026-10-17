@@ -1,22 +1,26 @@
 # Handoff — engine / analyst (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~16:07 (T-014 bitişi)
-- Aktif görev / durum: T-014 (trend sinyalinin önüne 2 kapı: Hurst rejimi + kırılım/retest) / READY_FOR_REVIEW. Kart main'de henüz yok (planner kararı, integrator açıyor); kapsam kullanıcı mesajından. Son saat 16:30.
-- Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`); origin/main@ad7edd1 içeride.
-- contracts okunan sürüm: 0.6. İstek: `state.metrics.signals` alanı sözleşmeye eklenmeli (integrator) — hash'e girmez.
-- Tamamlanan somut davranış (T-014):
-  - `stats.py`: `hurst_dfa(rets)` = DFA-1 (pencereler 4..n/4, baştan+sondan), küçük örnek düzeltmesi: H_ham − E[H_ham | beyaz gürültü, n] + 0.5 (400 sim, sabit seed, `lru_cache`). 48 barda düzeltmesiz DFA ~0.62 verir; düzeltmeli beyaz gürültü ort. 0.499, sd ~0.19. `breakout_setup(closes, tol)` = range tepesi pencerenin ilk 2/3'ünün en yükseği; son kapanış üstte değil → none; kırılım barından sonra bir kapanış tepeye ±tol geri gelip son kapanış üstte → retest; yoksa breakout. Look-ahead yok (sadece pencere içi).
-  - `decision.py`: sabitler HURST_RANGING 0.45, HURST_TRENDING 0.55, tol = max(%0.2, 0.5 × bar vol), çarpan retest 1 / none 0.5 / breakout 0. Sadece trendi pozitif coinlerde: hedef = min(hedef, max(çarpan × hedef, mevcut)) → kapı ALIMI azaltır, satış üretmez; hedefin üstündeki pozisyon eskisi gibi kırpılır. Reason: "Market is ranging (Hurst 0.42), momentum buys paused" / "Breakout not retested yet" / "...; breakout + retest confirmed" / "...; no breakout yet, half size". `metrics.signals[inst] = {hurst, regime, setup}` (geçerli coinler).
-  - Replay (T-012 verisi, 720 bar, config.example): getiri +1.83% → +2.03%, en kötü düşüş 7.48% → 4.34%, işlem 382 (191 al/191 sat) → 218 (111/107), ücret 2.07 → 1.08 USDT, kill switch bar 166 → 0, tam nakit bar %15.3 → %26.9. Al-tut değişmedi (+8.81%, düşüş 14.51%). `engine/out/replay.json` + `replay-summary.md` yeniden üretildi.
+- Güncelleme zamanı: 2026-10-17 ~16:25 (T-014 R-009 düzeltmeleri bitişi)
+- Aktif görev / durum: T-014 + R-009 düzeltmeleri / READY_FOR_REVIEW (planner: merge GO, 16:45 push, 17:00 feature freeze).
+- Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`); origin/main@d449da4+ merge edildi (contracts 0.6.1).
+- contracts okunan sürüm: 0.6.1 (`contracts/README.md:8` signals tanımı). Sözleşme değişikliği isteği yok.
+- Tamamlanan somut davranış:
+  - T-014 (6e8abad): `stats.hurst_dfa` (DFA-1, küçük örnek düzeltmeli), `stats.breakout_setup`; `decide()` trendi pozitif coinlerde alımı azaltan 2 kapı; `metrics.signals`. Ayrıntı `engine/README.md` "Kapılar (T-014)".
+  - R-009-1 (MAJOR): nakit/bütçe artık KAPISIZ alım boyutuyla tüketiliyor (`size_u`); kapılı BUY = min(kapılı fark, kapısız boyut). Bir coinin kapısının boşalttığı pay başka coine geçmiyor; kapısızda BUY olmayan coin BUY olmuyor. Reviewer senaryosu testi eski kodda FAIL (BTC HOLD→BUY), yenide PASS.
+  - R-009-2: raporlanan H `[0,1]`'e kırpılmış, 2 ondalık; rejim aynı sayıdan (`<0.45` ranging, `>0.55` trending, arası unclear — 0.55 dahil unclear). NaN → 0.5.
+  - R-009-3: `signals` bütün config coinleri; geçersiz veri → `{hurst: 0.5, regime: "unclear", setup: "none"}` (sözleşme 0.6.1; planner mesajı "null" diyordu, sözleşme esas alındı).
+  - R-009-4: `engine/README.md`'ye yöntem + katsayı tablosu.
+  - Madde 4: `decision.py` hata mesajları İngilizce: "Config invalid: ...", "Market snapshot is not an object", "Account value missing or invalid; all coins HOLD".
+  - Replay yeniden üretildi: +2.03%, düşüş 4.33%, işlem 220 (112/108), ücret 1.10 USDT, kill switch 0 bar (eski motor: +1.83%, 7.48%, 382, 2.07).
 - Commit edilmemiş / izlenmeyen dosyalar: yok
-- Çalıştırılan kontroller: `uv run pytest -q` (engine/) → 139 passed. `uv run python scripts/replay_okx.py` (kayıtlı mumlar, ağsız).
-- Testler: `tests/test_gates.py` (golden, sabit seed: AR(1) phi 0 seed 2 → unclear, phi +0.7 seed 2 → trending, phi −0.7 seed 1 → ranging/HOLD; elle kurulmuş seriler retest/breakout/none; look-ahead; "kapılar sadece azaltır" 24 parametre). `test_decide.py`'de 4 emir-limiti/bozuk-veri testi `no_gates` fixture'ı ile kapıdan yalıtıldı (conftest) — o testlerin konusu boyutlama, kapı değil.
-- Çalıştırılmayan kontroller ve nedeni: UI'da signals gösterimi yok (web işi); agents tarafı metrics'i olduğu gibi geçiriyor mu bakılmadı.
+- Çalıştırılan kontroller: `uv run pytest -q` (engine/) → 167 passed. `uv run python scripts/replay_okx.py` (kayıtlı mumlar, ağsız).
+- Çalıştırılmayan kontroller ve nedeni: agents pytest bu turda koşulmadı (reviewer 6e8abad'de 157 passed; bu turda payload yapısı değişmedi, sadece hata mesajı metinleri). `config.py` doğrulama mesajları (e['message']) Türkçe kaldı — kapsam dışıydı.
 - Devam eden süreçler / portlar: yok
 - Dış eylemler (emir id, tx hash): yok.
 - Bu makinede tuzak: `%TEMP%\pytest-of-Serdar Arif` izni bozuk → testlerde `tmp_path` KULLANMA. PowerShell `Get-Content` UTF-8'i bozuk gösterir → `-Encoding utf8` ya da Read aracı. Worktree'ler ref paylaşır: commit öncesi `origin/main` tekrar kontrol et.
-- Açık konular / öneriler (integrator kararı):
-  - 48 barda Hurst sd ~0.19: rejim barlar arasında oynak olabilir; ölü bant bu yüzden. Daha uzun Hurst penceresi (ör. 168 bar) ayrı kart olabilir (config değişmeden ayrı sabit).
-  - R-007 notları hâlâ açık: `target_weight_pct` tabanı (equity vs deploy_base), metrics'e `deploy_base_usdt`.
+- Açık konular / öneriler (integrator kararı, freeze sonrası):
+  - R-009-5: 48 barda Hurst gürültülü (beyaz gürültüde %41 ranging). UI/pitch rejimi "tespit" gibi sunmasın. Bandı genişlet ya da daha uzun geçmiş.
+  - Verimlilik (replay, 15+15 gün bölünmüş): ücret yükü sermayenin %2.2'si; en küçük emri 2→4 USDT yapmak (yeniden dengeleme bandı vekili) iki yarıda da daha iyi (düşüş yarısında −1.61% → −0.90%, işlem 217 → 125). Öneri: ayrı kart "rebalance band". `target_vol_pct` 20→40 bedava kâr değil, risk düğmesi (yükselişte iyi, düşüşte kötü).
+  - R-007 notları hâlâ açık: `target_weight_pct` tabanı, metrics'e `deploy_base_usdt`.
 - TEKRARLANMAMASI gereken işlem: modül adı `decide.py` yapma (`decision.py`). Git Bash heredoc içindeki Python'da `\\n` gerçek satır sonuna dönüşüyor → çok satırlı düzenlemeyi Edit aracıyla yap.
-- SIRADAKİ İLK ADIM: T-014 review/merge bekleniyor; reviewer bulgusu gelirse düzelt. Yoksa integrator'dan yeni kart bekle — yeni chat, `Agentic Hack-wt/engine` içinde.
+- SIRADAKİ İLK ADIM: merge bekleniyor; freeze sonrası kart gelirse (rebalance band / Hurst penceresi) uygula. Yeni chat, `Agentic Hack-wt/engine` içinde.

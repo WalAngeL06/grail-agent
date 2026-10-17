@@ -21,8 +21,8 @@ class AgentLoop:
         if validate_config(config):
             raise GrailError("CONFIG_INVALID: engine config validation failed")
         self.cfg = AgentConfig.from_mapping(config)
-        if config.get("contract_version") != "0.5":
-            raise GrailError("CONFIG_VERSION: expected contracts 0.5")
+        if config.get("contract_version") != "0.6":
+            raise GrailError("CONFIG_VERSION: expected contracts 0.6")
         if not self.cfg.dry_run and chain.info().get("simulated"):
             raise GrailError("SIMULATED_CHAIN_LIVE: simulated chain cannot authorize real orders")
         if not self.cfg.dry_run and live_confirmed is not True:
@@ -35,13 +35,13 @@ class AgentLoop:
         self.decide = decide_fn or decide
         self.orders, self.live_confirmed = orders, live_confirmed
         self.state = self.store.load_state() or {
-            "contract_version": "0.5", "generated_at_ms": self.clock(), "mode": "live", "dry_run": self.cfg.dry_run,
+            "contract_version": "0.6", "generated_at_ms": self.clock(), "mode": "live", "dry_run": self.cfg.dry_run,
             "agent": {"name": config["agent_name"], "status": "starting", "cycle_id": 0, "next_cycle_at_ms": None},
             "market": [], "portfolio": {"equity_usdt": "0", "cash_usdt": "0", "positions": []},
             "metrics": {}, "decisions": [], "errors": [], "chain": {},
         }
         fields = ("coins", "risk_budget_pct", "max_position_pct", "cycle_seconds", "max_order_usdt", "max_total_deploy_usdt", "kill_switch_drawdown_pct")
-        self.state.update({"contract_version": "0.5", "mode": "live", "dry_run": self.cfg.dry_run, "config": {key: deepcopy(config[key]) for key in fields}})
+        self.state.update({"contract_version": "0.6", "mode": "live", "dry_run": self.cfg.dry_run, "config": {key: deepcopy(config[key]) for key in fields}})
 
     def _error(self, error, where, cycle_id=0):
         if isinstance(error, GrailError):

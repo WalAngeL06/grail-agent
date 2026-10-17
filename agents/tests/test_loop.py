@@ -201,12 +201,17 @@ def test_market_error_is_redacted_and_next_cycle_survives(rig):
     assert loop.run_once()["chain"]["reveals"] == 1
 
 
-def test_restart_preserves_peak_and_cycle_counter(rig):
+@pytest.mark.parametrize("saved_version", ["0.5", "0.6"])
+def test_restart_preserves_peak_cycle_counter_and_history(rig, saved_version):
     _, client, chain, _, _, create = rig
-    create().run_once()
+    previous = deepcopy(create().run_once())
+    previous["contract_version"] = saved_version
+    CycleStore(chain.root).save_state(previous)
     client.balance = lambda: [{"details": [{"ccy": "USDT", "cashBal": "70", "availBal": "70"}, {"ccy": "ETH", "cashBal": "0.2", "availBal": "0.2"}]}]
     state = create().run_once()
+    assert state["contract_version"] == "0.6"
     assert state["agent"]["cycle_id"] == 2
+    assert [row for row in state["decisions"] if row["cycle_id"] == 1] == previous["decisions"]
     assert state["portfolio"]["peak_equity_usdt"] == "100"
     assert any(error["code"] == "KILL_SWITCH" for error in state["errors"])
     assert chain.info()["reveals"] == 2

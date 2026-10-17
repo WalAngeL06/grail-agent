@@ -21,7 +21,7 @@ def test_run_cli_refuses_live_config(cfg_dict, tmp_path, monkeypatch, capsys):
     assert "RUN_DRY_RUN" in capsys.readouterr().out
 
 
-def test_run_cli_writes_v05_state_with_offline_market(cfg_dict, tmp_path, monkeypatch, capsys):
+def test_run_cli_writes_v06_state_with_offline_market(cfg_dict, tmp_path, monkeypatch, capsys):
     path = tmp_path / "config.json"
     path.write_text(json.dumps(cfg_dict))
     monkeypatch.setattr(cli, "AtkClient", lambda: Market(cfg_dict["coins"]))
@@ -32,7 +32,7 @@ def test_run_cli_writes_v05_state_with_offline_market(cfg_dict, tmp_path, monkey
     output = json.loads(capsys.readouterr().out)
     assert output["chain_simulated"] is True and output["commits"] == output["reveals"] == 1
     state = json.loads((root / "state.json").read_text())
-    assert state["contract_version"] == "0.5" and len(state["decisions"]) == 5
+    assert state["contract_version"] == "0.6" and len(state["decisions"]) == 5
     assert "ledger" not in state and state["chain"]["agent_id"] is None
 
 

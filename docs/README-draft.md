@@ -131,10 +131,10 @@ Config (`contracts/config.example.json`): coins, `cycle_seconds`, `candle_bar`, 
 - **No secrets in the repo:** `.env` is git-ignored, and the code never prints or logs keys.
 
 ## Status at submission
-- **On chain (Fuji):** 2 cycles committed, 2 revealed, 0 open. Cycle 1 was in practice mode; cycle 2 was the first live order (see "On-chain proof").
+- **On chain (Fuji):** 25+ cycles committed, all revealed, 0 open (31/31 at 16:29). `cd chain && npm run audit` reads the whole ledger and checks every cycle: all MATCH. Cycle 1 was in practice mode; cycle 2 was the first live order (see "On-chain proof").
 - **Live trading:** one live order so far: BUY 2 USDT of BTC-USDT, filled. A person switched on live mode for that run with a 2 USDT cap.
-- **Tests (offline):** engine + analyst 104 · agents (OKX adapter + loop) 157 · contracts 38.
-- **30-day replay** (simulation on real OKX 1H candles, 17 Sep → 17 Oct 2026, 50 USDT, 0.1% fees, no orders sent): GRAIL's worst drop was **7.5%** vs **14.5%** for an equal-weight buy-and-hold of the same 5 coins. Return was +1.8% vs +8.8%; we don't claim GRAIL beats buy-and-hold. The 5 coins averaged **1.36 independent bets**. Details: `engine/out/replay-summary.md`.
+- **Tests (offline):** engine + analyst 167 · agents (OKX adapter + loop) 157 · contracts 48.
+- **30-day replay** (simulation on real OKX 1H candles, 17 Sep → 17 Oct 2026, 50 USDT, 0.1% fees, no orders sent): GRAIL's worst drop was **4.3%** vs **14.5%** for an equal-weight buy-and-hold of the same 5 coins, and its emergency stop never triggered. Return was +2.0% vs +8.8%; we don't claim GRAIL beats buy-and-hold. The smart-entry gates (Hurst estimate + breakout retest, which can only shrink or skip a buy) cut trades from 382 to 220. The 5 coins averaged **1.36 independent bets**. Details: `engine/out/replay-summary.md`.
 
 ## Team
 `<TBD>`

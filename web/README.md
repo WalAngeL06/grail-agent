@@ -44,6 +44,9 @@ npm run preview:public        # → http://localhost:4173/grail-agent/
 ```
 
 Publish (done by the integrator/user once the repo is public; not done from this branch):
+- Pages in 3 steps (integrator): `cd web && npm run build:public` (base `/grail-agent/`) → copy the CONTENTS of `web/dist-public/`
+  (index.html + assets/) to the ROOT of the `gh-pages` branch and push it → Settings → Pages → source `gh-pages` / root;
+  site: https://walangel06.github.io/grail-agent/
 - GitHub Pages: push the contents of `web/dist-public/` to a `gh-pages` branch (e.g. `npx gh-pages -d web/dist-public`, or a
   Pages workflow that runs `npm ci && npm run build:public` in `web/` and uploads `web/dist-public`). Repo Settings → Pages → source `gh-pages`.
   URL: `https://<owner>.github.io/grail-agent/`.

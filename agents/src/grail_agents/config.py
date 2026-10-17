@@ -8,6 +8,13 @@ class GrailError(ValueError):
     """Safe to display: contains a stable code and no exchange response text."""
 
 
+class OrderRejected(GrailError):
+    """A well-formed exchange sCode proves that no order was created."""
+    def __init__(self, code):
+        self.code = str(code)
+        super().__init__(f"ATK_REJECTED_{self.code}: exchange explicitly rejected the order")
+
+
 def number(value, field: str, *, positive=False) -> Decimal:
     try:
         result = Decimal(str(value))

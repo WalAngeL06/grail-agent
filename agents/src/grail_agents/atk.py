@@ -6,7 +6,7 @@ import re
 import shutil
 import subprocess
 
-from .config import GrailError, money, number, spot_id
+from .config import GrailError, OrderRejected, money, number, spot_id
 
 
 def cli_command() -> tuple[str, ...]:
@@ -48,14 +48,24 @@ class AtkClient:
             raise GrailError("ATK_TIMEOUT: outcome unknown; reconcile by client order ID") from None
         except OSError:
             raise GrailError("ATK_PROCESS: cannot start OKX CLI") from None
+        try:
+            data = json.loads(result.stdout)
+        except (ValueError, TypeError):
+            data = None
+        if args[:2] == ["spot", "place"]:
+            rows = data.get("data") if isinstance(data, dict) else data
+            if isinstance(rows, list) and len(rows) == 1 and isinstance(rows[0], dict):
+                row = rows[0]
+                code = str(row.get("sCode", ""))
+                expected_id = args[args.index("--clOrdId") + 1]
+                if re.fullmatch(r"\d{1,6}", code) and int(code) != 0 and not row.get("ordId") and row.get("clOrdId", "") in {"", expected_id}:
+                    raise OrderRejected(code)
         if result.returncode:
             # Never propagate raw stdout/stderr (may contain keys, signatures or balances).
             code = re.search(r"(?:code|sCode)[\s:=]+[\"']?(\d{5})\b", result.stderr or "", re.I)
             suffix = f"_{code[1]}" if code else ""
             raise GrailError(f"ATK_CLI{suffix}: query failed at site tr, profile grail; verify CLI/profile")
-        try:
-            data = json.loads(result.stdout)
-        except (ValueError, TypeError):
+        if data is None:
             raise GrailError("ATK_JSON: invalid CLI response") from None
         if isinstance(data, dict) and "code" in data:
             code = str(data["code"])
@@ -105,7 +115,7 @@ class AtkClient:
         if not rows:
             return {"client_order_id": client_order_id, "okx_order_id": None, "order_status": "unknown", "fill_price": None}
         row = rows[0]
-        if row.get("instId") != inst_id or row.get("clOrdId") != client_order_id:
+        if not isinstance(row, dict) or row.get("instId") != inst_id or row.get("clOrdId") != client_order_id:
             raise GrailError("ATK_ORDER: mismatched order identity")
         status = {"live": "pending", "partially_filled": "partial", "filled": "filled", "canceled": "canceled", "mmp_canceled": "canceled"}.get(row.get("state"), "unknown")
         return {"client_order_id": client_order_id, "okx_order_id": row.get("ordId") or None, "order_status": status, "fill_price": row.get("avgPx") or None}
@@ -121,7 +131,7 @@ class AtkClient:
         if order["order_type"] == "market" and order["action"] == "BUY":
             args.append("--banAmend")
         rows = self._invoke(args)
-        if len(rows) != 1 or str(rows[0].get("sCode")) != "0" or not rows[0].get("ordId"):
+        if len(rows) != 1 or not isinstance(rows[0], dict) or str(rows[0].get("sCode")) != "0" or not rows[0].get("ordId"):
             raise GrailError("ATK_SUBMISSION: order not acknowledged; reconcile client order ID")
         return {"client_order_id": order["client_order_id"], "okx_order_id": rows[0]["ordId"], "order_status": "pending", "fill_price": None}
 

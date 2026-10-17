@@ -120,6 +120,34 @@ def breakout_setup(closes, tol: float) -> str:
     return "breakout"
 
 
+def ou_fit(log_closes, bar_hours: float = 1.0) -> dict:
+    """Ornstein-Uhlenbeck (T-017): Δx_t = a + b·x_{t-1} + e (OLS, artan sıralı log kapanışlar, son bar dahil).
+    θ = −b, yarı ömür = ln2/θ (saat), μ = −a/b, σ_eq = sd(e)/√(2θ), z = (x_son − μ)/σ_eq; t = b/se(b).
+    b ≥ 0 ise yarı ömür/z yok (None). Hesaplanamazsa t NaN."""
+    out = {"b": math.nan, "t": math.nan, "half_life_h": None, "z": None}
+    x = np.asarray(log_closes, dtype=float)
+    if x.size < 10 or not np.isfinite(x).all():
+        return out
+    X, dx = x[:-1], np.diff(x)
+    Xc = X - X.mean()
+    sxx = float(Xc @ Xc)
+    if not sxx > 1e-18:
+        return out
+    b = float(Xc @ (dx - dx.mean())) / sxx
+    a = float(dx.mean()) - b * float(X.mean())
+    e = dx - a - b * X
+    s2 = float(e @ e) / (X.size - 2)
+    if not s2 > 0:
+        return out
+    out["b"], out["t"] = b, b / math.sqrt(s2 / sxx)
+    if b < 0:
+        theta = -b
+        out["half_life_h"] = math.log(2) / theta * bar_hours
+        sig_eq = float(e.std(ddof=1)) / math.sqrt(2 * theta)
+        out["z"] = (float(x[-1]) + a / b) / sig_eq  # μ = −a/b
+    return out
+
+
 def psr(returns, sr_benchmark: float = 0.0) -> float | None:
     """Probabilistic Sharpe Ratio (Bailey & López de Prado), bar başına SR ile. Hesaplanamazsa None."""
     r = np.asarray(returns, dtype=float)

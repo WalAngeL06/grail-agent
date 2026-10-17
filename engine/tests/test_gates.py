@@ -137,9 +137,11 @@ def test_signals_in_metrics_for_every_config_coin(cfg):
     del snap["closes"]["SOL-USDT"]  # veri yok
     m = decide(snap, make_portfolio(), cfg)["metrics"]
     assert set(m["signals"]) == set(cfg["coins"])
-    assert m["signals"]["BTC-USDT"] == m["signals"]["SOL-USDT"] == {"hurst": 0.5, "regime": "unclear", "setup": "none"}
+    assert m["signals"]["BTC-USDT"] == m["signals"]["SOL-USDT"] == {
+        "hurst": 0.5, "regime": "unclear", "setup": "none",
+        "ou": {"half_life_h": None, "z": None, "significant": False, "sleeve": "none"}}  # T-017 eki
     for s in m["signals"].values():
-        assert set(s) == {"hurst", "regime", "setup"}
+        assert set(s) == {"hurst", "regime", "setup", "ou"}
         assert isinstance(s["hurst"], float) and 0.0 <= s["hurst"] <= 1.0
         assert s["regime"] in {"trending", "unclear", "ranging"} and s["setup"] in {"none", "breakout", "retest"}
 

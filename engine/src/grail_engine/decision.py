@@ -12,7 +12,7 @@ import numpy as np
 
 from .config import bar_minutes, to_decimal, validate_config
 from .hrp import hrp_weights
-from .stats import avg_corr, breakout_setup, corr_matrix, hurst_dfa, n_eff, psr, sr_portfolio
+from .stats import avg_corr, breakout_setup, corr_matrix, hurst_dfa, n_eff, ou_fit, psr, sr_portfolio
 
 SR_SINGLE = 0.5  # Holy Grail metriği için varsayılan tekil SR (sadece gösterim)
 # T-014 kapıları (config'te değil, sabit). 48 bar kısa → Hurst gürültülü, bu yüzden arada ölü bant.
@@ -22,6 +22,13 @@ RETEST_TOL_MIN = 0.002  # retest bandı: seviyenin ±max(%0.2, 0.5 × bar vol)'�
 RETEST_TOL_SD = 0.5
 SETUP_SIZE = {"retest": 1.0, "none": 0.5, "breakout": 0.0}  # hedefin çarpanı; kapılar sadece azaltır
 SIGNAL_FALLBACK = {"hurst": 0.5, "regime": "unclear", "setup": "none"}  # veri yetersiz/geçersiz (contracts 0.6.1)
+# T-017 ortalamaya dönüş (O-U) kolu: sadece ranging + anlamlı O-U. Spot, açığa satış yok.
+OU_T_MAX = -2.5  # b'nin t istatistiği en fazla bu (Hurst'ten bağımsız ikinci kanıt)
+OU_HL_MIN_H, OU_HL_MAX_H = 1.0, 12.0  # anlamlı yarı ömür aralığı (saat)
+MR_ENTRY_Z, MR_EXIT_Z = -1.5, -0.25  # giriş z ≤ −1.5; elde pozisyon varken z ≥ −0.25 → çıkış; arası tut
+MR_BUDGET_FRAC = 0.25  # MR kolu toplam deploy tabanının en fazla %25'i
+MR_SIZE_FRAC = 0.5  # MR coin hedefi = momentum coin tavanının yarısı
+OU_FALLBACK = {"half_life_h": None, "z": None, "significant": False, "sleeve": "none"}
 MIN_RETURNS = 10  # bir coinin geçerli sayılması için gereken en az getiri (lookback daha kısaysa o)
 CURVE_N = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 50]
 CENT = Decimal("0.01")
@@ -79,7 +86,7 @@ def _raw_closes(snap: dict, inst: str):
         return None
 
 
-def _analyze(raw, lookback: int) -> dict:
+def _analyze(raw, lookback: int, bar_hours: float = 1.0) -> dict:
     """Bir coinin lookback penceresi: geçerliyse getiriler + trend + bar vol, değilse HOLD sebebi."""
     if not isinstance(raw, (list, tuple)) or not raw:
         return {"ok": False, "why": "Not enough data (no prices)"}
@@ -101,7 +108,32 @@ def _analyze(raw, lookback: int) -> dict:
     regime = "ranging" if h < HURST_RANGING else "trending" if h > HURST_TRENDING else "unclear"
     setup = breakout_setup(win, max(RETEST_TOL_MIN, RETEST_TOL_SD * sd))
     return {"ok": True, "rets": rets, "trend": float(win[-1] / win[0] - 1.0), "sd": sd, "lb": lb, "last": float(win[-1]),
-            "hurst": h, "regime": regime, "setup": setup}
+            "hurst": h, "regime": regime, "setup": setup, "ou": _ou_signal(win, bar_hours, regime)}
+
+
+def _ou_signal(win, bar_hours: float, regime: str) -> dict:
+    """T-017: O-U özeti (2 ondalık; karar da raporlanan sayıdan) + kol: ranging+anlamlı → mean_reversion,
+    trending/unclear → momentum, ranging+anlamsız → none."""
+    f = ou_fit(np.log(win), bar_hours)
+    hl = round(f["half_life_h"], 2) if f["half_life_h"] is not None and math.isfinite(f["half_life_h"]) else None
+    z = round(f["z"], 2) if f["z"] is not None and math.isfinite(f["z"]) else None
+    sig = bool(hl is not None and z is not None and f["t"] <= OU_T_MAX and OU_HL_MIN_H <= hl <= OU_HL_MAX_H)
+    sleeve = "momentum" if regime != "ranging" else "mean_reversion" if sig else "none"
+    return {"half_life_h": hl, "z": z, "significant": sig, "sleeve": sleeve}
+
+
+def _mr_target(inf: dict, cur: float, mr_usdt: float):
+    """T-017 MR kolu: (hedef USDT, reason) ya da None (MR bu coinde işlem önermez → momentum/T-014 sonucu kalır).
+    Giriş: z ≤ −1.5 → hedef mr_usdt (mevcudun altına inmez). Elde pozisyon: z ≥ −0.25 → 0 (çıkış), arası → tut."""
+    z, hl, h = inf["ou"]["z"], inf["ou"]["half_life_h"], inf["hurst"]
+    if z <= MR_ENTRY_Z and mr_usdt > cur:
+        return mr_usdt, (f"Ranging market (Hurst {h:.2f}) and price {-z:.1f} std devs below its average "
+                         f"(half-life {hl:.0f}h): small mean-reversion buy")
+    if cur <= 0:
+        return None
+    if z >= MR_EXIT_Z:
+        return 0.0, "Price back near its average: mean-reversion exit"
+    return cur, f"Ranging market (Hurst {h:.2f}), price {-z:.1f} std devs below its average: holding mean-reversion position"
 
 
 def _last_price(snap: dict, inst: str, raw) -> float:
@@ -161,7 +193,7 @@ def _decide(snap: dict, positions, cfg: dict, errors: list) -> dict:
 
     # --- piyasa verisi ---
     raws = {c: _raw_closes(snap, c) for c in coins}
-    info = {c: _analyze(raws[c], cfg["lookback_bars"]) for c in coins}
+    info = {c: _analyze(raws[c], cfg["lookback_bars"], bar_minutes(cfg["candle_bar"]) / 60.0) for c in coins}
     price = {c: _last_price(snap, c, raws[c]) for c in coins}
 
     # --- portföy ---
@@ -214,11 +246,15 @@ def _decide(snap: dict, positions, cfg: dict, errors: list) -> dict:
     w = np.minimum(hrp * scale, cap) if n else hrp
     pv = pvol(w)
     weight = dict(zip(V, w.tolist()))
+    # T-017 MR kolu: coin hedefi = min(momentum tavanının yarısı, tek varlık vol hedefi); kol toplamı ≤ %25
+    w_mr = {c: float(min(MR_SIZE_FRAC * cap[i], tv / sigma[i])) for i, c in enumerate(V)}
+    mr_coins = [c for c in V if info[c]["ou"]["sleeve"] == "mean_reversion"]
 
     # --- kararlar ---
     deploy_base = min(equity, float(max_deploy)) if equity_ok else 0.0
     budget_left = max(Decimal(0), max_deploy - _cents(invested))
     cash_left = _cents(cash) if math.isfinite(cash) else budget_left
+    mr_left = max(Decimal(0), _cents(MR_BUDGET_FRAC * deploy_base - sum(pos_val.get(c, 0.0) for c in mr_coins)))
     decisions = []
     for c in coins:
         cur = pos_val.get(c, 0.0)
@@ -252,6 +288,10 @@ def _decide(snap: dict, positions, cfg: dict, errors: list) -> dict:
                     reason += "; breakout + retest confirmed" if setup == "retest" else "; no breakout yet, half size"
             else:
                 reason = f"Price trending down ({tr:+.1%}), " + ("moving to cash" if cur > 0 else "staying in cash")
+            mr = _mr_target(info[c], cur, w_mr[c] * deploy_base) if c in mr_coins else None
+            if mr is not None:  # T-017: ranging + anlamlı O-U → kararı MR kolu verir
+                target, reason = mr
+                tw = round(target / deploy_base * 100.0, 2) if deploy_base > 0 else 0
             if info[c]["lb"] < cfg["lookback_bars"]:
                 reason += f"; short history ({info[c]['lb']} of {cfg['lookback_bars']} bars)"
             diff, diff_u = _cents(target - cur), _cents(target_u - cur)
@@ -262,18 +302,23 @@ def _decide(snap: dict, positions, cfg: dict, errors: list) -> dict:
                 if diff != 0:
                     reason += f"; change too small to trade ({abs(diff)} < {min_o} USDT minimum)"
             elif diff > 0:
-                size = min(diff, size_u)
+                size = min(diff, max_o, budget_left, cash_left, mr_left) if mr is not None else min(diff, size_u)
                 if size >= min_o:
                     action = "BUY"
                 else:
                     size = Decimal(0)
-                    reason += f"; spending limit reached (budget left {budget_left}, cash {cash_left} USDT)"
+                    reason += (f"; spending limit reached (budget left {budget_left}, cash {cash_left} USDT"
+                               + (f", mean-reversion budget {mr_left} USDT)" if mr is not None else ")"))
             else:
                 action, size = "SELL", min(-diff, max_o)
-                if tr > 0:
+                if tr > 0 and mr is None:
                     reason += "; trimming to target"
-            budget_left -= size_u
-            cash_left -= size_u
+            # MR alımı kendi boyutunu tüketir; kapısız momentum payından az tüketmez (sonraki coinlerin bütçesi büyümez)
+            spent = max(size_u, size if action == "BUY" else Decimal(0)) if mr is not None else size_u
+            budget_left -= spent
+            cash_left -= spent
+            if mr is not None and action == "BUY":
+                mr_left -= size
         decisions.append({
             "cycle_id": cycle_id, "agent": cfg["agent_name"], "mode": cfg["mode"], "dry_run": cfg["dry_run"],
             "inst_id": c, "action": action, "size_usdt": format(size.quantize(CENT, rounding=ROUND_DOWN), "f") if action != "HOLD" else "0",
@@ -296,7 +341,7 @@ def _decide(snap: dict, positions, cfg: dict, errors: list) -> dict:
         "portfolio_vol_raw_pct": _clean(pv_raw, 2), "portfolio_vol_pct": _clean(pv, 2),
         "psr": _clean(psr(port_r)) if port_r is not None else None, "psr_basis": "hrp_all_valid_in_sample",
         "window_bars": m, "drawdown_pct": _clean(dd_pct, 2), "kill_switch": kill,
-        "signals": {c: {k: info[c][k] for k in SIGNAL_FALLBACK} if info[c]["ok"] else dict(SIGNAL_FALLBACK)
-                    for c in coins},
+        "signals": {c: {**{k: info[c][k] for k in SIGNAL_FALLBACK}, "ou": dict(info[c]["ou"])} if info[c]["ok"]
+                    else {**SIGNAL_FALLBACK, "ou": dict(OU_FALLBACK)} for c in coins},
     }
     return {"ok": not errors, "payload": payload, "metrics": metrics, "errors": errors}

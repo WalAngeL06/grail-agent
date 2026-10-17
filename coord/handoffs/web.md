@@ -1,10 +1,10 @@
 # Handoff — web (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~17:35
-- Aktif görev / durum: Türkçe dil desteği (planner "Orkestra Şefi - 2" görevi, kullanıcı onaylı) / READY_FOR_REVIEW
+- Güncelleme zamanı: 2026-10-17 ~18:13
+- Aktif görev / durum: TR arayüz + motto + Rehber (main ab6e2d5) → T-017 OU çipi + public snapshot 18:09 / READY_FOR_REVIEW
 - Oturum: Claude Code · Max (Opus 5.5) "GRAIL web - 2", durdu
 - Worktree / branch / son commit: `Agentic Hack-wt/web` / `role/web` / bu dosyayı içeren son commit (`git log -1`); origin/main (81356a1) merge edildi
-- contracts okunan sürüm: v0.6.1
+- contracts okunan sürüm: v0.6.2
 
 - Bu tur (TR dil desteği):
   - `web/src/i18n.ts`: `T(en, tr)` satır içi çift, `P()` çoğul, `tx()` sözlük (verifyLogic/chain.ts'in İngilizce sebep cümleleri → TR; bilinmeyen metin olduğu gibi).
@@ -26,6 +26,13 @@
     Verify'da "Try to cheat" başlığı TR'de "Try to cheat · hile yapmayı dene" (Rehber bu adı kullanıyor). docs/TUTORIAL.md gelince metin farkı eşitlenecek.
   - Kontrol: npm test 22/22, build + build:public geçti; 375 px'te guide/dashboard/decisions scrollWidth 375, alt menü 6 öğe sığıyor (en uzun "Kararlar" 42/63 px).
     Görüntüler: v4-tr-tutorial.jpg, v4-tr-tutorial-try.jpg, v4-tr-tutorial-mobile.jpg, v4-en-tutorial.jpg, v4-tr-dashboard-motto.jpg.
+- Son iş (planner, 18:13):
+  - T-017 (v0.6.2): `state.ts` `signals[inst].ou` = {half_life_h, z, significant, sleeve} ayrıştırılır (sleeve enum dışıysa yok sayılır); Kararlar'da çip:
+    mean_reversion → "Ortalamaya dönüş · z −1,7 · yarı ömür 5 sa" / "Mean reversion · z −1.7 · half-life 5h"; momentum → "Momentum"; none/alan yok → çip yok.
+    Nasıl çalışır "Smart entry" kartına OU cümlesi (TR/EN). Rehber değişmedi. Test state'iyle (scratch, mean_reversion örneği) ve gerçek state'te (cycle #90) doğrulandı.
+  - Public snapshot tazelendi: 18:10'da `npm run snapshot` → state 18:09:25, check-in #93'e kadar 455 karar, 0 açılmamış salt, `ou` dahil; sır kelimesi/yerel yol taraması 0.
+    `preview:public`: 6 ekran hata yok (TR varsayılan), üst bar "Kopya: 17 Eki 18:09 · zincir kontrolü canlı", Verify #2 (LIVE, zincirden) → Eşleşti + "OKX emir 4017748393474314240";
+    ağ: yalnız Fuji RPC + Routescan (yerel /api yok).
 - Bilinen / küçük: masaüstünde (1280 px) üst bar hem TR hem EN'de iki satıra sarıyor (dil düğmesi 2. satırda) — önceden de flex-wrap tasarımı; taşma yok.
   Pozisyon tablosu "Miktar" (size_base) agent'ın ham string'i, biçimlenmiyor.
 - Devam eden süreçler / portlar: önizleme 5175 (`grail-web-real`) açık olabilir; kapatmak serbest.

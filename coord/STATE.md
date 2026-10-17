@@ -1,19 +1,21 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r1 · 2026-10-17 (Europe/Istanbul)
+- Durum revizyonu: r2 · 2026-10-17 12:20 (Europe/Istanbul)
+- Ürün: `coord/BRIEF.md` (kesinleşti). Fuji test cüzdanı `.env` içinde hazır (`AGENT_ADDRESS`); faucet kullanıcıda.
+- OKX: `grail` profili bağlı (gerçek para; `dry_run` açık).
 - Entegrasyon: `main` @ ilk commit (iskelet)
 - Son doğrulanmış çalışan sürüm: yok (henüz ürün kodu yok)
 - Aktif sözleşme: `contracts/VERSION` = 0.2
 - Kaynak: Avalanche workshop slaytı (ERC-8004 boilerplate) ve ATK yapılandırması → D-006
-- Sıradaki öncelik: T-001, T-002, T-003 paralel başlar; T-004 (UI brifi) paralel; T-005 (UI) 15:00'te.
+- Sıradaki öncelik: T-001, T-002, T-003, T-004 ŞİMDİ paralel başlar. T-005 (UI) 15:00'te.
 
 ## Zaman kapıları
 | Saat | Kapı | Ölçüt |
 |---|---|---|
-| 13:00 | Fuji deploy | `contracts/chain.json` içinde adres + ABI, Snowtrace'te görünüyor |
-| 13:00 | Engine testleri | `engine` test komutu geçer (golden değerler) |
-| 13:00 | ATK veri + ilk emir | dry_run emir akışı çalışıyor; kullanıcı izniyle 1 küçük canlı emir, kimliği loglandı |
-| 14:00 | Uçtan uca ilk döngü | 1 commit tx + 1 ATK demo emri + 1 reveal tx, kimlikleri burada |
+| 13:30 | Fuji deploy | `contracts/chain.json` içinde adresler + ABI + agentId, Snowtrace'te görünüyor |
+| 14:00 | Engine testleri | `engine` test komutu geçer (golden değerler) |
+| 14:00 | ATK veri + dry_run emir | bakiye + ticker + simüle emir çalışıyor |
+| 15:00 | Uçtan uca ilk döngü | 1 commit tx + 1 ATK (dry_run) emri + 1 reveal tx; ardından kullanıcı onayıyla 1 küçük canlı emir |
 | 15:00 | UI başlar | proje %80 olmasa bile; Antigravity kotası bu saate kadar kullanılmaz |
 | 17:00 | Feature freeze | sadece hata düzeltme + UI güncelleme |
 | 18:00 | Yedek demo videosu | kayıt hazır |

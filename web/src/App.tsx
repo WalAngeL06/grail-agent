@@ -183,6 +183,14 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
           MOCK DATA
         </span>
       )}
+      {feed.source === "snapshot" && (
+        <span
+          className="chip snap"
+          title="Agent data is a frozen snapshot of the real practice-mode run. The Ledger and every Verify read Avalanche live from your browser."
+        >
+          Snapshot of {s.generated_at_ms ? new Date(s.generated_at_ms).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"} · live chain checks
+        </span>
+      )}
       {feed.source === "demo" && (
         <span className="chip mock" title="web/fixtures/demo-state.json — one real Fuji cycle plus made-up demo cycles">
           DEMO DATA
@@ -192,7 +200,9 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
       <span>
         Check-in <b>#{s.agent.cycle_id ?? "—"}</b>
       </span>
-      <span>{!running ? "paused" : next ? <>next in <b className="mono">{next}</b></> : "next check-in overdue"}</span>
+      {feed.source !== "snapshot" && (
+        <span>{!running ? "paused" : next ? <>next in <b className="mono">{next}</b></> : "next check-in overdue"}</span>
+      )}
       <span className="sep" />
       {(c.commits !== undefined || c.reveals !== undefined) && (
         <a className="mini" href="#/ledger" title="Decisions sealed on Avalanche / opened / still sealed">
@@ -205,7 +215,9 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
         {errs} {errs === 1 ? "error" : "errors"}
       </a>
       <span className="grow" />
-      <span title={s.generated_at_ms ? new Date(s.generated_at_ms).toISOString() : ""}>updated {ago(s.generated_at_ms, now)}</span>
+      {feed.source !== "snapshot" && (
+        <span title={s.generated_at_ms ? new Date(s.generated_at_ms).toISOString() : ""}>updated {ago(s.generated_at_ms, now)}</span>
+      )}
     </header>
   );
 }

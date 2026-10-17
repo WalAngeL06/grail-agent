@@ -282,7 +282,10 @@ export function decisionDryRun(d: Decision, s: GrailState): boolean | undefined 
   return s.dry_run;
 }
 
-export type Source = "live" | "demo" | "mock" | "bundled";
+export type Source = "live" | "demo" | "mock" | "bundled" | "snapshot";
+
+/** `vite build --mode public`: static jury build, no server, no local files. */
+export const PUBLIC_SNAPSHOT = import.meta.env.MODE === "public";
 export type Feed = {
   state: GrailState | null;
   source: Source | null;
@@ -310,6 +313,28 @@ export function useGrailFeed(): Feed {
   useEffect(() => {
     alive.current = true;
     let timer: number | undefined;
+
+    if (PUBLIC_SNAPSHOT) {
+      // Static build: the agent state is a frozen snapshot; chain reads in Ledger / Verify stay live from the browser.
+      Promise.all([import("../fixtures/public-snapshot.json"), import("../../contracts/chain.json")]).then(
+        ([snap, chainJson]) =>
+          alive.current &&
+          setFeed({
+            // a frozen snapshot has no "next check-in": hide every countdown
+            state: { ...normalize(snap.default), agent: { ...normalize(snap.default).agent, next_cycle_at_ms: undefined } },
+            source: "snapshot",
+            missingPath: null,
+            loading: false,
+            error: null,
+            fetchedAt: Date.now(),
+            chainJson: chainJson.default,
+          }),
+        (e) => alive.current && setFeed((f) => ({ ...f, loading: false, error: String(e), state: normalize(mockState), source: "bundled" })),
+      );
+      return () => {
+        alive.current = false;
+      };
+    }
 
     const tick = async () => {
       try {

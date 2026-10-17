@@ -223,3 +223,5 @@ details.math[open] summary { margin-bottom: 8px; }
 .sig.trending, .sig.retest { color: var(--buy); border-color: rgba(34, 197, 94, 0.4); }
 .sig.ranging { color: var(--warn); border-color: rgba(245, 165, 36, 0.45); }
 .sig.breakout { color: var(--proof); border-color: rgba(139, 156, 255, 0.45); }
+
+.chip.snap { color: var(--proof); border-color: rgba(139, 156, 255, 0.45); background: rgba(139, 156, 255, 0.1); }

@@ -63,9 +63,11 @@ def test_candles_exclude_open_bar_and_sort_oldest_first():
         confirmed_candles(rows, 3)
 
 
-def test_config_uses_current_contract(cfg_dict):
+@pytest.mark.parametrize("lookback_bars", [48, 168])
+def test_config_uses_current_contract(cfg_dict, lookback_bars):
+    cfg_dict["lookback_bars"] = lookback_bars
     cfg = AgentConfig.from_mapping(cfg_dict)
-    assert cfg.dry_run is True and cfg.lookback_bars == 48
+    assert cfg.dry_run is True and cfg.lookback_bars == lookback_bars
 
 
 @pytest.mark.parametrize("change", [{"dry_run": "false"}, {"okx_site": "global"}, {"max_order_usdt": "NaN"}, {"max_order_usdt": "0"}, {"coins": ["BTC-USDT-SWAP"]}, {"coins": []}, {"quote": "USD"}, {"kill_switch_drawdown_pct": 101}, {"mode": "demo"}])

@@ -72,7 +72,7 @@ result = service.execute(
 
 Execution accepts only USDT spot market/limit orders in cash mode. It checks configured coins, positive finite amounts, minimum/maximum order size, total held exposure plus reservations, cash/base availability and drawdown (`>= kill_switch_drawdown_pct`). Limits enforce lot/minimum/tick precision; market BUY uses quote currency and `banAmend` so the exchange cannot enlarge it. Market SELL size is based on the decision reference price; actual proceeds can vary with the execution price. Market BUY's estimated base amount is not a fill; simulations have `fill_price: null` and no exchange order ID.
 
-Repeated calls with the same ID/intent are idempotent; a changed intent with that ID fails. Keep one `OrderService` per dry-run portfolio/session so its reservations cover the entire batch. A simulation does not alter the real portfolio; T-006 owns any simulated portfolio accounting.
+Repeated calls with the same ID/intent are idempotent; a changed intent with that ID fails. Keep one `OrderService` per dry-run batch so its reservations cover all orders in that batch. The loop creates a fresh service for each dry-run cycle: simulation does not alter the real portfolio, and simulated reservations expire with the batch. Live execution retains the shared persistent journal. An explicitly injected order service is owned by its caller.
 
 ## Live execution prerequisites (not run during development)
 

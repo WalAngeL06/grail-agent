@@ -187,17 +187,22 @@ class AgentLoop:
                     raise GrailError("CHAIN_COMMIT_UNCONFIRMED: no confirmed receipt; no orders")
                 record["phase"] = "committed"
                 self.store.save_pending(record)
-                if self.orders is None:
-                    self.orders = OrderService(self.client, self.cfg, data["instruments"], journal=OrderJournal(self.store.root / "orders.sqlite3") if not self.cfg.dry_run else None)
+                orders = self.orders
+                if orders is None:
+                    orders = OrderService(self.client, self.cfg, data["instruments"], journal=OrderJournal(self.store.root / "orders.sqlite3") if not self.cfg.dry_run else None)
+                    # Simulated reservations cover this batch only; the real
+                    # portfolio is refreshed, unchanged by simulation, next cycle.
+                    if not self.cfg.dry_run:
+                        self.orders = orders
                 for decision in record["payload"]["decisions"]:
                     inst = decision["inst_id"]
                     outcome = {"okx_order_id": None, "order_status": "hold", "fill_price": None}
                     if decision["action"] != "HOLD":
                         try:
-                            outcome = self.orders.execute(deepcopy(decision), portfolio, client_order_id=record["client_order_ids"][inst], live_confirmed=self.live_confirmed)
+                            outcome = orders.execute(deepcopy(decision), portfolio, client_order_id=record["client_order_ids"][inst], live_confirmed=self.live_confirmed)
                             if outcome["order_status"] in {"simulated", "filled", "canceled", "pending", "partial", "unknown"}:
                                 try:
-                                    outcome = self.orders.query(record["client_order_ids"][inst])
+                                    outcome = orders.query(record["client_order_ids"][inst])
                                 except Exception as error:
                                     self._error(error, "agents.order.query", cycle_id)
                                     outcome = {**outcome, "order_status": "unknown"}

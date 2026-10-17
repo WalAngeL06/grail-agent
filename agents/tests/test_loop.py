@@ -86,6 +86,31 @@ def fixed_decide(snapshot, portfolio, cfg):
     return {"ok": True, "payload": {"cycle_id": snapshot["cycle_id"], "agent": cfg["agent_name"], "mode": "live", "dry_run": True, "decided_at_ms": snapshot["at_ms"], "decisions": decisions}, "metrics": {"n_assets": len(decisions)}, "errors": []}
 
 
+def test_dry_run_reservations_cover_one_batch_and_reset_each_cycle(cfg_dict, tmp_path):
+    cfg_dict.update(coins=["BTC-USDT", "ETH-USDT", "SOL-USDT"], max_total_deploy_usdt="20")
+
+    class CashMarket(Market):
+        def balance(self):
+            return [{"details": [{"ccy": "USDT", "cashBal": "20", "availBal": "20"}]}]
+
+    def buy_all(snapshot, portfolio, cfg):
+        result = fixed_decide(snapshot, portfolio, cfg)
+        for decision in result["payload"]["decisions"]:
+            decision.update(action="BUY", size_usdt="10")
+        return result
+
+    client = CashMarket(cfg_dict["coins"])
+    chain = SimulatedChain(tmp_path / "chain.json")
+    loop = AgentLoop(cfg_dict, client, chain, tmp_path, decide_fn=buy_all)
+    for cycle in (1, 2, 3):
+        state = loop.run_once()
+        rows = [row for row in state["decisions"] if row["cycle_id"] == cycle]
+        assert [row["order_status"] for row in rows] == ["simulated", "simulated", "blocked"]
+        assert chain.lookup(cycle)["revealed"] is True
+    assert [error["code"] for error in state["errors"]] == ["DEPLOY_LIMIT"] * 3
+    assert client.queries == []
+
+
 @pytest.fixture
 def rig(cfg_dict, tmp_path):
     cfg_dict["coins"] = ["BTC-USDT", "ETH-USDT", "SOL-USDT"]

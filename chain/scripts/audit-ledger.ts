@@ -3,20 +3,33 @@ import path from "node:path";
 import { FetchRequest, JsonRpcProvider } from "ethers";
 import { auditLedger, PUBLICNODE_RPC, renderAuditMarkdown } from "./lib/audit-ledger";
 import type { CycleDeployment } from "./lib/verify-cycle";
+import { parseCycle } from "./lib/verify-cycle";
 
-export function resolveAuditRpc(args: string[], env: NodeJS.ProcessEnv = process.env): string {
+export function resolveAuditArgs(args: string[], env: NodeJS.ProcessEnv = process.env): { rpc: string; maxCycle?: bigint } {
   let selected: string | undefined;
+  let maxCycle: bigint | undefined;
+  const usage = "Usage: npm run audit -- [--rpc URL] [--max-cycle K]";
   for (let i = 0; i < args.length; i++) {
     let value: string | undefined;
-    if (args[i] === "--rpc") value = args[++i];
-    else if (args[i].startsWith("--rpc=")) value = args[i].slice(6);
-    else throw new Error("Usage: npm run audit -- [--rpc URL]");
-    if (!value || value.startsWith("--") || selected !== undefined) throw new Error("Usage: npm run audit -- [--rpc URL]");
-    selected = value;
+    const flag = args[i].split("=")[0];
+    if (!["--rpc", "--max-cycle"].includes(flag)) throw new Error(usage);
+    value = args[i].includes("=") ? args[i].slice(flag.length + 1) : args[++i];
+    if (!value || value.startsWith("--")) throw new Error(usage);
+    if (flag === "--rpc") {
+      if (selected !== undefined) throw new Error(usage);
+      selected = value;
+    } else {
+      if (maxCycle !== undefined || !/^\d+$/.test(value) || BigInt(value) >= 2n ** 256n) throw new Error(usage);
+      maxCycle = parseCycle(value);
+    }
   }
   const rpc = selected || env.GRAIL_AUDIT_RPC_URL || env.FUJI_RPC_URL || PUBLICNODE_RPC;
   if (!["https:", "http:"].includes(new URL(rpc).protocol)) throw new Error("Audit RPC must use HTTP or HTTPS");
-  return rpc;
+  return { rpc, maxCycle };
+}
+
+export function resolveAuditRpc(args: string[], env: NodeJS.ProcessEnv = process.env): string {
+  return resolveAuditArgs(args, env).rpc;
 }
 
 export function auditRpcLabel(rpc: string): string {
@@ -28,7 +41,7 @@ async function main(): Promise<void> {
   // Standalone reader: does not import Hardhat config, dotenv, Wallet or a signer.
   const deployment: CycleDeployment = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../contracts/chain.json"), "utf8"));
   if (deployment.chainId !== 43113 || deployment.agentId !== "1") throw new Error("Audit requires Fuji 43113 and agent #1");
-  const rpc = resolveAuditRpc(process.argv.slice(2));
+  const { rpc, maxCycle } = resolveAuditArgs(process.argv.slice(2));
   const label = auditRpcLabel(rpc);
   const request = new FetchRequest(rpc);
   request.timeout = 20_000;
@@ -38,6 +51,7 @@ async function main(): Promise<void> {
     console.log(`Read-only audit of agent #1 via ${label}`);
     let chunks = 0;
     const audit = await auditLedger(provider, deployment, {
+      maxCycle,
       onProgress: (from, to, head) => {
         if (++chunks % 10 === 0 || to === head) console.error(`Scanned through block ${to}/${head} (${chunks} chunks; latest ${from}–${to})`);
       },

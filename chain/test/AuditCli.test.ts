@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { resolveAuditRpc, auditRpcLabel } from "../scripts/audit-ledger";
+import { resolveAuditRpc, resolveAuditArgs, auditRpcLabel } from "../scripts/audit-ledger";
 import { PUBLICNODE_RPC } from "../scripts/lib/audit-ledger";
 
 describe("Audit RPC configuration", function () {
@@ -21,5 +21,20 @@ describe("Audit RPC configuration", function () {
   it("does not print RPC credentials, private paths or query values in endpoint labels", function () {
     expect(auditRpcLabel("https://user:example-password@rpc.example/private-path?token=example-token"))
       .to.equal("https://rpc.example");
+  });
+
+  it("accepts an exact uint256 max-cycle alongside the RPC override", function () {
+    expect(resolveAuditArgs(["--max-cycle", "3", "--rpc", "https://cli.example"], {}))
+      .to.deep.equal({ rpc: "https://cli.example", maxCycle: 3n });
+    expect(resolveAuditArgs(["--max-cycle=9007199254740993"], {}).maxCycle).to.equal(9007199254740993n);
+    expect(resolveAuditArgs(["--max-cycle", "0"], {}).maxCycle).to.equal(0n);
+    expect(resolveAuditArgs([], {}).maxCycle).to.equal(undefined);
+  });
+
+  it("rejects missing, duplicate, negative, fractional or overflowing max-cycle", function () {
+    for (const args of [["--max-cycle"], ["--max-cycle", "-1"], ["--max-cycle", "1.5"],
+      ["--max-cycle", "3", "--max-cycle", "4"], ["--max-cycle", (2n ** 256n).toString()]]) {
+      expect(() => resolveAuditArgs(args, {})).to.throw();
+    }
   });
 });

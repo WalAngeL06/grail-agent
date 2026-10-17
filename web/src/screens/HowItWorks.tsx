@@ -247,6 +247,10 @@ function SmartEntry({ s }: { s: GrailState }) {
         {T(
           "First GRAIL asks whether the market is trending or just moving sideways, using the Hurst exponent. In a sideways market, breakouts usually fail, so it waits.",
           "GRAIL önce Hurst ile sorar: piyasa trendde mi, yoksa yatay mı? Yatay piyasada breakout'lar genelde başarısız olur, bu yüzden bekler.",
+        )}{" "}
+        {T(
+          "If the market is ranging (Hurst) and the price is clearly below its average, it makes a small mean-reversion buy (Ornstein-Uhlenbeck); in a trend, momentum does the work.",
+          "Piyasa yataysa (Hurst) ve fiyat ortalamasının belirgin altındaysa küçük bir ortalamaya dönüş (Ornstein-Uhlenbeck) alımı yapar; trendde momentum çalışır.",
         )}
       </p>
       <p>

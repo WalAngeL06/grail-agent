@@ -13,6 +13,15 @@ def cfg():
     return json.loads((CONTRACTS / "config.example.json").read_text(encoding="utf-8"))
 
 
+@pytest.fixture
+def no_gates(monkeypatch):
+    """T-014 kapılarını nötrle (rejim trending, setup retest → çarpan 1): emir limiti/bozuk veri testleri kapıdan bağımsız."""
+    import grail_engine.decision as mod
+
+    monkeypatch.setattr(mod, "hurst_dfa", lambda r: 0.6)
+    monkeypatch.setattr(mod, "breakout_setup", lambda c, tol: "retest")
+
+
 def make_closes(n=169, drift=0.001, vol=0.001, seed=1, start=100.0):
     """Artan zaman sıralı kapanışlar (log-normal yürüyüş, sabit seed)."""
     rng = np.random.default_rng(seed)

@@ -1,22 +1,26 @@
 # Handoff — engine / analyst (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~15:50 (R-007 bitişi)
-- Aktif görev / durum: R-007 (UI matematiği incelemesi, kod yazma yok) / READY_FOR_REVIEW. Kartı main'de yok; kapsam kullanıcı mesajından: "origin/main web/src'de n_eff, ρ̄, Holy Grail eğrisi+tavan, PSR, KPI'lar engine ile aynı mı, yanlış etiket/yuvarlama var mı → coord/reviews/R-007-ui-math.md". T-009/T-012 INTEGRATED (b7e294b).
-- Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`); origin/main@9acec55 fast-forward edildi.
-- contracts okunan sürüm: 0.6 (sözleşme değişikliği yok).
-- Tamamlanan somut davranış (R-007): `coord/reviews/R-007-ui-math.md`.
-  - Formüller DOĞRU: UI `nEff`/`srP`/tavan engine `stats.py` ile cebirsel aynı; 720 barda max fark n_eff 2.3e-4, SR 6.9e-5 (engine 4 ondalık yuvarlaması), Holy Grail nokta-çizgi kayması 0.67 px.
-  - 4 MAJOR (etiket/taban): R-007-1 PSR "skill vs luck" değil (HRP tüm coinler, in-sample 48h; 107/672 barda GRAIL gerçekleşen PSR'ye zıt); R-007-2 "Return per unit of risk" = varsayım 0.5×√n_eff, ölçüm değil (GRAIL gerçekleşen Sharpe 1.26 vs ekran ort. 0.58); R-007-3 Positions "target" = HRP (limit öncesi) + now %equity / target %deploy_base taban farkı; R-007-4 başlık "real bets GRAIL holds" ama n_eff coin listesinin.
-  - MINOR: Show-the-math 71/720 barda aritmetik tutarsız (payda 2 ondalık), PSR "100%"/"0%", kill switch "after a 5% loss" metni, target_vol "at most", vol etiketi, HRP ipucu, demo fixture (HRP düşen coinlere ≠0, eski Türkçe reason'lar), state.example corr_matrix 2×2.
+- Güncelleme zamanı: 2026-10-17 ~16:25 (T-014 R-009 düzeltmeleri bitişi)
+- Aktif görev / durum: T-014 + R-009 düzeltmeleri / READY_FOR_REVIEW (planner: merge GO, 16:45 push, 17:00 feature freeze).
+- Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`); origin/main@d449da4+ merge edildi (contracts 0.6.1).
+- contracts okunan sürüm: 0.6.1 (`contracts/README.md:8` signals tanımı). Sözleşme değişikliği isteği yok.
+- Tamamlanan somut davranış:
+  - T-014 (6e8abad): `stats.hurst_dfa` (DFA-1, küçük örnek düzeltmeli), `stats.breakout_setup`; `decide()` trendi pozitif coinlerde alımı azaltan 2 kapı; `metrics.signals`. Ayrıntı `engine/README.md` "Kapılar (T-014)".
+  - R-009-1 (MAJOR): nakit/bütçe artık KAPISIZ alım boyutuyla tüketiliyor (`size_u`); kapılı BUY = min(kapılı fark, kapısız boyut). Bir coinin kapısının boşalttığı pay başka coine geçmiyor; kapısızda BUY olmayan coin BUY olmuyor. Reviewer senaryosu testi eski kodda FAIL (BTC HOLD→BUY), yenide PASS.
+  - R-009-2: raporlanan H `[0,1]`'e kırpılmış, 2 ondalık; rejim aynı sayıdan (`<0.45` ranging, `>0.55` trending, arası unclear — 0.55 dahil unclear). NaN → 0.5.
+  - R-009-3: `signals` bütün config coinleri; geçersiz veri → `{hurst: 0.5, regime: "unclear", setup: "none"}` (sözleşme 0.6.1; planner mesajı "null" diyordu, sözleşme esas alındı).
+  - R-009-4: `engine/README.md`'ye yöntem + katsayı tablosu.
+  - Madde 4: `decision.py` hata mesajları İngilizce: "Config invalid: ...", "Market snapshot is not an object", "Account value missing or invalid; all coins HOLD".
+  - Replay yeniden üretildi: +2.03%, düşüş 4.33%, işlem 220 (112/108), ücret 1.10 USDT, kill switch 0 bar (eski motor: +1.83%, 7.48%, 382, 2.07).
 - Commit edilmemiş / izlenmeyen dosyalar: yok
-- Çalıştırılan kontroller: scratchpad betiği `uv run --project engine python r007_check.py <repo>` → engine `decide()` kayıtlı 30 günlük OKX verisinde (720 bar, config.example) + UI formüllerinin Python kopyası; çıktı sayıları review dosyasında. Ağ/emir/tx yok. Betik repoya eklenmedi (yalnız review dosyası istendi).
-- Çalıştırılmayan kontroller ve nedeni: tarayıcıda UI render edilmedi (inceleme koddan + sayısal); engine pytest çalıştırılmadı (engine kodu değişmedi).
+- Çalıştırılan kontroller: `uv run pytest -q` (engine/) → 167 passed. `uv run python scripts/replay_okx.py` (kayıtlı mumlar, ağsız).
+- Çalıştırılmayan kontroller ve nedeni: agents pytest bu turda koşulmadı (reviewer 6e8abad'de 157 passed; bu turda payload yapısı değişmedi, sadece hata mesajı metinleri). `config.py` doğrulama mesajları (e['message']) Türkçe kaldı — kapsam dışıydı.
 - Devam eden süreçler / portlar: yok
 - Dış eylemler (emir id, tx hash): yok.
-- Bu makinede tuzak: `%TEMP%\pytest-of-Serdar Arif` klasörünün izni bozuk (WinError 5) → testlerde `tmp_path` KULLANMA; `tempfile.TemporaryDirectory()` fixture'ı (`test_replay.py::tmp_dir`). PowerShell `Get-Content` UTF-8'i bozuk gösterir → `-Encoding utf8` ya da Read aracı. Worktree'ler ref paylaşır: başka oturum fetch ederse `origin/main` ilerleyebilir, commit öncesi tekrar kontrol et.
-- Açık konular / öneriler (integrator kararı):
-  - Engine (ayrı kart): `target_weight_pct` iki tabanda — normal yol deploy_base=min(equity,max_total_deploy), HOLD/kill/geçersiz yol equity (`tw = cur_w`, decision.py:212-213). decision.md'de taban tanımlanmalı; metrics'e (hash dışı) `deploy_base_usdt` eklenmesi UI dönüşümünü (R-007-3) mümkün kılar. Reason'daki n_eff'i `_clean(ne)` üzerinden biçimlemek hero ile 1/720 çift yuvarlama farkını kapatır.
-  - Ücret yükü (T-012): her barda yeniden dengeleme 382 emir, 2.07 USDT ücret. Öneri: hedeften sapma bandı, ayrı kart.
-  - Kill switch HOLD pozisyonu dondurur (satmaz); replay max düşüş 7.48% (> %5).
-- TEKRARLANMAMASI gereken işlem: modül adı `decide.py` yapma (paket `decide` fonksiyonu modülü gölgeliyor → `decision.py`). Git Bash heredoc içindeki Python'da `\\n` gerçek satır sonuna dönüşüyor → çok satırlı düzenlemeyi Edit aracıyla yap.
-- SIRADAKİ İLK ADIM: R-007 bulguları web'e (ve engine notu için integrator'a) taşındıysa engine kartı gelirse uygula; yoksa integrator'dan yeni görev kartı bekle — yeni chat, `Agentic Hack-wt/engine` içinde.
+- Bu makinede tuzak: `%TEMP%\pytest-of-Serdar Arif` izni bozuk → testlerde `tmp_path` KULLANMA. PowerShell `Get-Content` UTF-8'i bozuk gösterir → `-Encoding utf8` ya da Read aracı. Worktree'ler ref paylaşır: commit öncesi `origin/main` tekrar kontrol et.
+- Açık konular / öneriler (integrator kararı, freeze sonrası):
+  - R-009-5: 48 barda Hurst gürültülü (beyaz gürültüde %41 ranging). UI/pitch rejimi "tespit" gibi sunmasın. Bandı genişlet ya da daha uzun geçmiş.
+  - Verimlilik (replay, 15+15 gün bölünmüş): ücret yükü sermayenin %2.2'si; en küçük emri 2→4 USDT yapmak (yeniden dengeleme bandı vekili) iki yarıda da daha iyi (düşüş yarısında −1.61% → −0.90%, işlem 217 → 125). Öneri: ayrı kart "rebalance band". `target_vol_pct` 20→40 bedava kâr değil, risk düğmesi (yükselişte iyi, düşüşte kötü).
+  - R-007 notları hâlâ açık: `target_weight_pct` tabanı, metrics'e `deploy_base_usdt`.
+- TEKRARLANMAMASI gereken işlem: modül adı `decide.py` yapma (`decision.py`). Git Bash heredoc içindeki Python'da `\\n` gerçek satır sonuna dönüşüyor → çok satırlı düzenlemeyi Edit aracıyla yap.
+- SIRADAKİ İLK ADIM: merge bekleniyor; freeze sonrası kart gelirse (rebalance band / Hurst penceresi) uygula. Yeni chat, `Agentic Hack-wt/engine` içinde.

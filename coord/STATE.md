@@ -19,7 +19,8 @@
 | 15:00 | UI başlar | proje %80 olmasa bile; Antigravity kotası bu saate kadar kullanılmaz |
 | 17:00 | Feature freeze | sadece hata düzeltme + UI güncelleme |
 | 18:00 | Yedek demo videosu | kayıt hazır |
-| 19:00 | Teslim | |
+| 18:45 | Teslim formu | `coord/SUBMISSION.md` kontrol listesi tamam, form gönderildi (zorunlu: Builder Hub e-postası, GitHub, sunum linki) |
+| 19:00 | Teslim kapanır | |
 
 ## Görev panosu
 | Görev | Başlık | Sahip | Durum | Bağımlılık |

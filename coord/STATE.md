@@ -1,13 +1,13 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r10 · 2026-10-17 14:28 (Europe/Istanbul)
+- Durum revizyonu: r11 · 2026-10-17 14:29 (Europe/Istanbul)
 - Ürün: `coord/BRIEF.md` (kesinleşti). Fuji test cüzdanı `.env` içinde hazır (`AGENT_ADDRESS`); 13:05 organizatörden 1 test AVAX kullanıcının MetaMask'ına (0x3b8b2…3C537, Fuji) GELDİ → kullanıcı ~0.9 AVAX agent adresine aktaracak (gas için ~0.1 MetaMask'ta kalır).
 - OKX: `grail` profili bağlı (gerçek para; `dry_run` açık).
-- Entegrasyon: T-001 (`e06987b`), T-004 (`a630cb6`), T-007 (`3181848`), T-005 v1 (`67a5e4a`), T-002 (`04c5c3d`), R-002 (`f6390f3`); T-005 v0.5 UI (`role/web@9eb1b52`, bu kayıtla aynı merge commit'i).
-- Son doğrulanmış parçalar: web v0.5 dal/main build (14:28); agents 78 test (14:08); engine/analyst 84 test (13:56). Uçtan uca döngü / gerçek state / Fuji UI henüz doğrulanmadı.
+- Entegrasyon: T-001 (`e06987b`), T-004 (`a630cb6`), T-007 (`3181848`), T-002 (`04c5c3d`), R-002 (`f6390f3`), T-005 v0.5 UI (`main@561b0be`); T-008 taslaklar (`role/docs@d1e8ea0`, bu kayıtla aynı merge commit'i).
+- Son doğrulanmış parçalar: web v0.5 dal/main build (14:28); docs taslak kabulü (14:29); agents 78 test (14:08); engine/analyst 84 test (13:56). Uçtan uca döngü / gerçek state / Fuji UI henüz doğrulanmadı.
 - Aktif sözleşme: `contracts/VERSION` = 0.5 (D-011: LLM alanları hash'e, SELL exempt, state limit/kimlik alanları; ledger[] RED; dry_run açık)
 - Kaynak: Avalanche workshop slaytı (ERC-8004 boilerplate) ve ATK yapılandırması → D-006
-- Sıradaki öncelik: docs `d1e8ea0` merge + T-008 kartı; ardından T-003 deploy → T-006 (analist + R-002 koşulları) → UI gerçek state/Fuji. R-002-1 düzeltilmeden canlıya geçilmez.
+- Sıradaki öncelik: T-003 deploy → T-006 (analist + R-002 koşulları) → UI gerçek state/Fuji. T-008 gerçek değerleri freeze sonrası doldurulur; README ancak 17:00 sonrası ve adresler doğrulanınca köke taşınır (D-012). R-002-1 düzeltilmeden canlıya geçilmez.
 
 ## Zaman kapıları
 | Saat | Kapı | Ölçüt |
@@ -32,6 +32,7 @@
 | T-005 | UI v0.5 (LLM not/rozet, limitler, ERC-8004 kimlik) | web (Claude Code · Max) · QA: Antigravity | INTEGRATED (gerçek state/Fuji açık) | T-004; gerçek veri T-003/T-006 |
 | T-006 | Agent döngüsü: decide → analyst review_payload → commit → ATK → reveal → state | agents (Codex · hesap 1) | TODO | T-001, T-002, T-003, T-007; contracts 0.5 |
 | T-007 | LLM analist (yalnız BUY riskini azaltır; SELL exempt) | analyst (Claude Code · Max) | INTEGRATED | T-001; contracts 0.5 |
+| T-008 | Teslim metinleri: form açıklaması, README taslağı, pitch, demo | docs (Claude Code · Max) | INTEGRATED (taslaklar; freeze sonrası doğrulama açık) | T-003/T-006 gerçek değerleri; D-012 |
 | R-002 | T-002 incelemesi: APPROVE koşullu, BLOCKER yok | Claude Code · Max (Opus 5.5) | DONE | bad30c3; R-002-1/2 T-006 kabulünde |
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
@@ -47,9 +48,10 @@
 - R-002: Claude Max `bad30c3` → APPROVE koşullu, BLOCKER yok; reviewer test çalıştırmadı (kod incelemesi), integrator yukarıdaki 78 testi bağımsız çalıştırdı. R-002-1 MAJOR ve R-002-2 T-006 kabulüne işlendi; ürün kodunda henüz düzeltilmedi.
 - R-002 merge sınırı: yalnız coord/reviews/T-002.md + coord/handoffs/reviewer.md; `git diff --check` ve rapor/kart/STATE koşul tutarlılığı doğrulandı. Agents kaynakları 78 testin geçtiği ağaçla aynı.
 - T-005 v0.5: `9eb1b52` uzak dalda; sınır web/ + kendi handoff'u (10 dosya). `cd web && npm run build` dalda ve main'de geçti (45 modül; main 526ms). LLM alanları, üç limit ve null/dolu kimlik gösterimleri kaynakta doğrulandı; gerçek state/Fuji henüz denenmedi.
+- T-008: `d1e8ea0` uzak dalda; sınır docs/ + kendi handoff'u (5 dosya). Açıklama 179 kelime, pitch 10 slayt, demo 2:00, README bölümleri/yer tutucuları ve formül örneği doğrulandı; `git diff --check` geçti. T-008 kartı açıldı; kök README aynı.
 
 ## Bekleyen merge'ler
-- T-008 `role/docs@d1e8ea0`: kullanıcı merge istedi; dört teslim taslağı + docs handoff'u. T-008 kartı bu teslimde açılacak.
+- (yok)
 
 ## Engeller
 - Fuji deploy gecikti (13:30 kapısı kaçtı; chain 13:48'de başladı, 14:05 push yok). Gerçek state/Fuji UI kontrolü T-003/T-006 çıktısını bekliyor.

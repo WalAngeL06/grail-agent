@@ -1,20 +1,22 @@
-# Handoff — engine (sadece bu rol yazar)
+# Handoff — engine / analyst (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 13:15 (Europe/Istanbul)
-- Aktif görev / durum: T-001 / READY_FOR_REVIEW
-- Oturum: Claude Code · Max (Opus 5.5), durdu. Not: oturum yanlışlıkla `Agentic Hack\engine\.claude\worktrees\...` (branch `claude/rol-engine-devam-84aed9`) içinde açıldı; iş doğru worktree'de (`Agentic Hack-wt/engine`, `role/engine`) mutlak yolla yapıldı. O fazladan worktree/branch boş, silinebilir. Sonraki engine/analyst chat'ini doğrudan `Agentic Hack-wt/engine` klasöründen worktree'siz aç.
-- Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`)
-- contracts okunan sürüm: 0.3
-- Tamamlanan somut davranış:
-  - `engine/` uv paketi `grail-engine` (`src/grail_engine`): `validate_config`, `decide`, `sr_portfolio`, `n_eff`, `corr_matrix`, `avg_corr`, `hrp_weights`, `psr`, `returns_from_closes`. API ve kurallar: `engine/README.md`.
-  - `decide(snapshot, portfolio, cfg)` → `{"ok","payload","metrics","errors"}`; `payload` = decision.md döngü payload'ı (aynen hash'lenir). İstisna fırlatmaz (beklenmeyen hata → hepsi HOLD + ENGINE_ERROR). Saat okumaz: `decided_at_ms = snapshot.at_ms`.
-  - OKX ham `candles` satırlarını (en yeni önce) doğrudan kabul eder; gerçek OKX 1H verisiyle denendi (5 coin × 169 mum): ρ̄=0.79, n_eff=1.2, hatasız.
-  - `risk_budget_pct` yorumu (kartta tanımsızdı): coin başına yıllık vol katkısı tavanı `w_i * vol_i <= risk_budget_pct`. Integrator onaylamalı.
+- Güncelleme zamanı: 2026-10-17 (T-007 bitişi)
+- Aktif görev / durum: T-007 / READY_FOR_REVIEW (T-001 INTEGRATED)
+- Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`); main@e06987b merge edildi (fast-forward)
+- contracts okunan sürüm: 0.4
+- Tamamlanan somut davranış (T-007):
+  - `analyst/` uv paketi `grail-analyst` (`src/grail_analyst`, sadece stdlib): `review(decisions, snapshot, news, cfg, provider)`, `review_payload(payload, ...)`, `make_provider(env)`, `GeminiProvider`. Ayrıntı: `analyst/README.md`.
+  - Kod zorlar (planner onayı): sadece BUY LLM'e gider; SELL her durumda aynen (`llm_flag "exempt"`). BUY: action' ∈ {BUY, HOLD}; ters yön → HOLD; HOLD emre dönmez; size' ≤ size (kuruşa aşağı), min_order altı → HOLD; bilinmeyen coin yok sayılır.
+  - Sağlayıcı yok / timeout (daemon thread, tavan 8 sn) / bozuk JSON / hata → kararlar aynen, `llm_flag "skipped"`, `llm_note "skipped: <neden>"`. BUY yoksa LLM çağrılmaz (`no_buys`). İstisna fırlatmaz, girdi değişmez.
+  - Karara `llm_note` (ASCII ≤160) + `llm_flag` (skipped|approved|reduced|vetoed|exempt) eklenir → payload'la hash'lenir.
+  - `engine/pyproject.toml`: pytest `testpaths += ../analyst/tests`, `pythonpath = ../analyst/src` → engine test komutu analyst testlerini de koşar.
 - Commit edilmemiş / izlenmeyen dosyalar: yok
-- Çalıştırılan kontroller (komut → sonuç): `cd engine && uv run pytest -q` → `49 passed`; `grep` src'de open/os/time/requests/print yok.
-- Çalıştırılmayan kontroller ve nedeni: Ledoit–Wolf shrinkage yazılmadı (kartta opsiyonel).
+- Çalıştırılan kontroller: `cd engine && uv run pytest -q` → `84 passed` (49 engine + 35 analyst, ağsız; gerçek engine payload'ı ile uçtan uca test dahil).
+- Çalıştırılmayan kontroller ve nedeni: gerçek Gemini çağrısı (LLM_API_KEY yok/ağ testi kapsam dışı); varsayılan model adı `gemini-flash-latest` canlıda doğrulanmadı (`LLM_MODEL` ile değiştirilebilir).
 - Devam eden süreçler / portlar: yok
-- Dış eylemler (emir id, tx hash) ve durumu; belirsiz olanlar işaretli: yok (sadece salt okunur `okx market candles`).
-- Açık sorun / denenenler: Bugünkü piyasada `lookback_bars=168` ile 5 coinin trendi negatif → hepsi HOLD (beklenen davranış). Demo emir kapısı için `lookback_bars` 48 ile 5 BUY, 12 ile 3 BUY üretiyor (13:10 verisi). Config kullanıcının/integrator'ın kararı.
+- Dış eylemler (emir id, tx hash): yok
+- Açık konular (integrator kararı):
+  - Sözleşme: decision.md karar nesnesine opsiyonel `llm_note`, `llm_flag` alanları (hash'e girer). contracts güncellemesi integrator'da.
+  - Agent bağlantısı (T-006 eki, agents rolü): `decide` → `review_payload` → commit. `agents/pyproject.toml`'a `grail-analyst` path bağımlılığı.
 - TEKRARLANMAMASI gereken işlem: modül adı `decide.py` yapma (paket `decide` fonksiyonu modülü gölgeliyor → `decision.py`).
-- SIRADAKİ İLK ADIM: T-001 review bulgusu varsa düzelt; yoksa T-007 (analyst) kartını oku — yeni chat, `Agentic Hack-wt/engine` içinde.
+- SIRADAKİ İLK ADIM: T-007 review bulgusu varsa düzelt; yoksa integrator'dan yeni görev kartı bekle — yeni chat, `Agentic Hack-wt/engine` içinde.

@@ -1,10 +1,10 @@
 {
-  "contract_version": "0.4",
+  "contract_version": "0.5",
   "generated_at_ms": 1760700090000,
   "mode": "live",
   "dry_run": true,
   "agent": { "name": "GRAIL-01", "status": "running", "cycle_id": 12, "next_cycle_at_ms": 1760700180000 },
-  "config": { "coins": ["BTC-USDT", "ETH-USDT", "SOL-USDT", "AVAX-USDT", "OKB-USDT"], "risk_budget_pct": 10, "max_position_pct": 30, "cycle_seconds": 90 },
+  "config": { "coins": ["BTC-USDT", "ETH-USDT", "SOL-USDT", "AVAX-USDT", "OKB-USDT"], "risk_budget_pct": 10, "max_position_pct": 30, "cycle_seconds": 90, "max_order_usdt": "10", "max_total_deploy_usdt": "50", "kill_switch_drawdown_pct": 5 },
   "market": [
     { "inst_id": "BTC-USDT", "last": "67250.1", "change_24h_pct": 1.8, "at_ms": 1760700000000 }
   ],
@@ -31,6 +31,7 @@
     {
       "cycle_id": 12, "inst_id": "BTC-USDT", "action": "BUY", "size_usdt": "5", "ref_price": "67250.1",
       "reason": "trend+, n_eff=1.9", "decided_at_ms": 1760700000000,
+      "llm_note": "Approved within configured limits", "llm_flag": "approved",
       "commit_tx": "0xabc...", "commit_hash": "0x9f...", "okx_order_id": "1234567890", "order_status": "filled", "fill_price": "67248.0",
       "reveal_tx": "0xdef...", "verified": true,
       "payload_utf8": "{\"agent\":\"GRAIL-01\",\"cycle_id\":12,...}", "salt_hex": "0x5a..."
@@ -38,6 +39,7 @@
   ],
   "chain": {
     "network": "fuji", "chain_id": 43113, "address": "0x...", "explorer": "https://testnet.snowtrace.io",
+    "agent_id": null, "identity_registry": null,
     "commits": 12, "reveals": 11, "unrevealed": 1
   },
   "errors": [

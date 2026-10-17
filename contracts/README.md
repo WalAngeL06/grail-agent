@@ -14,6 +14,10 @@ Etkilenen roller bir sonraki görev başında `git merge main` ile alır ve RAPO
 - Varsayılan `lookback_bars = 48`; `candle_bar = "1H"` ile trend penceresi 48 saat, gereken kapanış sayısı 49 (D-010).
 - Hata nesnesi: `{ "code": "ATK_TIMEOUT", "message": "...", "at_ms": 0, "where": "agents.order", "context": {} }`.
 - Bilinmeyen alanlar okuyucuyu çökertmez (ileriye uyumlu).
+- Karardaki opsiyonel `llm_note` / `llm_flag` varsa hash'e girer; SELL analistten muaf (`exempt`). Ayrıntı `decision.md` (D-011).
+- `state.config`, etkin config'ten `max_order_usdt` ve `max_total_deploy_usdt` (ondalık string) ile `kill_switch_drawdown_pct` (yüzde sayı) taşır.
+- `state.chain.agent_id`: ERC-8004 uint256 kimliği ondalık string; `identity_registry`: 0x ile başlayan registry adresi. Deploy doğrulanana kadar ikisi de `null`; gerçek değerler `contracts/chain.json` çıktısından alınır.
+- Sicil UI'ı `state.decisions[]` kayıtlarını `cycle_id` ile gruplar; ayrı `ledger[]` eklenmez (D-011).
 
 ## Dosyalar
 - `config.example.json` — kullanıcı ayarları (engine doğrular).

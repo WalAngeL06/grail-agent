@@ -1,6 +1,6 @@
 # Handoff — web (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~18:13
+- Güncelleme zamanı: 2026-10-17 ~18:40
 - Aktif görev / durum: TR arayüz + motto + Rehber (main ab6e2d5) → T-017 OU çipi + public snapshot 18:09 / READY_FOR_REVIEW
 - Oturum: Claude Code · Max (Opus 5.5) "GRAIL web - 2", durdu
 - Worktree / branch / son commit: `Agentic Hack-wt/web` / `role/web` / bu dosyayı içeren son commit (`git log -1`); origin/main (81356a1) merge edildi
@@ -33,6 +33,11 @@
   - Public snapshot tazelendi: 18:10'da `npm run snapshot` → state 18:09:25, check-in #93'e kadar 455 karar, 0 açılmamış salt, `ou` dahil; sır kelimesi/yerel yol taraması 0.
     `preview:public`: 6 ekran hata yok (TR varsayılan), üst bar "Kopya: 17 Eki 18:09 · zincir kontrolü canlı", Verify #2 (LIVE, zincirden) → Eşleşti + "OKX emir 4017748393474314240";
     ağ: yalnız Fuji RPC + Routescan (yerel /api yok).
+- Pages hazırlığı (18:40): main merge; snapshot 18:33:49 (check-in #108'e kadar 500 karar, 0 açılmamış salt, tarama 0); `chain.ts readLedgerHistory`
+  Routescan getLogs'u sayfalıyor (page/offset 1000) — önce 100 kayıtta kesiliyordu ("kontrat 108, event 100" uyarısı). preview:public: Panel #108, Zincir Kaydı 108/108 uyarısız,
+  Verify #2 Eşleşti + OKX emir 4017748393474314240. README'de 3 adımlı Pages talimatı. gh-pages'e push YAPILMADI (integrator).
+- "bahis" kaldırıldı (kullanıcı isteği, 18:40): TR'de "Bağımsız varlık", "etkin varlık sayısı (n_eff)", "X bağımsız varlık", "tek varlık gibi", Holy Grail "etkin varlık".
+  EN "independent bets" değişmedi. `grep -rni bahis web/src` boş; build:public yeniden alındı (snapshot 18:33 aynı).
 - Bilinen / küçük: masaüstünde (1280 px) üst bar hem TR hem EN'de iki satıra sarıyor (dil düğmesi 2. satırda) — önceden de flex-wrap tasarımı; taşma yok.
   Pozisyon tablosu "Miktar" (size_base) agent'ın ham string'i, biçimlenmiyor.
 - Devam eden süreçler / portlar: önizleme 5175 (`grail-web-real`) açık olabilir; kapatmak serbest.

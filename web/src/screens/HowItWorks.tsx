@@ -17,11 +17,11 @@ export default function HowItWorks({ s }: { s: GrailState | null }) {
       <div className="how">
         <article className="card how-card">
           <CorrDiagram />
-          <h2>{T("1 · Independent bets", "1 · Bağımsız bahis · n_eff")}</h2>
+          <h2>{T("1 · Independent bets", "1 · Bağımsız varlık · n_eff")}</h2>
           <p>
             {T(
               "Coins that rise and fall together act like one bet, so five coins can be worth barely more than one. GRAIL counts real bets, not coins, and sizes every position by them.",
-              "Birlikte yükselip düşen coinler tek bir bahis gibi davranır; beş coin, bir coinden ancak biraz fazlasına denk gelebilir. GRAIL coinleri değil gerçek bahisleri sayar ve her pozisyonu buna göre boyutlar.",
+              "Birlikte yükselip düşen coinler tek bir varlık gibi davranır; beş coin, bir coinden ancak biraz fazlasına denk gelebilir. GRAIL coin sayısına değil etkin varlık sayısına bakar ve her pozisyonu buna göre boyutlar.",
             )}
           </p>
           <a className="linkbtn" href="#/dashboard">
@@ -155,8 +155,8 @@ export default function HowItWorks({ s }: { s: GrailState | null }) {
         <summary>{T("Glossary — plain words and the technical names behind them", "Sözlük — sade kelimeler ve arkalarındaki teknik adlar")}</summary>
         {isTr() ? (
           <dl className="glossary">
-            <dt>Bağımsız bahis</dt>
-            <dd>n_eff (effective N) = N / (1 + (N−1)·ρ̄). Coinlerinin kaç gerçekten ayrı bahis ettiği.</dd>
+            <dt>Bağımsız varlık</dt>
+            <dd>Etkin varlık sayısı (n_eff) = N / (1 + (N−1)·ρ̄). Coinlerinin kaç gerçekten ayrı varlık gibi davrandığı.</dd>
             <dt>Birliktelik</dt>
             <dd>ρ̄, getirilerin ortalama ikili korelasyonu: 0 (bağımsız) ile 1 (tamamen birlikte) arası.</dd>
             <dt>Risk başına getiri</dt>

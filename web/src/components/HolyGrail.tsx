@@ -158,7 +158,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
               <circle className="pulse" cx={x(N)} cy={y(nowSr)} r="7" fill="none" stroke="var(--grail)" strokeWidth="2" />
               <circle cx={x(N)} cy={y(nowSr)} r="6" fill="var(--grail)" stroke="var(--bg)" strokeWidth="2" />
               <text x={x(N) + 12} y={y(nowSr) - 12} fontSize={fs + 1} fontWeight="600" fill="var(--text)">
-                {T(`You are here: ${N} coins ≈ ${fmt(nowBets, 1, 1)} bets`, `Buradasın: ${N} coin ≈ ${fmt(nowBets, 1, 1)} bahis`)}
+                {T(`You are here: ${N} coins ≈ ${fmt(nowBets, 1, 1)} bets`, `Buradasın: ${N} coin ≈ ${fmt(nowBets, 1, 1)} etkin varlık`)}
               </text>
             </g>
           )}
@@ -172,11 +172,11 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
             <div>
               {T(
                 `at ${fmt(r, 2)}: ${fmt(nEff(hover, r), 1)} independent bets · return/risk ${fmt(srP(sr1, hover, r), 2)} (illustrative)`,
-                `${fmt(r, 2)} için: ${fmt(nEff(hover, r), 1)} bağımsız bahis · getiri/risk ${fmt(srP(sr1, hover, r), 2)} (örnek)`,
+                `${fmt(r, 2)} için: ${fmt(nEff(hover, r), 1)} bağımsız varlık · getiri/risk ${fmt(srP(sr1, hover, r), 2)} (örnek)`,
               )}
             </div>
             <div className="muted">
-              {T(`if fully independent: ${hover} bets · ${fmt(srP(sr1, hover, 0), 2)}`, `tamamen bağımsız olsaydı: ${hover} bahis · ${fmt(srP(sr1, hover, 0), 2)}`)}
+              {T(`if fully independent: ${hover} bets · ${fmt(srP(sr1, hover, 0), 2)}`, `tamamen bağımsız olsaydı: ${hover} varlık · ${fmt(srP(sr1, hover, 0), 2)}`)}
             </div>
           </div>
         )}
@@ -195,7 +195,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
           aria-valuetext={`ρ ${fmt(r, 2)}: ${N ?? 5} coins give ${fmt(nEff(N ?? 5, r), 2)} effective bets`}
         />
         <span className="val">
-          {fmt(r, 2, 2)} → {fmt(!isWhatIf && nowBets !== undefined ? nowBets : nEff(N ?? 5, r), 1, 1)} {T("independent bets", "bağımsız bahis")}
+          {fmt(r, 2, 2)} → {fmt(!isWhatIf && nowBets !== undefined ? nowBets : nEff(N ?? 5, r), 1, 1)} {T("independent bets", "bağımsız varlık")}
         </span>
       </div>
       <div className="whatif">
@@ -213,7 +213,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
         {live === undefined && <span className="muted">{T("Not measured yet — the curve uses the slider value.", "Henüz ölçülmedi — eğri kaydırıcı değerini kullanıyor.")}</span>}
       </div>
       <p className="chart-note">
-        {T("Adding coins that move together adds almost nothing. GRAIL sizes positions by independent bets.", "Birlikte hareket eden coinleri eklemek neredeyse hiçbir şey katmaz. GRAIL pozisyonları bağımsız bahislere göre boyutlar.")}
+        {T("Adding coins that move together adds almost nothing. GRAIL sizes positions by independent bets.", "Birlikte hareket eden coinleri eklemek neredeyse hiçbir şey katmaz. GRAIL pozisyonları bağımsız varlık sayısına göre boyutlar.")}
       </p>
       <p className="tech" style={{ marginTop: 4 }}>Holy Grail chart · y = SR₁·√n_eff {T("with", "burada")} SR₁ = {fmt(sr1, 2)} {T("assumed (illustration, not measured)", "varsayım (örnek, ölçülmedi)")} · n_eff = N/(1+(N−1)ρ) · ceiling SR₁/√ρ</p>
     </div>

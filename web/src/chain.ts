@@ -183,13 +183,16 @@ type Log = { topics: string[]; data: string; transactionHash: string; timeStamp?
 export async function readLedgerHistory(c: ChainInfo, agentId: string): Promise<ChainCycle[]> {
   if (!c.ledger) throw new Error("no GrailLedger address in chain.json");
   const t1 = "0x" + word(toBig(agentId));
-  const get = async (t0: string) => {
+  const PAGE = 1000; // without page/offset Routescan returns only the first 100 logs
+  const getPage = async (t0: string, page: number) => {
     const q = new URLSearchParams({
       module: "logs",
       action: "getLogs",
       address: c.ledger!,
       fromBlock: String(LEDGER_DEPLOY_BLOCK),
       toBlock: "latest",
+      page: String(page),
+      offset: String(PAGE),
       nocache: String(Date.now()), // R-010-4: Routescan GETs were served stale from the CDN cache
       topic0: t0,
       topic1: t1,
@@ -202,6 +205,15 @@ export async function readLedgerHistory(c: ChainInfo, agentId: string): Promise<
       throw new Error(typeof j.result === "string" ? j.result : (j.message ?? "logs error"));
     }
     return j.result;
+  };
+  const get = async (t0: string) => {
+    const all: Log[] = [];
+    for (let page = 1; page <= 20; page++) {
+      const r = await getPage(t0, page);
+      all.push(...r);
+      if (r.length < PAGE) break;
+    }
+    return all;
   };
   const [commits, reveals] = await Promise.all([get(T_COMMIT), get(T_REVEAL)]);
   const out = new Map<number, ChainCycle>();

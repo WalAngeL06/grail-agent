@@ -45,6 +45,19 @@ for (const cycle_id of cycles) {
       : `trend ${trend[inst_id].toFixed(1)}%<=0 -> nakit, n_eff 1.44`;
     return { action, agent, cycle_id, decided_at_ms: at, dry_run: true, inst_id, mode: "live", reason, ref_price: p, size_usdt: size, target_weight_pct: tw[inst_id] };
   });
+  // v0.5 analist (analyst/src/grail_analyst/review.py davranışı): sadece BUY'lar incelenir, SELL exempt,
+  // BUY yoksa hepsi "skipped: no_buys"; llm_note/llm_flag payload'a ve hash'e girer.
+  const hasBuy = ds.some((d) => d.action === "BUY");
+  for (const d of ds) {
+    if (d.action === "SELL") Object.assign(d, { llm_flag: "exempt", llm_note: "exempt: sell reduces exposure" });
+    else if (!hasBuy) Object.assign(d, { llm_flag: "skipped", llm_note: "skipped: no_buys" });
+    else if (d.action === "HOLD") Object.assign(d, { llm_flag: "skipped", llm_note: "" });
+    else if (cycle_id === 9 && d.inst_id === "ETH-USDT")
+      Object.assign(d, { size_usdt: "4.00", llm_flag: "reduced", llm_note: "Reduced: ETH moves with BTC (rho 0.82), adds little diversification" });
+    else if (cycle_id === 9 && d.inst_id === "AVAX-USDT")
+      Object.assign(d, { action: "HOLD", size_usdt: "0", llm_flag: "vetoed", llm_note: "Vetoed: 24h volatility spike, trend signal not confirmed" });
+    else Object.assign(d, { llm_flag: "approved", llm_note: "Approved within configured limits" });
+  }
   const payload = { cycle_id, agent, mode: "live", dry_run: true, decided_at_ms: at, decisions: ds };
   const payload_utf8 = canon(payload);
   const salt_hex = hex32();
@@ -57,7 +70,8 @@ for (const cycle_id of cycles) {
     const traded = d.action !== "HOLD";
     decisions.push({
       cycle_id, inst_id: d.inst_id, action: d.action, size_usdt: d.size_usdt, ref_price: d.ref_price,
-      target_weight_pct: d.target_weight_pct, reason: d.reason, decided_at_ms: at, mode: "live", dry_run: true,
+      target_weight_pct: d.target_weight_pct, reason: d.reason, llm_note: d.llm_note, llm_flag: d.llm_flag,
+      decided_at_ms: at, mode: "live", dry_run: true,
       commit_tx, commit_hash,
       okx_order_id: traded && revealed ? `sim-${cycle_id}-${d.inst_id}` : null,
       order_status: traded ? (revealed ? "simulated" : "pending") : "none",
@@ -81,7 +95,7 @@ const sr1 = 0.5;
 const neff = (n) => 1 / (1 / n + (1 - 1 / n) * rho);
 
 const state = {
-  contract_version: "0.4",
+  contract_version: "0.5",
   generated_at_ms: T0 + 1500,
   mode: "live",
   dry_run: true,
@@ -92,12 +106,10 @@ const state = {
   },
   market: corrLabels.map((inst_id) => ({ inst_id, last: String(price[inst_id]), change_24h_pct: trend[inst_id] * 0.7, at_ms: T0 })),
   portfolio: {
-    equity_usdt: "100.00", cash_usdt: "62.40",
+    equity_usdt: "100.00", cash_usdt: "86.03",
     positions: [
-      { inst_id: "BTC-USDT", size_base: "0.00022", value_usdt: "14.80", weight_pct: 14.8 },
-      { inst_id: "ETH-USDT", size_base: "0.00249", value_usdt: "6.50", weight_pct: 6.5 },
-      { inst_id: "AVAX-USDT", size_base: "0.2371", value_usdt: "6.50", weight_pct: 6.5 },
-      { inst_id: "OKB-USDT", size_base: "0.2304", value_usdt: "9.80", weight_pct: 9.8 },
+      { inst_id: "BTC-USDT", size_base: "0.000148", value_usdt: "9.95", weight_pct: 9.95 },
+      { inst_id: "ETH-USDT", size_base: "0.00154", value_usdt: "4.02", weight_pct: 4.02 },
     ],
   },
   metrics: {
@@ -112,7 +124,7 @@ const state = {
   decisions: decisions.reverse(),
   chain: {
     network: "fuji", chain_id: 43113, address: "0x7a3E1b1f0cC4D2e9b6f1A4C8d3B5e2F9a1C0d4E7", explorer: "https://testnet.snowtrace.io",
-    agent_id: 7, identity_registry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    agent_id: "7", identity_registry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
     commits: 4, reveals: 3, unrevealed: 1,
   },
   errors: [

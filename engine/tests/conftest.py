@@ -9,8 +9,15 @@ CONTRACTS = Path(__file__).resolve().parents[2] / "contracts"
 
 @pytest.fixture
 def cfg():
-    """contracts/config.example.json, test başına taze kopya."""
-    return json.loads((CONTRACTS / "config.example.json").read_text(encoding="utf-8"))
+    """contracts/config.example.json, test başına taze kopya. lookback_bars testlerde 48'e sabit: test verisi
+    (make_closes, sentetik seriler, beklenen pencere) 48 barlık pencereye göre kurulu; örnek config'in canlı değeri
+    (168) testleri etkilemesin. Motor davranışı config'ten ölçeklenir (out/lookback-168.md)."""
+    cfg = json.loads((CONTRACTS / "config.example.json").read_text(encoding="utf-8"))
+    cfg["lookback_bars"] = TEST_LOOKBACK
+    return cfg
+
+
+TEST_LOOKBACK = 48
 
 
 @pytest.fixture

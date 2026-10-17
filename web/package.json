@@ -11,7 +11,8 @@
     "fixture": "node scripts/make-demo-state.mjs",
     "build:public": "tsc -b && vite build --mode public --outDir dist-public",
     "preview:public": "vite preview --mode public --outDir dist-public --port 4173 --strictPort",
-    "snapshot": "node scripts/make-public-snapshot.mjs"
+    "snapshot": "node scripts/make-public-snapshot.mjs",
+    "test": "node --test scripts/verify-logic.test.ts"
   },
   "dependencies": {
     "@noble/hashes": "^2.4.0",

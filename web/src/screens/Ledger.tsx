@@ -18,7 +18,7 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
   const registry = c.identity_registry ?? chain.identityRegistry;
   const onchain = useOnChainCounts(chain, agentId);
   // Every check-in this agent ever sealed, from GrailLedger event logs. In demo mode the made-up check-ins would collide, so skip.
-  const history = useLedgerHistory(chain, demo ? undefined : agentId);
+  const { history, historyErr, reloadHistory } = useLedgerHistory(chain, demo ? undefined : agentId);
   const cycles = useMemo(() => {
     if (!history) return stateCycles;
     const known = new Set(stateCycles.map((c) => c.cycle_id));
@@ -26,6 +26,9 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
     return [...stateCycles, ...extra].sort((a, b) => (b.cycle_id ?? -1) - (a.cycle_id ?? -1));
   }, [stateCycles, history]);
   const chainOnly = cycles.filter((c) => c.fromChain).length;
+  // R-010-4: the event list must account for every seal the contract counts
+  const historyCommits = history ? history.filter((h) => h.commitTx).length : 0;
+  const missing = history && onchain && historyCommits < onchain.commits ? onchain.commits - historyCommits : 0;
 
   const commits = c.commits ?? cycles.filter((x) => x.commit_tx).length;
   const reveals = c.reveals ?? cycles.filter((x) => x.reveal_tx).length;
@@ -121,9 +124,19 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
           </Card>
         </div>
 
+        {(historyErr || missing > 0) && (
+          <div className="strip-msg warn" role="alert">
+            {historyErr
+              ? `Couldn't load the full on-chain history (${historyErr}). Showing the agent's file only.`
+              : `Some check-ins may be missing: the contract counts ${onchain!.commits} seals, the event list returned ${historyCommits}.`}
+            <button className="btn sm" onClick={reloadHistory}>
+              Retry
+            </button>
+          </div>
+        )}
         <Card
           title="Every check-in, newest first"
-          meta={`${cycles.length} in view${chainOnly ? ` · ${chainOnly} read straight from Avalanche (not in this agent's state file)` : ""}${history ? "" : " · on-chain history loading…"}`}
+          meta={`${cycles.length} in view${chainOnly ? ` · ${chainOnly} read straight from Avalanche (not in this agent's state file)` : ""}${history ? "" : historyErr ? " · on-chain history unavailable" : " · on-chain history loading…"}`}
         >
           {cycles.length === 0 ? (
             <Empty title={`Waiting for the first check-in${next ? ` — next in ${next}` : ""}`}>
@@ -183,8 +196,8 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
         <VerifySheet
           cycle={verify}
           chain={chain}
-          agentId={agentId}
-          agentName={s.agent.name ?? chain.agentName}
+          agentId={chain.agentId ?? agentId}
+          agentName={chain.agentName ?? s.agent.name}
           explorer={explorer}
           demo={demo}
           onClose={() => setVerify(null)}
@@ -196,13 +209,19 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
 
 function useLedgerHistory(chain: ScreenProps["chain"], agentId: string | undefined) {
   const [v, setV] = useState<ChainCycle[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
   useEffect(() => {
     if (!agentId || !chain.ledger) return;
     let alive = true;
     const load = () =>
       readLedgerHistory(chain, agentId).then(
-        (r) => alive && setV(r),
-        () => undefined,
+        (r) => {
+          if (!alive) return;
+          setV(r);
+          setErr(null);
+        },
+        (e) => alive && setErr(e instanceof Error ? e.message : String(e)), // R-010-4: visible, not swallowed
       );
     load();
     const t = window.setInterval(load, 60_000);
@@ -210,8 +229,8 @@ function useLedgerHistory(chain: ScreenProps["chain"], agentId: string | undefin
       alive = false;
       window.clearInterval(t);
     };
-  }, [chain, agentId]);
-  return v;
+  }, [chain, agentId, tick]);
+  return { history: v, historyErr: err, reloadHistory: () => setTick((t) => t + 1) };
 }
 
 /** A check-in known only from chain events: decisions come from the revealed payload (if opened). */

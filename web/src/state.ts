@@ -34,6 +34,8 @@ export type Decision = {
   ref_price?: string;
   target_weight_pct?: number;
   reason?: string;
+  llm_flag?: string;
+  llm_note?: string;
   decided_at_ms?: number;
   dry_run?: boolean;
   mode?: string;
@@ -86,6 +88,8 @@ export type GrailState = {
     explorer?: string;
     agent_id?: string;
     identity_registry?: string;
+    /** v0.5: alan var ama null → kimlik henüz kayıtlı değil. Alan hiç yoksa undefined. */
+    registered?: boolean;
     commits?: number;
     reveals?: number;
     unrevealed?: number;
@@ -158,6 +162,8 @@ export function normalize(raw: unknown): GrailState {
         ref_price: str(o.ref_price),
         target_weight_pct: num(o.target_weight_pct),
         reason: str(o.reason),
+        llm_flag: str(o.llm_flag)?.toLowerCase(),
+        llm_note: str(o.llm_note),
         decided_at_ms: num(o.decided_at_ms),
         dry_run: bool(o.dry_run),
         mode: str(o.mode),
@@ -179,6 +185,7 @@ export function normalize(raw: unknown): GrailState {
       explorer: str(ch.explorer),
       agent_id: str(ch.agent_id ?? ch.agentId ?? ch.erc8004_agent_id),
       identity_registry: str(ch.identity_registry ?? ch.identityRegistry),
+      registered: "agent_id" in ch ? str(ch.agent_id) !== undefined : undefined,
       commits: num(ch.commits),
       reveals: num(ch.reveals),
       unrevealed: num(ch.unrevealed),

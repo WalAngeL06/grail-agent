@@ -1,10 +1,15 @@
 # Handoff — web (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~14:00
-- Aktif görev / durum: T-005 / READY_FOR_REVIEW — docs/ui-brief.md (origin/role/docs@1b61651, merge EDİLMEDİ, sadece okundu) ile hizalandı
+- Güncelleme zamanı: 2026-10-17 ~14:20
+- Aktif görev / durum: T-005 / READY_FOR_REVIEW — v0.5 alanları eklendi (origin/main merge edildi; ui-brief artık main'de). Claude Design çıktısı bekleniyor.
 - Oturum: Claude Code · Max (Opus 5.5), durdu
 - Worktree / branch / son commit: `Agentic Hack-wt/web` / `role/web` / bu dosyayı içeren son commit (`git log -1`)
-- contracts okunan sürüm: v0.4
+- contracts okunan sürüm: v0.5
+- v0.5 eklemeleri (bu tur):
+  - Decisions: her satırda analist rozeti `AI approved|reduced|vetoed|exempt|skipped` (renkli; title = açıklama + llm_note) ve llm_note metni; bilinmeyen flag gri gösterilir.
+  - Settings: "Spend limits" kartı (state.config.max_order_usdt, max_total_deploy_usdt, kill_switch_drawdown_pct; yoksa "—" + "not reported"), salt okunur; Config tablosunda tekrar edilmez.
+  - Ledger: ERC-8004 kartı v0.5 alanı varsa her zaman görünür; agent_id null → "NOT REGISTERED", registry null → "not registered"; dolu ise #id + registry Snowtrace linki.
+  - Demo fixture v0.5: review.py davranışı (BUY approved/reduced/vetoed, SELL exempt, BUY yoksa "skipped: no_buys", HOLD skipped); llm alanları payload'da ve hash'te; agent_id "7" (string).
 - Tamamlanan somut davranış (brife göre):
   - Arayüz İngilizce. Sol menü: Dashboard · Decisions · On-chain Ledger · Settings; altta "Avalanche Fuji · OKX TR".
   - Üst bar (56 px, sabit): agent + durum noktası, DRY RUN/LIVE rozeti, MOCK DATA / DEMO DATA rozeti, Cycle #, "next in m:ss", zincir sayaçları c/r/u, hata rozeti (→ #/settings/system), "updated Xs ago".
@@ -17,6 +22,7 @@
   - Durumlar: iskelet + "connecting…", bayat veri (> 3 × cycle_seconds, sadece canlı kaynakta), okuma hatası şeridi (son iyi state kalır), boş karar "Waiting for first cycle — next in …", pozisyon yok "All cash — trend filter is risk-off".
 - Commit edilmemiş / izlenmeyen dosyalar: worktree kökünde `.claude/launch.json` (sadece önizleme aracı için; web/ dışı, commit edilmez).
 - Çalıştırılan kontroller (komut → sonuç):
+  - (v0.5) `cd web && npm run build` → geçti; demo döngü #9 (llm alanlı payload) Verify ✅; mock: 4 ekran hata yok, kimlik "NOT REGISTERED", limitler $10/$50/5%; fixture payload'ları Python json.dumps(sort_keys, ensure_ascii) ile birebir.
   - `cd web && npm run build` → geçti.
   - `npm run dev:demo` (5174) → 4 ekran açıldı; döngü #11 Verify → ✅ Match, "all 5 decisions match the sealed payload".
   - `npm run dev` (mock, 5173) → 4 ekran açıldı, hata bandı yok, yatay taşma yok; mock Verify → "Mock data — cannot verify".
@@ -30,4 +36,4 @@
   - Engine `reason` metinleri Türkçe ("-> nakit", "hedef"); UI İngilizce. Engine'e istek: reason'ı İngilizce yaz (UI metni olduğu gibi gösterir).
   - Brifte istenen "on-chain 0x…" satırı ABI ile kontrattan okunmuyor; commit tx calldata'sında hash aranıyor (ABI'siz). chain.json gelince `chainHints()` + gerekirse ABI okuması eklenecek.
 - TEKRARLANMAMASI gereken işlem: vite.config'te `new URL(...).pathname` (boşluklu yol → 404) — `fileURLToPath` kullan.
-- SIRADAKİ İLK ADIM: `git merge main` (ui-brief main'e gelmiş olabilir); chain.json gelince src/verify.ts `chainHints()` anahtarlarını gerçek şekle göre düzelt; T-006 state yazınca `GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev` ile gerçek veriden ekran görüntüsü al; Claude Design çıktısı gelirse farkları uygula.
+- SIRADAKİ İLK ADIM: `git merge origin/main`; Claude Design çıktısı gelince farkları uygula; chain.json gelince src/verify.ts `chainHints()` anahtarlarını gerçek şekle göre düzelt; T-006 state yazınca `GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev` ile gerçek veriden ekran görüntüsü al; Claude Design çıktısı gelirse farkları uygula.

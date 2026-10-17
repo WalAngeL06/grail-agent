@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { groupCycles, type Cycle, type Decision, type GrailState } from "../state";
-import { ActionChip, Empty, ExplorerLink, Hash, ModeTag } from "../components/Bits";
+import { ActionChip, Empty, ExplorerLink, Hash, LlmBadge, ModeTag } from "../components/Bits";
 import VerifyPanel from "../components/VerifyPanel";
 import { chainHints } from "../verify";
 import { clock, coin, countdown, dayClock, price } from "../format";
@@ -74,7 +74,15 @@ function CycleCard({ c, s, chainJson, onlyTrades, fresh, demo }: { c: Cycle; s: 
             <span>
               <ActionChip action={d.action} size={d.size_usdt} />
             </span>
-            <span className="reason">{d.reason ?? <span className="dim">no reason given</span>}</span>
+            <span className="reason">
+              {d.reason ?? <span className="dim">no reason given</span>}
+              {d.llm_flag && (
+                <span className="llm-line">
+                  <LlmBadge flag={d.llm_flag} note={d.llm_note} />
+                  {d.llm_note && <span className="llm-note">{d.llm_note}</span>}
+                </span>
+              )}
+            </span>
             <span className="px">
               ref {price(d.ref_price)}
               {d.fill_price && <> → fill {price(d.fill_price)}</>}

@@ -1,9 +1,9 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r39 · 2026-10-17 16:58 (Europe/Istanbul)
+- Durum revizyonu: r40 · 2026-10-17 16:59 (Europe/Istanbul)
 - Ürün: ilk CANLI 15:37 cycle2 BTC BUY2 filled kanıtı korunur. Sürekli agents döngüsünde cycle3 5 BUY / 5 approved ve planner Gemini HTTP200 kullanıcı tarafından bildirildi; bu chat yeni koşu başlatmaz.
 - Aktif sözleşme: VERSION 0.6.1 (belge/eklemeli metrik); config/payload/state contract_version=0.6, chain.json deploy=0.5. Config/adres/ABI/hash değişmedi (D-017).
-- Bu teslim: web@c1c2361 → main9322c6f ve chain@23a81aa → maind4c4c53 ayrı push/uzak eşitliği doğrulandı; chain raporu sonrası main temiz. Docs@8103126 bu kaydı taşıyan üçüncü merge'de; yalnız istenen hedefler alındı. Daha yeni docs/chain uçları alınmadı.
+- Bu teslim tamam: web@c1c2361 → main9322c6f, chain@23a81aa → maind4c4c53, docs@8103126 → main127e461 ayrı push'landı. Son kontrolde main temiz ve HEAD=origin/main=uzak main. Üç exact hedef ancestor/içerik kontrolü PASS; daha yeni docs/chain uçları alınmadı.
 - Bu tur kontroller: web npm test22/22, build/build:public exit0 (54 modül; 684ms/696ms); web ağacı c1c2361 ile birebir; diff/sınır temiz. Contracts/agents/engine/analyst/chain ürün kaynakları başlangıçb6d6b61 ile aynı. Engine167/agents157/chain48 önceki kanıttır.
 - Public kapısı: R-005 PUBLIC GO yalnız taranan main9acec55/ref kümesi için; MINOR-1 kapandı. Yayınlanacak son HEAD değiştiği için farklar yeniden taranır; bu chat public ayarını değiştirmez.
 - Öncelik: **Verify GO — R-010 kapandı** (webc1c2361, bağımsız chain23a81aa). Audit R-011 chain'de düzeltiliyor (kullanıcı hedefi ~17:30); canlı audit komutu GO değil. Agents gemini-3.7-flash'a geçiyor; LLM_API_KEY kullanıcı tarafından geri ekleniyor. Yeni model/restart sonucu henüz doğrulanmadı. **17:00 freeze sonrası sadece hata düzeltme + UI.**
@@ -58,8 +58,8 @@
 
 ## Kanıtlar / bu teslim ve önceki doğrulamalar
 - Bu tur başlangıç main@b6d6b61 temiz ve origin/main ile eşitti. Üç exact hedef uzak dallardan erişilebilir; docs dalındaki8103126 sonrası değişiklikler kapsam dışı. Web22/22 + iki build PASS; c1c2361 web/handoff birebir ve diğer ürün alanları aynı. Public build yayınlanmadı; bu tur tarayıcı/RPC/sır taraması yapılmadı.
-- Chain merge farkı yalnız coord/reviews/R-010-web-verify.md + chain handoff; rapor/handoff3c0f476 ile birebir. Chain/contracts ve tüm ürün kaynakları web mergeca4b914 ile aynı; R-010 gerçek RPC/ABI/UI senaryoları inceleyen kanıtıdır, integrator tekrarlamadı. Chain handoff'undaki eski T-015 bekliyor ifadesi STATE/D-019'a göre geçersizdir.
-- İki hedef HEAD ancestor kontrolü PASS; webc2a731b ve rapor/handoff3c0f476 içerikleri birebir. Başlangıç9756590'a göre contracts/agents/engine/analyst/chain ürünleri aynı, diff --check temiz. Son koordinasyon commit'i bu doğrulama kanıtını taşır.
+- Chain23a81aa farkı yalnız R-010 rapor/handoff; içerik birebir. Ürün kaynakları web9322c6f ile aynı. Gerçek RPC/ABI/UI tekrar senaryoları inceleyen kanıtıdır; integrator tekrarlamadı. T-015 bağımsız R-011 raporu okundu, yeni düzeltme bekleniyor.
+- Üç hedef ancestor PASS; webc1c2361/docs8103126/chainrapor23a81aa ağaçları birebir. Başlangıçb6d6b61'e göre kök README/contracts/agents/engine/analyst/chain ürünleri aynı, diff --check temiz. Main127e461 push sonrası temiz/uzak eşitliği doğrulandı; son koordinasyon commit'i bu kanıtı taşır.
 - R-005 raporu: 100 commit / 535 blob desen + 537 blob gerçek sır eşleştirmesi, 0 gerçek sır; PUBLIC GO. Bunlar reviewer kanıtı; integrator bu tur anahtar/.env okumadı veya taramayı tekrar etmedi. MINOR-2/3/4 ve raporun kapsam sınırları korunur.
 - Ignore kontrolü: 18 sentetik riskli yol engellendi; 8 örnek/fixture/çıktı yolu açık. İstenen sqlite/runtime/fuji/live-config/envrc/pem/key/.claude kuralları var; public JSON fixtures istisnalı, PEM/key gibi sır türleri fixtures içinde de kapalı. Mevcut tracked fixture’lar korundu.
 - R-007 sözleşme istekleri: corr_matrix 5 coin/5x5 simetrik, diag1/offdiag0.62; avg_corr0.62/n_eff1.44/SR0.60 ile tutarlı. target_weight_pct normalde deploy_base=min(equity,max_deploy), koruma HOLD’unda equity; normal HOLD tek başına tabanı ayırt ettirmez. Kod/hash değişikliği yok.

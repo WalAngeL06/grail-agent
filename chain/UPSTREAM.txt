@@ -1,0 +1,3 @@
+﻿https://github.com/ava-labs/8004-boilerplate
+commit: 27d04ef9f2de048370be6286041eb38d54c76153
+Only contracts/scripts/test/config imported; GRAIL changes documented in README.md.

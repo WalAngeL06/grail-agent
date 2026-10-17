@@ -1,10 +1,10 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r21 · 2026-10-17 15:36 (Europe/Istanbul)
+- Durum revizyonu: r22 · 2026-10-17 15:36 (Europe/Istanbul)
 - Ürün: Fuji 43113, dört kontrat, ERC-8004 agentId 1; tarihsel 14:50 dry_run kapısı geçti. Canlı koşu çalıştırılmaz; sınırlı kullanıcı koşusu R-004b + hedef T-006 main test/merge sonucunu bekler.
 - OKX: grail profili, gerçek para; örnek config dry_run=true. Kod yazan AI ilk canlı emri çalıştırmaz.
 - Aktif sözleşme: contracts/VERSION 0.6; chain.json deployment 0.5, adres/ABI/hash/testVector değişmedi.
-- Sıralı kullanıcı entegrasyonu: 4/6 tamam; kalan: review@ac96902; agents@2bf5668. Her merge sonrası main push edilir.
+- Sıralı kullanıcı entegrasyonu: 5/6 tamam; kalan: agents@2bf5668. Her merge sonrası main push edilir.
 - Son yerel kontrol: web build PASS; engine 104, agents 78, chain 38 + typecheck. Sayıların hangi aşamada koşulduğu aşağıda.
 - Public kapısı: R-005 raporu + yayınlanacak son SHA taraması beklenir; repo görünürlüğü değişmedi. README freeze sonrası D-012.
 - Önceki ayrıntılı kanıtlar: coord/archive/STATE-r17-20261017.md (tarihsel kayıt; güncel durum bu dosya).
@@ -42,6 +42,7 @@
 | R-003 | T-003 incelemesi: APPROVE koşullu, yeniden deploy yok | reviewer (Claude Code · Opus 5.5) | DONE | a6044d7; R-003-2 decision.md v0.6, R-003-3 T-006 kabulünde |
 | R-004 | T-006 incelemesi: APPROVE koşullu; 3 MAJOR; canlı NO-GO | reviewer (Claude Code · Opus 5.5) | DONE | 62ef3c3; dcf68db incelendi; D-014 üçü de merge öncesi |
 | R-005 | Public öncesi sır/anahtar/.env/gitignore taraması | reviewer (Codex · hesap 2) | TODO | coord/reviews/R-005-public.md; tüm ref geçmişi + güncel ağaç; yayınlanacak son SHA kontrolü |
+| R-004b | T-006 düzeltmeleri + sınırlı canlı kapı | reviewer (Claude Opus) | DONE / APPROVE | ac96902; incelenen 2bf5668; ilk canlıyı kullanıcı yapar |
 | R-006 | T-010 bağımsız inceleme | reviewer (Claude Pro) | TODO (paralel) | f36a95d, yalnız chain/ farkı; coord/reviews/R-006.md |
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
@@ -52,10 +53,11 @@
 - T-013 1d411c0: docs/ui-copy.md: 5 How it works kartı, 21 terim, ekran şablonları, boş/bekleme/hata metinleri. Belge/alan kapsamı okundu; web uygulaması ve ek tooltip/replay metni tamamlama ayrı. diff --check temiz.
 - T-009/T-012 b7e294b: Engine pytest 104; main agents pytest 78. Kayıtlı OKX verisiyle ağsız replay tekrarlandı, JSON/özet baytları aynı; 720 saatlik ortak bar. Engine reason EN. Replay: kapanış fiyatında dolum, %0.1 ücret varsayımı, slippage/AI yok; sonraki açılış modeli ve sıkı veri/provenance kabulü açık.
 - T-010 f36a95d: hardhat 38 test + typecheck PASS; 4 VERIFIED explorer kaydı ve cycle okuyucu geldi. Integrator bu tur explorer/RPC sorgusu veya tx çalıştırmadı. R-006 bağımsız incelemesi kullanıcı talimatıyla merge ile paralel, Claude Pro kartı açık.
+- R-004b ac96902: R-004b APPROVE tam agents@2bf5668 farkı için; R-004-1/2/3 kapalı. Reviewer 157 test + CLI kapı matrisi sunuyor; bu aşamada T-006 main test/merge kapısı henüz açık. Kullanıcının tek coin 2 USDT ilk canlı koşu talimatı son test/merge sonrası geçerli.
 - Replay sonucu (tarihsel simülasyon): 50 → GRAIL 50.92 (+1.83%, DD 7.48%); equal weight 54.41 (+8.81%, DD 14.51%). Üstünlük iddiası yok; 5% kill switch zarar tavanı değildir. JSON/özet web/sunum sahiplerine aktarılacak.
 
 ## Bekleyenler / sınırlar
-- review@ac96902; agents@2bf5668.
+- agents@2bf5668.
 - T-011 sunum son hazırlığı: README/kaynak notları/süreler/TBD; T-013 ilk kopyasının eksik tooltip/replay/terimleri docs, uygulamasını web tamamlar.
 - T-012 kapanış-fill varsayımı açık; sonraki açılış, strict eksik/tekrar veri ve provenance/şema kabul maddeleri tamamlanmış sayılmaz.
 - R-005 public taraması bekler; R-006 bağımsız chain incelemesi paralel TODO. Canlı koşu, deploy, yeni tx veya otomatik rol mesajı yok.

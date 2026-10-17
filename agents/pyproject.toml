@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "grail-agents"
+version = "0.1.0"
+description = "Guarded OKX ATK adapter for GRAIL"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = ["--basetemp=runtime/pytest"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/grail_agents"]

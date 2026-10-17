@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGrailFeed, type Feed, type GrailState } from "./state";
 import { readChainJson, type ChainInfo } from "./chain";
 import { Boundary, Toaster } from "./components/Bits";
@@ -31,16 +31,31 @@ export default function App() {
   const now = useNow(1000);
   const chain = useMemo(() => readChainJson(feed.chainJson), [feed.chainJson]);
 
+  const [hash, setHash] = useState(() => window.location.hash);
   useEffect(() => {
-    const on = () => setRoute(readRoute());
+    const on = () => {
+      setRoute(readRoute());
+      setHash(window.location.hash);
+    };
+    // A link to the hash we are already on fires no hashchange: scroll to its anchor anyway.
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.("a[href^='#/']");
+      if (a && a.getAttribute("href") === window.location.hash) scrollToAnchor(window.location.hash);
+    };
     window.addEventListener("hashchange", on);
-    return () => window.removeEventListener("hashchange", on);
+    document.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("hashchange", on);
+      document.removeEventListener("click", onClick);
+    };
   }, []);
+  const lastRoute = useRef(route);
   useEffect(() => {
-    const anchor = window.location.hash.split("/")[2];
-    if (anchor) window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth" }), 50);
-    else window.scrollTo(0, 0);
-  }, [route]);
+    // #/screen/anchor scrolls to the anchor (also within the same screen); a new screen without anchor starts at the top
+    if (hash.split("/")[2]) scrollToAnchor(hash);
+    else if (lastRoute.current !== route) window.scrollTo(0, 0);
+    lastRoute.current = route;
+  }, [hash, route]);
 
   const s = feed.state;
   const open = s?.chain.unrevealed;
@@ -107,6 +122,15 @@ export default function App() {
   );
 }
 
+/** Scroll to the element named by #/screen/<id>; retries briefly while the screen renders its data. */
+function scrollToAnchor(h: string, tries = 12) {
+  const id = h.split("/")[2];
+  if (!id) return;
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ block: "start" }); // instant: smooth scrolling was unreliable in testing
+  else if (tries > 0) window.setTimeout(() => scrollToAnchor(h, tries - 1), 100);
+}
+
 // ---------- first-visit intro (dismissible, remembered per browser) ----------
 const INTRO_KEY = "grail.intro.dismissed";
 function Intro() {
@@ -139,7 +163,7 @@ function Intro() {
         </li>
         <li>
           <b>3 · You can check it yourself</b>
-          <span>Press "Verify" on any decision: your browser re-checks the seal against the blockchain.</span>
+          <span>Press "Verify yourself" on any decision: your browser re-checks the seal against the blockchain.</span>
         </li>
       </ol>
       <div className="intro-actions">
@@ -173,14 +197,22 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
       <span className="agent" title={`agent status: ${s.agent.status ?? "unknown"}`}>
         <span className={`dot ${running ? "on" : ""}`} />
         {s.agent.name ?? "agent"}
-        <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>
+        <span className="muted tb-opt" style={{ fontWeight: 400, fontSize: 12 }}>
           {running ? "running" : (s.agent.status ?? "status unknown")}
         </span>
       </span>
       <ModeChip state={s} />
       {(feed.source === "mock" || feed.source === "bundled") && (
-        <span className="chip mock" title="The agent hasn't written live data yet; this is the example file (contracts/state.example.json).">
-          EXAMPLE DATA
+        <span className="chip mock" title="No live agent data found. Showing sample data.">
+          MOCK DATA
+        </span>
+      )}
+      {feed.source === "snapshot" && (
+        <span
+          className="chip snap"
+          title="Agent data is a frozen snapshot of the real practice-mode run. The Ledger and every Verify read Avalanche live from your browser."
+        >
+          Snapshot of {s.generated_at_ms ? new Date(s.generated_at_ms).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"} · live chain checks
         </span>
       )}
       {feed.source === "demo" && (
@@ -190,22 +222,28 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
       )}
       <span className="sep" />
       <span>
-        Round <b>#{s.agent.cycle_id ?? "—"}</b>
+        Check-in <b>#{s.agent.cycle_id ?? "—"}</b>
       </span>
-      <span>{!running ? "paused" : next ? <>next in <b className="mono">{next}</b></> : "next round overdue"}</span>
+      {feed.source !== "snapshot" && (
+        <span>{!running ? "paused" : next ? <>next in <b className="mono">{next}</b></> : "next check-in overdue"}</span>
+      )}
       <span className="sep" />
       {(c.commits !== undefined || c.reveals !== undefined) && (
-        <a className="mini" href="#/ledger" title="Decisions sealed on Avalanche / opened / still sealed">
+        <a className="mini tb-opt" href="#/ledger" title="Decisions sealed on Avalanche / opened / still sealed">
           <b>{c.commits ?? "—"}</b> sealed <b>{c.reveals ?? "—"}</b> opened{" "}
           <b className={(c.unrevealed ?? 0) > 0 ? "open" : ""}>{c.unrevealed ?? "—"}</b>
           <span className={(c.unrevealed ?? 0) > 0 ? "open" : ""}>still sealed</span>
         </a>
       )}
-      <a className={`chip ${errs > 0 ? "danger" : ""}`} href="#/settings/system" title="Problems the agent reported (it skips the round and keeps running)">
-        {errs} {errs === 1 ? "problem" : "problems"}
+      <a className={`chip ${errs > 0 ? "danger" : ""}`} href="#/settings/system" title="Errors the agent reported (it skips the check-in and keeps running)">
+        {errs} {errs === 1 ? "error" : "errors"}
       </a>
       <span className="grow" />
-      <span title={s.generated_at_ms ? new Date(s.generated_at_ms).toISOString() : ""}>updated {ago(s.generated_at_ms, now)}</span>
+      {feed.source !== "snapshot" && (
+        <span className="tb-opt" title={s.generated_at_ms ? new Date(s.generated_at_ms).toISOString() : ""}>
+          updated {ago(s.generated_at_ms, now)}
+        </span>
+      )}
     </header>
   );
 }
@@ -236,7 +274,7 @@ function Strips({ feed, now }: { feed: Feed; now: number }) {
     <>
       {feed.error && (
         <div className="strip-msg danger" role="alert">
-          Can't read the agent's data right now (retrying every 3 s). {s ? "You are seeing the last good reading." : ""}
+          Can't read the agent's data right now. Retrying — showing the last known state.
           <span className="tech">{feed.error}</span>
         </div>
       )}
@@ -247,11 +285,11 @@ function Strips({ feed, now }: { feed: Feed; now: number }) {
       )}
       {stale && (
         <div className="strip-msg warn" role="alert">
-          Agent silent for {Math.max(1, Math.round(age! / 60000))}m — last state shown.
+          No update from the agent for {Math.max(1, Math.round(age! / 60000))}m — showing the last known state.
         </div>
       )}
       {stopped && (
-        <div className="strip-msg warn">Agent stopped — no new decisions until it is restarted. Everything already sealed stays checkable.</div>
+        <div className="strip-msg warn">The agent is stopped. No new check-ins until it is restarted.</div>
       )}
     </>
   );

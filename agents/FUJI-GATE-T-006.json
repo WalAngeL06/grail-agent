@@ -32,6 +32,8 @@
     "independent Web3.keccak(payload+salt)",
     "canonical order summary",
     "onchain committed/revealed flags",
-    "empty pending"
-  ]
+    "empty pending",
+    "fresh adapter reads chain floor: next cycle 2, no transaction sent"
+  ],
+  "restart_next_cycle_id": 2
 }

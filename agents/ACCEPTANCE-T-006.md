@@ -1,48 +1,47 @@
-# T-006 acceptance — simulated-chain phase, contracts 0.5
+# T-006 acceptance — real Fuji dry-run gate, contracts 0.5
 
-2026-10-17, Europe/Istanbul. Role agents, branch role/agents. User requested R-002-1/R-002-2 first, then an offline-testable chain interface/fake adapter while deployment is pending. No real order, wallet use or chain transaction occurred.
+2026-10-17 14:50 Europe/Istanbul. Role agents, branch role/agents. Main descriptor source: 9bc78e3, merged as 0010c9c. No actual OKX order was sent; dry_run remained true.
 
-## Review fixes
+## Verified 15:00 gate
 
-- `ef5aecd`: definite structured nonzero exchange sCode with empty order ID -> terminal rejected with safe rejection_code. Works with raw array/envelope JSON and nonzero CLI exit. Text errors, malformed/contradictory responses and timeout stay unknown. Requery of a rejected record cannot turn it back into unknown. Next distinct intent can execute.
-- Before a new live intent, unknown/pending/partial orders are automatically queried before the fresh portfolio/budget check. Regression reproduces 29.40 USDT cash, first BUY 10 filled, remaining 19.40: the second BUY 10 is allowed.
-- All live-path tests use fakes; no real rejection/order was triggered to test CLI behavior. The local installed CLI source was inspected; no raw stderr text is accepted as proof of a definitive rejection.
+- Fuji chainId: 43113; ledger: 0x1B5fcf6DeFf2F9375338A2C35932224522118851; agentId: 1.
+- Cycle 1: real ATK market/account reads -> real engine -> analyst fallback (skipped, no provider key) -> real confirmed commit -> five simulated BUY orders, queried locally -> real confirmed reveal.
+- Commit: 0x7b47c4f313ffa5630d1acfff6411f11c6d13c321bbc69649ec8c90976995f728, status 1, block 59596837.
+- Reveal: 0x541cb8ff88aac0248fbf79d7997915b62bb08fb873e226bbefc35cbcec77cf45, status 1, block 59596842.
+- commitHash: 0xd9064ac4000cae4637a50cd3f25b4ae7c9612e9c9600772f7468533371785a83.
+- Revealed okxOrderId: `{"AVAX-USDT":"simulated","BTC-USDT":"simulated","ETH-USDT":"simulated","OKB-USDT":"simulated","SOL-USDT":"simulated"}`.
+- Runner exit 0, errors 0, commits 1, reveals 1, pending empty, status stopped. State v0.5, verified=true, order_status=simulated, no exchange ordId or fictitious fill.
+- Separate read-only Web3 verification checked chainId, both receipts (status/from/to/canonical blockHash), agentId/cycleId events, exact payload bytes, independent Keccak(payload+salt), canonical result mapping, and on-chain committed/revealed flags. Machine-readable proof: `FUJI-GATE-T-006.json`.
 
-## Automated checks
-
-From `agents/`:
-
-| Command | Actual result |
-|---|---|
-| `uv run pytest -q --tb=short` | 121 passed, 1 skipped, 3.38s |
-| `uv run pytest -q ../engine/tests ../analyst/tests --tb=short` | 84 passed, 1.13s |
-| `uv run python -m grail_agents --help` | exit 0 |
-
-All tests are offline. The sole skip is the `contracts/chain.json` deployment testVector: the file is absent, and no vector was invented. The Ethereum empty-input Keccak reference vector passes; canonical JSON sorting, ASCII escaping, analyst fields, fresh 32-byte salts and hash validation are tested.
-
-Recovery proof includes a **real subprocess** terminated with `os._exit(23)` immediately after the fake ledger persisted its commit, before the loop could save its receipt. Fresh adapter/loop instances recovered the identical payload/salt, performed one reveal, and never recommitted or sent an order. Additional tests cover reveal failure, live unknown/pending-ID queries, corrupt pending JSON, provider absence/timeout/bad JSON, BUY reduction/veto, SELL exempt, HOLD-only cycles, persistent peak/cycle IDs, continued cycles after errors, single runner lease and safe stop status.
-
-One test run observed `STORAGE_WRITE`; the isolated rerun passed. Its original exception class was hidden by old redaction, so the exact original cause was not proven. Safe exception-type diagnostics and a targeted transient-PermissionError regression were added; atomic replacement retries once after 20ms. This is a local file operation only; network/chain/order submissions are never retried. Subsequent full suites and actual-read smoke passed.
-
-## Actual ATK-read cycle, simulated chain
+Command, from agents/:
 
 ```powershell
-uv run python -m grail_agents run --config ../contracts/config.example.json --chain simulated --cycles 1 --runtime runtime/t006-smoke
+$env:GRAIL_ENV = 'C:/Users/Serdar Arif/Desktop/Agentic Hack/.env'
+$env:FUJI_RPC_URL = 'https://avalanche-fuji-c-chain-rpc.publicnode.com'
+uv run python -m grail_agents run --config ../contracts/config.example.json --chain fuji --cycles 1 --runtime runtime/t006-fuji-gate
 ```
 
-Actual output:
+The configured AVAX_RPC_URL returned Cloudflare HTTP 429 during the first run; that run stopped before any transaction or order. The alternate explicit process endpoint was verified as 43113 before use; .env was unchanged. No automatic provider fallback or broadcast retry exists. The default endpoint also enforces a maximum 100-block log range; pagination has a regression test. CLI failures with unavailable chain metadata now return structured failure rather than a traceback.
 
-```json
-{"ok":true,"chain_simulated":true,"cycle_id":1,"errors":0,"commits":1,"reveals":1}
-```
+## Checks
 
-The runner read all five configured instruments/tickers/49 confirmed bars and real portfolio data from OKX TR. Real engine + analyst fallback produced five BUY decisions, each executed as `simulated` / `llm_flag=skipped`. The fake ledger committed and revealed once. State is contracts 0.5, dry_run=true, agent status stopped, five decision rows, no separate ledger array. Identity fields are null, transaction IDs start `simulated:`, verified=false. Pending directory is empty after reveal.
+| Command (from agents/) | Actual result |
+|---|---|
+| `uv run pytest -q --tb=short` | 135 passed, 8.30s |
+| `uv run pytest -q ../engine/tests ../analyst/tests --tb=short` | 84 passed, 1.11s |
+| chain.json testVector | Exact Keccak match, no skip |
+| Actual Fuji run above | exit 0, one commit/reveal, five simulated orders, errors=0 |
+| Independent read-only chain verification | Passed; evidence JSON generated at 14:50:50 +03:00 |
 
-Output file (ignored): `agents/runtime/t006-smoke/state.json`. Web may point `GRAIL_STATE_PATH` at its absolute path. No web files or shared contracts/STATE files were edited.
+Offline local EVM tests execute compiled IdentityRegistry/GrailLedger fixtures from chain@fdd4bf0. They cover signed commit/reveal, verified receipts/events/counters, a chain cycle gap (cycle 9 -> next 10 on restart), invalid vector/identity/network, journal-before-broadcast, unknown broadcast without any resend, lost response after mining, and a mined status=0 commit reaching no order execution. Additional R-003 tests cover monotonic persistent floors, empty no-order summary, canonical simulated/unknown/ordId mapping, order query before reveal, and preserving a known order ID when its status query fails.
 
-## Real-chain follow-up
+Existing loop tests cover BUY reduction/veto matching commit/execution/reveal, unchanged exempt SELL, provider absence/timeout/bad output, HOLD commits, recovery without recommit or analyst invocation, unknown order lookup, corrupt pending storage, single-runner locking and scheduling. A real subprocess is killed after its *simulated-ledger* commit and recovered using identical bytes/salt; a forced process kill during an actual Fuji cycle was not performed. Local EVM timeout/receipt reconciliation and the actual normal Fuji cycle are separate evidence.
 
-- Supply and merge `contracts/chain.json` from T-003; run its actual testVector, then implement the confirmed ChainAdapter using the deployed ABI, verified agent identity and existing wallet configuration.
-- Demonstrate a real Fuji commit/reveal with dry_run still true before enabling any real order. This phase does not satisfy the real-transaction 15:00 gate.
-- Public state publishes payload/salt only after reveal; unrevealed cycles remain private pending records and visible through counters/errors. Rounded execution sizes use additive execution_size_* fields; committed decision fields remain exact.
-- R-002-3 (SELL market-value sizing) and R-002-4 (unpriced non-config holdings) remain outside the two fixes requested in this phase; existing documented fail-closed behavior remains. Full independent review is pending.
+## Runtime and review handoff
+
+- UI state (ignored): `C:/Users/Serdar Arif/Desktop/Agentic Hack-wt/agents/agents/runtime/t006-fuji-gate/state.json`; web owner can point GRAIL_STATE_PATH here. This role did not change web/.
+- Keep the runtime: its pending salt/payload, control/peak, transaction hash/nonce journal and future orders.sqlite3 are recovery data. On a fresh runtime the next cycle is read from the largest own-agent DecisionCommitted cycleId, checked against commitCount; local counters never move backwards.
+- Pending bytes/salt are published in state.decisions only after successful reveal. Guard outcomes never change committed decision fields; rounded execution sizes have separate execution_size_* fields.
+- Commit receipt/event/state must confirm before execute. Unknown transactions only get queried by durable signed hash; no automatic resend. One runner/runtime per signer/ledger is required.
+- Live orders remain disabled by the CLI. R-002-1/2 fixes have regressions; R-002-3/4 were not expanded in this task. First live order is a separate explicit user-observed step.
+- Independent cross-model review is pending through the integrator, as required by AGENTS.md. Shared contracts/, coord/STATE.md and other roles' files were not edited by agents.

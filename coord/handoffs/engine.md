@@ -6,18 +6,17 @@
 - contracts okunan sürüm: 0.4
 - Tamamlanan somut davranış (T-007):
   - `analyst/` uv paketi `grail-analyst` (`src/grail_analyst`, sadece stdlib): `review(decisions, snapshot, news, cfg, provider)`, `review_payload(payload, ...)`, `make_provider(env)`, `GeminiProvider`. Ayrıntı: `analyst/README.md`.
-  - Kod zorlar: action' ∈ {aynı, HOLD}; ters yön → HOLD; HOLD emre dönmez; size' ≤ size (kuruşa aşağı), min_order altı → HOLD; bilinmeyen coin yok sayılır.
-  - Sağlayıcı yok / timeout (daemon thread, tavan 8 sn) / bozuk JSON / hata → kararlar aynen, `llm_flag "skipped"`, `llm_note "skipped: <neden>"`. Emir yoksa LLM çağrılmaz. İstisna fırlatmaz, girdi değişmez.
-  - Karara `llm_note` (ASCII ≤160) + `llm_flag` (skipped|approved|reduced|vetoed) eklenir → payload'la hash'lenir.
+  - Kod zorlar (planner onayı): sadece BUY LLM'e gider; SELL her durumda aynen (`llm_flag "exempt"`). BUY: action' ∈ {BUY, HOLD}; ters yön → HOLD; HOLD emre dönmez; size' ≤ size (kuruşa aşağı), min_order altı → HOLD; bilinmeyen coin yok sayılır.
+  - Sağlayıcı yok / timeout (daemon thread, tavan 8 sn) / bozuk JSON / hata → kararlar aynen, `llm_flag "skipped"`, `llm_note "skipped: <neden>"`. BUY yoksa LLM çağrılmaz (`no_buys`). İstisna fırlatmaz, girdi değişmez.
+  - Karara `llm_note` (ASCII ≤160) + `llm_flag` (skipped|approved|reduced|vetoed|exempt) eklenir → payload'la hash'lenir.
   - `engine/pyproject.toml`: pytest `testpaths += ../analyst/tests`, `pythonpath = ../analyst/src` → engine test komutu analyst testlerini de koşar.
 - Commit edilmemiş / izlenmeyen dosyalar: yok
-- Çalıştırılan kontroller: `cd engine && uv run pytest -q` → `82 passed` (49 engine + 33 analyst, ağsız; gerçek engine payload'ı ile uçtan uca test dahil).
+- Çalıştırılan kontroller: `cd engine && uv run pytest -q` → `84 passed` (49 engine + 35 analyst, ağsız; gerçek engine payload'ı ile uçtan uca test dahil).
 - Çalıştırılmayan kontroller ve nedeni: gerçek Gemini çağrısı (LLM_API_KEY yok/ağ testi kapsam dışı); varsayılan model adı `gemini-flash-latest` canlıda doğrulanmadı (`LLM_MODEL` ile değiştirilebilir).
 - Devam eden süreçler / portlar: yok
 - Dış eylemler (emir id, tx hash): yok
 - Açık konular (integrator kararı):
   - Sözleşme: decision.md karar nesnesine opsiyonel `llm_note`, `llm_flag` alanları (hash'e girer). contracts güncellemesi integrator'da.
   - Agent bağlantısı (T-006 eki, agents rolü): `decide` → `review_payload` → commit. `agents/pyproject.toml`'a `grail-analyst` path bağımlılığı.
-  - Öneri: kart gereği LLM SELL'i de veto/küçültebilir; bu pozisyonu taşımaya devam etmek demek. İstenirse SELL'ler LLM'den muaf tutulabilir (küçük değişiklik).
 - TEKRARLANMAMASI gereken işlem: modül adı `decide.py` yapma (paket `decide` fonksiyonu modülü gölgeliyor → `decision.py`).
 - SIRADAKİ İLK ADIM: T-007 review bulgusu varsa düzelt; yoksa integrator'dan yeni görev kartı bekle — yeni chat, `Agentic Hack-wt/engine` içinde.

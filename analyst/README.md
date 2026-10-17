@@ -12,13 +12,15 @@ payload2 = review_payload(res["payload"], snapshot, news_items, cfg, provider)  
 ```
 
 **Kural (kod zorlar, LLM çıktısından bağımsız)**
-- `action'` ∈ {`action`, `HOLD`}: ters yön (BUY↔SELL) → HOLD; HOLD asla emre dönmez; listede olmayan coin yok sayılır.
-- `size_usdt' <= size_usdt` (kuruşa aşağı); büyük miktar → orijinal miktar (`[clamp: ...]` notu); `min_order_usdt` altı → HOLD.
+- Sadece BUY'lar LLM'e gider. SELL pozisyonu kapatır (riski azaltır) → her durumda aynen, `llm_flag: "exempt"`,
+  `llm_note: "exempt: sell reduces exposure"` (SELL'i veto etmek/küçültmek pozisyonu açık bırakır = daha fazla risk).
+- BUY: `action'` ∈ {`BUY`, `HOLD`}, ters yön → HOLD; HOLD asla emre dönmez; listede olmayan coin yok sayılır.
+- BUY: `size_usdt' <= size_usdt` (kuruşa aşağı); büyük miktar → orijinal miktar (`[clamp: ...]` notu); `min_order_usdt` altı → HOLD.
 - Sağlayıcı yok / timeout (`llm_timeout_s`, tavan 8 sn, daemon thread) / bozuk JSON / sağlayıcı hatası → kararlar aynen,
-  `llm_flag: "skipped"`, `llm_note: "skipped: <no_provider|timeout|bad_json|provider_error>"`. Hiç emir yoksa LLM çağrılmaz (`no_orders`).
+  `llm_flag: "skipped"`, `llm_note: "skipped: <no_provider|timeout|bad_json|provider_error>"`. Hiç BUY yoksa LLM çağrılmaz (`no_buys`).
 - Şema dışı tek öğe (bilinmeyen action, negatif/NaN/bool size) → o karar aynen, `skipped`.
 
-**Karara eklenen alanlar** (hash'e girer): `llm_note` (ASCII, tek satır, ≤160) · `llm_flag` ∈ `skipped | approved | reduced | vetoed`.
+**Karara eklenen alanlar** (hash'e girer): `llm_note` (ASCII, tek satır, ≤160) · `llm_flag` ∈ `skipped | approved | reduced | vetoed | exempt`.
 
 **Sağlayıcı**: Gemini (`generateContent`, JSON yanıt modu, temperature 0). Ortam: `LLM_API_KEY` (zorunlu),
 `LLM_MODEL` (varsayılan `gemini-flash-latest`), `LLM_PROVIDER` (sadece `gemini`). Anahtar header'da (`x-goog-api-key`), URL'de/logda değil.

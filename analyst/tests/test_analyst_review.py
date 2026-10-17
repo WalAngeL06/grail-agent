@@ -36,13 +36,24 @@ def by_inst(out):
     return {d["inst_id"]: d for d in out}
 
 
+def non_sell(out):
+    return [o for o in out if o["action"] != "SELL"]
+
+
+def sell_exempt(out):
+    """SELL pozisyonu kapatır (riski azaltır): LLM'e gitmez, her durumda aynen geçer."""
+    o = by_inst(out)["ETH-USDT"]
+    return (o["action"], o["size_usdt"], o["llm_flag"], o["llm_note"]) == ("SELL", "6", "exempt", "exempt: sell reduces exposure")
+
+
 def test_no_provider_passes_through_skipped():
     out = review(DECISIONS, SNAP, NEWS, CFG, provider=None)
-    assert len(out) == 3
+    assert len(out) == 3 and sell_exempt(out)
     for o, d in zip(out, DECISIONS):
         assert o["action"] == d["action"] and o["size_usdt"] == d["size_usdt"]
-        assert o["llm_flag"] == "skipped"
-        assert o["llm_note"] == "skipped: no_provider"
+        if d["action"] != "SELL":
+            assert o["llm_flag"] == "skipped"
+            assert o["llm_note"] == "skipped: no_provider"
         assert {k: v for k, v in o.items() if not k.startswith("llm_")} == d
 
 
@@ -54,8 +65,8 @@ def test_input_not_mutated():
 
 def test_bad_json_passes_through():
     out = review(DECISIONS, SNAP, NEWS, CFG, provider=lambda p, t: "not json {")
-    assert [o["llm_flag"] for o in out] == ["skipped"] * 3
-    assert all(o["llm_note"] == "skipped: bad_json" for o in out)
+    assert [o["llm_flag"] for o in out] == ["skipped", "exempt", "skipped"]
+    assert all(o["llm_note"] == "skipped: bad_json" for o in non_sell(out))
     assert [(o["action"], o["size_usdt"]) for o in out] == [("BUY", "10"), ("SELL", "6"), ("HOLD", "0")]
 
 
@@ -63,14 +74,15 @@ def test_bad_json_passes_through():
 def test_schema_invalid_passes_through(raw):
     out = review(DECISIONS, SNAP, NEWS, CFG, provider=lambda p, t: raw)
     assert [(o["action"], o["size_usdt"]) for o in out] == [("BUY", "10"), ("SELL", "6"), ("HOLD", "0")]
-    assert all(o["llm_flag"] == "skipped" for o in out)
+    assert all(o["llm_flag"] == "skipped" for o in non_sell(out)) and sell_exempt(out)
 
 
 def test_provider_exception_passes_through():
     def boom(p, t):
         raise RuntimeError("HTTP 429 key=SECRET")
     out = review(DECISIONS, SNAP, NEWS, CFG, provider=boom)
-    assert all(o["llm_flag"] == "skipped" and o["llm_note"] == "skipped: provider_error" for o in out)
+    assert all(o["llm_flag"] == "skipped" and o["llm_note"] == "skipped: provider_error" for o in non_sell(out))
+    assert sell_exempt(out)
     assert "SECRET" not in json.dumps(out)
 
 
@@ -81,7 +93,7 @@ def test_timeout_does_not_block():
     t0 = time.monotonic()
     out = review(DECISIONS, SNAP, NEWS, {**CFG, "llm_timeout_s": 0.2}, provider=slow)
     assert time.monotonic() - t0 < 1.5
-    assert all(o["llm_note"] == "skipped: timeout" for o in out)
+    assert all(o["llm_note"] == "skipped: timeout" for o in non_sell(out))
     assert [(o["action"], o["size_usdt"]) for o in out] == [("BUY", "10"), ("SELL", "6"), ("HOLD", "0")]
 
 
@@ -100,7 +112,7 @@ def test_larger_size_is_clamped():
         {"inst_id": "ETH-USDT", "action": "SELL", "size_usdt": 999, "note": "dump"},
     ])))
     assert (out["BTC-USDT"]["action"], out["BTC-USDT"]["size_usdt"]) == ("BUY", "10")
-    assert (out["ETH-USDT"]["action"], out["ETH-USDT"]["size_usdt"]) == ("SELL", "6")
+    assert sell_exempt(out.values())
     assert out["BTC-USDT"]["llm_flag"] == "approved"
     assert "clamp" in out["BTC-USDT"]["llm_note"]
 
@@ -110,9 +122,24 @@ def test_direction_flip_becomes_hold():
         {"inst_id": "BTC-USDT", "action": "SELL", "size_usdt": "10", "note": "bearish"},
         {"inst_id": "ETH-USDT", "action": "BUY", "size_usdt": "6", "note": "bullish"},
     ])))
-    for inst in ("BTC-USDT", "ETH-USDT"):
-        assert out[inst]["action"] == "HOLD" and out[inst]["size_usdt"] == "0"
-        assert out[inst]["llm_flag"] == "vetoed"
+    assert (out["BTC-USDT"]["action"], out["BTC-USDT"]["size_usdt"], out["BTC-USDT"]["llm_flag"]) == ("HOLD", "0", "vetoed")
+    assert sell_exempt(out.values())  # SELL->BUY önerisi yok sayılır
+
+
+def test_llm_cannot_veto_or_shrink_sell():
+    for r in ({"inst_id": "ETH-USDT", "action": "HOLD", "note": "keep it"},
+              {"inst_id": "ETH-USDT", "action": "SELL", "size_usdt": "1", "note": "sell less"}):
+        assert sell_exempt(review(DECISIONS, SNAP, NEWS, CFG, provider=fake([r])))
+
+
+def test_sell_never_sent_to_llm():
+    p = fake([])
+    sells = [dec("BTC-USDT", "SELL", "5"), dec("SOL-USDT", "HOLD", "0")]
+    out = review(sells, SNAP, NEWS, CFG, provider=p)
+    assert p.prompts == []
+    assert [(o["action"], o["llm_flag"]) for o in out] == [("SELL", "exempt"), ("HOLD", "skipped")]
+    review(DECISIONS, SNAP, NEWS, CFG, provider=p)
+    assert "ETH-USDT" not in p.prompts[0]
 
 
 def test_hold_cannot_become_order():
@@ -128,7 +155,7 @@ def test_unknown_coin_ignored():
         {"inst_id": "DOGE-USDT", "action": "BUY", "size_usdt": "10", "note": "x"},
     ]))
     assert [o["inst_id"] for o in out] == ["BTC-USDT", "ETH-USDT", "SOL-USDT"]
-    assert all(o["llm_flag"] == "skipped" for o in out)
+    assert all(o["llm_flag"] == "skipped" for o in non_sell(out)) and sell_exempt(out)
 
 
 def test_veto_and_reduce():
@@ -139,7 +166,7 @@ def test_veto_and_reduce():
     ])))
     assert (out["BTC-USDT"]["action"], out["BTC-USDT"]["size_usdt"], out["BTC-USDT"]["llm_flag"]) == ("HOLD", "0", "vetoed")
     assert out["BTC-USDT"]["llm_note"] == "headline risk"
-    assert (out["ETH-USDT"]["action"], out["ETH-USDT"]["size_usdt"], out["ETH-USDT"]["llm_flag"]) == ("SELL", "3.45", "reduced")
+    assert sell_exempt(out.values())
     assert out["SOL-USDT"]["llm_flag"] == "approved"
 
 
@@ -190,7 +217,7 @@ def test_all_hold_skips_llm_call():
     holds = [dec("BTC-USDT", "HOLD", "0"), dec("ETH-USDT", "HOLD", "0")]
     out = review(holds, SNAP, NEWS, CFG, provider=p)
     assert p.prompts == []
-    assert all(o["llm_flag"] == "skipped" and o["llm_note"] == "skipped: no_orders" for o in out)
+    assert all(o["llm_flag"] == "skipped" and o["llm_note"] == "skipped: no_buys" for o in out)
 
 
 def test_garbage_inputs_never_raise():

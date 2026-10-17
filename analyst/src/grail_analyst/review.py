@@ -1,8 +1,10 @@
 """review(): LLM, engine kararlarını sadece riski AZALTACAK yönde değiştirebilir (T-007).
 
 Kod düzeyinde zorunlu kurallar (LLM ne derse desin):
-- action' ∈ {action, HOLD}; BUY<->SELL dönüşümü yok, HOLD emre dönmez (ters yön → HOLD).
-- size_usdt' <= size_usdt (kuruşa aşağı yuvarlı); min_order_usdt altına düşerse HOLD.
+- Sadece BUY'lar LLM'e gider. SELL pozisyonu kapatır (riski azaltır): LLM'e gitmez, her durumda aynen geçer
+  (llm_flag "exempt"); SELL'i veto etmek/küçültmek pozisyonu açık bırakıp riski artırırdı.
+- BUY için action' ∈ {BUY, HOLD} (ters yön → HOLD), size_usdt' <= size_usdt (kuruşa aşağı), min_order_usdt altı → HOLD.
+- HOLD emre dönmez.
 - Sağlayıcı yok / timeout / bozuk JSON / hata → kararlar aynen geçer, llm_flag "skipped". İstisna fırlatmaz.
 Her karara `llm_note` (ASCII, <=160) ve `llm_flag` eklenir; payload'la birlikte zincire mühürlenir.
 """
@@ -19,14 +21,15 @@ NOTE_MAX = 160
 NEWS_MAX = 10
 CENT = Decimal("0.01")
 ACTIONS = ("BUY", "SELL", "HOLD")
+SELL_NOTE = "exempt: sell reduces exposure"
 
 PROMPT = """You are the risk officer of an autonomous spot crypto trading agent.
-A deterministic quant engine proposed the orders below. You may ONLY reduce risk:
+A deterministic quant engine proposed the BUY orders below. You may ONLY reduce risk:
 approve an order, reduce its size_usdt, or veto it (action "HOLD"). You can never
-increase size, flip BUY/SELL, or create new orders; such answers are ignored.
+increase size, flip to SELL, or create new orders; such answers are ignored.
 Veto or reduce only for a concrete reason (news, abnormal move, event risk).
 Reply with JSON only, no prose:
-{"reviews":[{"inst_id":"BTC-USDT","action":"BUY|SELL|HOLD","size_usdt":"<= proposed","note":"<=120 chars, English, why"}]}
+{"reviews":[{"inst_id":"BTC-USDT","action":"BUY|HOLD","size_usdt":"<= proposed","note":"<=120 chars, English, why"}]}
 One review per proposed order.
 
 INPUT:
@@ -61,8 +64,14 @@ def _is_decision(d) -> bool:
     return isinstance(d, dict) and isinstance(d.get("inst_id"), str) and d.get("action") in ACTIONS
 
 
+def _exempt(d: dict) -> dict:
+    return {**d, "llm_note": SELL_NOTE, "llm_flag": "exempt"}
+
+
 def _mark(decisions: list, flag: str, note: str) -> list:
-    return [{**d, "llm_note": note, "llm_flag": flag} if _is_decision(d) else d for d in decisions]
+    """Analist atlandı: SELL yine exempt, diğer kararlar flag/note ile aynen."""
+    return [(_exempt(d) if d["action"] == "SELL" else {**d, "llm_note": note, "llm_flag": flag})
+            if _is_decision(d) else d for d in decisions]
 
 
 def _market_summary(snap) -> dict:
@@ -153,6 +162,8 @@ def _parse(text) -> dict | None:
 def _apply(d: dict, r: dict | None, min_o: Decimal) -> dict:
     """Tek karar + LLM önerisi → kısıtlanmış karar."""
     act = d["action"]
+    if act == "SELL":
+        return _exempt(d)
     if r is None:
         return {**d, "llm_note": "", "llm_flag": "skipped"}
     want = r.get("action")
@@ -193,9 +204,9 @@ def review(decisions, market_snapshot, news_items, cfg, provider=None) -> list:
         cfg = cfg if isinstance(cfg, dict) else {}
         if provider is None:
             return _mark(decisions, "skipped", "skipped: no_provider")
-        orders = [d for d in decisions if _is_decision(d) and d["action"] != "HOLD"]
-        if not orders:  # ücretsiz kotayı harcama: değiştirilecek risk yok
-            return _mark(decisions, "skipped", "skipped: no_orders")
+        orders = [d for d in decisions if _is_decision(d) and d["action"] == "BUY"]
+        if not orders:  # ücretsiz kotayı harcama: azaltılacak risk yok
+            return _mark(decisions, "skipped", "skipped: no_buys")
         t = _dec(cfg.get("llm_timeout_s"))
         timeout_s = float(min(t, Decimal(str(MAX_TIMEOUT_S)))) if t and t > 0 else MAX_TIMEOUT_S
         text, err = _call(provider, build_prompt(orders, market_snapshot, news_items), timeout_s)

@@ -3,6 +3,12 @@
 Sürüm: `VERSION` dosyası. Her değişiklikte sürüm artar ve `coord/DECISIONS.md`'ye not düşülür.
 Etkilenen roller bir sonraki görev başında `git merge main` ile alır ve RAPOR'da okudukları sürümü yazar.
 
+### Revizyon 0.6.1 — eklemeli metrik ve açıklama (D-017)
+- `VERSION=0.6.1` bu sözleşme belgelerinin/örneklerinin revizyonudur. Config, karar payload'ı ve runtime state içindeki `contract_version="0.6"` **değişmez**; mevcut agent'ın 0.6 kabulü korunur. Config dosyasına yeni alan/değer eklenmez. `chain.json.contractVersion=0.5` tarihsel deploy kaydı olarak kalır.
+- `state.metrics.signals` opsiyonel, coin kimliğinden `{hurst, regime, setup}` nesnesine eşlemedir (T-014). `hurst` sonlu float, `[0,1]`; `regime` `trending|unclear|ranging`, `setup` `none|breakout|retest`. `H<0.45` ranging, `0.45<=H<=0.55` unclear, `H>0.55` trending. Veri yetersiz/geçersizse `0.5/unclear/none` fallback'i kullanılır. Alan yokken eski okuyucu çalışır; bilinmeyen metrik alanı yok sayılır.
+- Signals yalnız gözlem metriğidir; payload/hash'e yeni alan eklemez. T-014 motor uygulaması ayrı teslimdir; örnekte bulunması motorun uygulandığı anlamına gelmez. Geçmiş/pending kararlar yeniden yazılmaz. Yapısal payload/hash/ABI değişikliği ve yeniden deploy yok.
+- `corr_matrix` etiketi ve satır/sütun sayısı birbiriyle, `n_assets` ve geçerli coin kümesiyle eşleşir. Örnekte beş coin ve ortalama 0.62 ile tutarlı 5×5 matris kullanılır. `target_weight_pct` tabanı için `decision.md`'deki normal/koruma yolları geçerlidir.
+
 ## Genel kurallar (bütün dosyalar)
 - Zaman: Unix epoch **milisaniye**, UTC, alan adı `*_ms`.
 - Para / miktar / fiyat: **ondalık string** (`"0.00012"`), float değil. Birim alan adında: `*_usdt`, `size_base` (coin cinsinden).

@@ -105,3 +105,14 @@ OKX TR katılımcılara gerçek bakiye verdi; emirler canlı hesapta. Erişim: `
 - Commit 0x16f2d1294cda0181cf94dd50f7cfccf90b449e2a7534b5eccb6aa5a1a96e9569 → reveal 0xae6537e9acc9e66accfe5d0fe61b2f9a858460d7c42cf3d25f0acafa378541f7; planner Fuji doğrulamasını kullanıcı bildirdi. Integrator bu tur bağımsız RPC/receipt veya OKX sorgusu yapmadı; yeni emir/tx/runner başlatmadı.
 - D-015 tek coin/2 USDT/tek döngü kapısı gerçekleşti; yeni/sürekli koşu yetkisi yok. Gerçek runtime/live/journal/pending korunur. Eski hazırlık handoff’undaki boş runtime bilgisi artık tarihsel kabul edilir.
 - Kullanıcı LLM_API_KEY eklendi dedi. Anahtar okunmaz/raporlanmaz; provider çalışması veya geçmiş cycle2 LLM onayı kanıtlanmış sayılmaz. Örnek config dry_run=true, contracts 0.6 korunur; R-005 public kapısı ayrı.
+
+
+## D-017 · T-014 planner kararı; eklemeli 0.6.1 ve R-005/R-007 (2026-10-17 16:05)
++- Kullanıcı T-014’ü engine’e atadı: Hurst rejimi, 0.45–0.55 dahil ölü bant; kırılım/retest setup yalnız mevcut BUY boyutunu azaltır, BUY üretmez. Config değişmez. metrics.signals[inst_id]={hurst:float,regime:trending|unclear|ranging,setup:none|breakout|retest} hash dışı eklemeli alandır.
++- Teslim 16:30 (test/handoff/commit/push), bağımsız inceleme chain/Codex-2, merge <=16:50; yetişmezse T-014 kapsam dışında. Kullanıcının inceleme ataması bu karta özel chain reviewer çıktısı coord/reviews/T-014.md + chain handoff kapsamını verir; engine/chain ürün alanlarında çapraz yazma yok.
++- Her contracts değişikliğinde VERSION artışı için revizyon 0.6 → 0.6.1; protokol/config/payload/state contract_version=0.6 korunur. Agents runtime’ın tam 0.6 kabulü ve kullanıcı config değişmez talimatı böyle korunur. 0.6.1 belge/eklemeli örnek revizyonudur; README ayrımı açıklar. chain.json deployment0.5, adres/ABI/hash/testVector ve config.example.json aynı.
++- Kullanıcı R-007 sözleşme isteklerini onayladı: örnek corr_matrix5x5, diag1/offdiag0.62, 5 coin/avg_corr/n_eff ile tutarlı; target_weight_pct tabanı mevcut normal deploy_base=min(equity,max_deploy) ve koruma HOLD equity dallarıyla belgelenir. Kod/historical payload semantiği değiştirilmez; deploy_base_usdt alanı eklenmez. Web’in 4 MAJOR düzeltmesi ayrı sahip işi.
++- R-005 PUBLIC GO raporu 4927557 main9acec55/ref kümesini tarar; güncel yayın SHA farkları hâlâ tekrar kontrol edilmeli. Kullanıcının MINOR-1 isteğiyle sqlite/runtime/fuji/live-config/envrc/pem/key/.claude ignore kuralları eklendi. Public JSON fixtures korunur, gerçek sır türleri fixture içinde de ignore kalır. Public ayarı/key rotation/history rewrite yetkisi yok.
++- T-014 kartı/örnek alan motorun uygulandığı anlamına gelmez. Bu teslim yeni runner/canlı emir/Fuji tx yetkisi vermez; 15:37 ilk canlı kanıtı ve gerçek runtime/journal korunur.
+
+- R-007 2682d99 raporu/handoff’u kullanıcı talimatıyla merge edildi; inceleme DONE, web MAJOR’ları açık. R-005 ilk teslim 0c8a02b’de pushlandı; bu tur root/contract/coord dışında ürün kodu değiştirilmedi.

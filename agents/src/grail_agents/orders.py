@@ -4,7 +4,7 @@ from decimal import Decimal, ROUND_DOWN
 from threading import RLock
 
 from .atk import validate_client_id
-from .config import AgentConfig, GrailError, money, number, spot_id
+from .config import AgentConfig, GrailError, OrderRejected, money, number, spot_id
 from .market import fetch_portfolio, normalize_ticker, validate_instruments
 
 
@@ -88,6 +88,8 @@ class OrderService:
                 raise GrailError("BASE_BALANCE: insufficient unreserved spot balance")
 
     def _query_record(self, record):
+        if record["result"]["order_status"] == "rejected":
+            return deepcopy(record["result"])
         prepared = record["prepared"]
         try:
             result = self.client.order_status(prepared["inst_id"], prepared["client_order_id"])
@@ -99,6 +101,11 @@ class OrderService:
     def query(self, client_order_id):
         """Reconcile an existing durable record; never submit or retry an order."""
         validate_client_id(client_order_id)
+        if self.config.dry_run:
+            record = self._simulated.get(client_order_id)
+            if record is None:
+                raise GrailError("JOURNAL_MISSING: unknown simulated client order ID")
+            return deepcopy(record["result"])
         if self.journal is None:
             raise GrailError("JOURNAL_REQUIRED: reconciliation needs a durable journal")
         record = self.journal.get(client_order_id)
@@ -129,9 +136,10 @@ class OrderService:
                 if existing["intent"] != intent:
                     raise GrailError("ORDER_ID_REUSED: client ID belongs to a different intent")
                 return self._query_record(existing)
-            # Resolve uncertainty before any new intent. Never retry even if lookup is empty.
+            # Reconcile all outstanding orders before refreshing balances/budgets.
+            # A definite rejection is terminal; an empty lookup is never a retry permit.
             for record in self.journal.records():
-                if record["result"]["order_status"] == "unknown":
+                if record["result"]["order_status"] in {"unknown", "pending", "partial"}:
                     if self._query_record(record)["order_status"] == "unknown":
                         raise GrailError("UNCERTAIN_ORDER: reconcile existing client ID before another order")
             self.instruments = validate_instruments(self.client.instruments(), self.config.coins)
@@ -157,6 +165,8 @@ class OrderService:
             # The transaction is committed BEFORE the external effect. A crash remains unknown.
             try:
                 result = self.client._place_spot(prepared)
+            except OrderRejected as error:
+                result = {**unknown, "order_status": "rejected", "rejection_code": error.code}
             except GrailError:
                 return self.query(client_order_id)
             self.journal.save_result(client_order_id, result)

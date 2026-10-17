@@ -7,7 +7,7 @@ Demo sırasında **yeni canlı emir ya da runner başlatılmaz.** D-016'ya göre
 - [ ] **Web gerçek state ile açık:** `cd web && GRAIL_STATE_PATH="C:/Users/Serdar Arif/Desktop/Agentic Hack-wt/agents/agents/runtime/live/state.json" npm run dev`.
       Üstte **MOCK DATA** rozeti yok; mod rozeti **LIVE · real funds** (cycle 2, `dry_run=false`).
 - [ ] **Cycle 2 kartı görünüyor:** Decisions'ta BUY BTC $2.00, `FILLED`, OKX `4017748393474314240`, adımlayıcı Decided → … → Verified.
-- [ ] **Terminal hazır:** ana klasörde `cd chain && npm ci` bir kez çalışmış. `npm run verify:cycle:1` önceden bir kez denenip MATCH görülmüş. Ayrıca `npm run audit` provada bir kez çalıştırılıp raporu (`chain/deployments/audit-latest.md`) açık tutulmuş: 25+ döngü, hepsi açılmış, hepsi MATCH.
+- [ ] **Terminal hazır:** ana klasörde `cd chain && npm ci` bir kez çalışmış. `npm run verify:cycle:1` önceden bir kez denenip MATCH görülmüş. `npm run audit` sahnede ÇALIŞTIRILMAZ: arşiv destekli RPC ister, herkese açık Fuji'de hata verir (R-011).
       Font büyük (≥ 20 pt), pencere temiz.
 - [ ] **Tarayıcı sekmeleri sırayla açık:**
   1. GRAIL Dashboard
@@ -20,11 +20,11 @@ Demo sırasında **yeni canlı emir ya da runner başlatılmaz.** D-016'ya göre
 | Süre | Ekran | Yap | Söyle |
 |---|---|---|---|
 | 0:00–0:25 | Dashboard | Hero sayıyı ve Holy Grail eğrisini göster; ρ slider'ı aşağı çek, sonra "Back to today" | "Beş coin var ama birlikte hareket ediyorlar. GRAIL coinleri değil, gerçek bahisleri sayıyor ve her pozisyonu buna göre boyutluyor." |
-| 0:25–0:45 | On-chain Ledger | Sayaçlar: commits / reveals / unrevealed; agent #1 kimlik kartı | "Her karar, emirden önce Avalanche'a mühürleniyor. Açılmamış zarflar görünür kalıyor, yani hiçbir şey saklanamıyor. Zincirde 25'ten fazla döngü var, hepsi açılmış." |
+| 0:25–0:45 | On-chain Ledger | Sayaçlar: commits / reveals / unrevealed; agent #1 kimlik kartı | "Her karar, emirden önce Avalanche'a mühürleniyor. Açılmamış zarflar görünür kalıyor, yani hiçbir şey saklanamıyor. Zincirde 40'tan fazla döngü var, hepsi açılmış." |
 | 0:45–1:20 | Decisions | Cycle 2'yi aç: BUY BTC $2, FILLED, OKX order id; adımlayıcıyı soldan sağa göster | "Bu bizim ilk canlı emrimiz, bugün 15:37'de. OKX TR'de 2 dolarlık BTC: önce mühürlendi, sonra işlem yapıldı, sonra açıldı." |
 | 1:20–1:50 | Decisions → Verify | **Verify yourself** (kendin doğrula) düğmesine tıkla → "computing…" → üç satır ✓ → "Match" | "Tarayıcınız az önce parmak izini yeniden hesapladı ve Avalanche'taki mühürle karşılaştırdı. Bize güvenmeniz gerekmedi." |
 | 1:50–2:15 | Snowtrace (sekme 2, sonra 3) | Commit tx'in zamanını göster; sonra GrailLedger #code'da "verified" | "İşte Snowtrace'te, emirden önce yazılmış mühür. Kontratın kaynak kodu doğrulanmış; kuralları herkes okuyabilir." |
-| 2:15–2:40 | Terminal | `npm run verify:cycle:1` çalıştır; MATCH satırını göster | "Aynı kontrol terminalden: cüzdan yok, anahtar yok. Açılışı çözüyor, parmak izini yeniden hesaplıyor, karşılaştırıyor: MATCH. Bütün sicil için npm run audit aynısını her döngüye yapıyor." |
+| 2:15–2:40 | Terminal | `npm run verify:cycle:1` çalıştır; MATCH satırını göster | "Aynı kontrol terminalden: cüzdan yok, anahtar yok. Açılışı çözüyor, parmak izini yeniden hesaplıyor, karşılaştırıyor: MATCH." |
 | 2:40–3:00 | Settings | Limitler + guardrail listesi; mod rozeti | "Sadece spot, para çekme yok, kesin sınırlar; canlıya geçmek insan kararı. Backtest yalan söyleyebilir. Avalanche söyleyemez." |
 
 Notlar:
@@ -63,7 +63,7 @@ https://testnet.snowtrace.io/tx/0x541cb8ff88aac0248fbf79d7997915b62bb08fb873e226
 4. Verify sheet, üç ✓ + "Match"
 5. Snowtrace commit tx (cycle 2)
 6. Snowtrace GrailLedger #code "verified"
-7. Terminal MATCH çıktısı (verify:cycle:1) ve audit raporu özeti (25+ döngü, hepsi MATCH)
+7. Terminal MATCH çıktısı (verify:cycle:1)
 8. Settings (limitler + guardrail'ler)
 
 ## Demo sonrası

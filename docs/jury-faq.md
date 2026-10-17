@@ -9,7 +9,7 @@ Ekran/UI adları İngilizce kalır (site İngilizce): "Verify yourself" (kendin 
 
 ### 1. Ajan hiç açmazsa (reveal etmezse) ne olur?
 **Herkes görür. Mühür Avalanche'ta kalır ve kontrat mühürleri ve açılışları ayrı ayrı sayar.**
-- Sicil her (ajan, döngü) için tek bir mühür tutar ve açılışları sayar; "Unrevealed" (açılmamış) hem panelde hem zincirde görünür. Şu an zincirde 25+ döngü var, hepsi açılmış (16:29'da 31 mühür / 31 açılış).
+- Sicil her (ajan, döngü) için tek bir mühür tutar ve açılışları sayar; "Unrevealed" (açılmamış) hem panelde hem zincirde görünür. Şu an zincirde 40'tan fazla döngü var, hepsi açılmış (16:47'de 42 mühür / 42 açılış).
 - Rastgele değer (salt) olmadan zarfı kimse açamaz. Ajan da başka bir kararla değiştiremez: kontrat parmak iziyle (hash) eşleşmeyen her içeriği reddeder (`HashMismatch`).
 - Çökme güvenliği: içerik ve salt mühürden *önce* diske yazılır; yeniden başlayınca ajan önce açık zarfı açar.
 - Dürüst sınır: açılmamış mühür için zincirde bir ceza (slashing) henüz yok. Bedeli itibar kaybı, ama bu kayıp herkese açık ve kalıcı.
@@ -64,7 +64,7 @@ Ekran/UI adları İngilizce kalır (site İngilizce): "Verify yourself" (kendin 
 ### 9. Gerçekten otonom mu?
 **Evet. Her döngü kendi kendine işler: piyasayı oku → karar ver → yapay zekâ kontrolü → mühürle → emri ver → aç → güncelle. Kimse "onayla"ya basmaz.**
 - İnsan kuralları (ayarları) koyar ve canlı modun açık olup olmadığına karar verir. Ajan ikisini de değiştirmez.
-- Dürüst: canlı modda bilerek, güvenlik için tam bir döngü çalıştırdık. Sürekli döngü deneme modunda gerçek piyasa verisi ve gerçek Fuji mühürleriyle çalıştı; zincirde 25+ döngü var.
+- Dürüst: canlı modda bilerek, güvenlik için tam bir döngü çalıştırdık. Sürekli döngü deneme modunda gerçek piyasa verisi ve gerçek Fuji mühürleriyle çalıştı; zincirde 40'tan fazla döngü var.
 
 ### 10. OKX ya da Avalanche döngünün ortasında çökerse?
 **Güvenle durur. Mühür başarısız olursa emir gönderilmez. Emir sonucu belirsizse emri kimliğiyle sorgular, asla iki kez göndermez.**
@@ -75,12 +75,14 @@ Ekran/UI adları İngilizce kalır (site İngilizce): "Verify yourself" (kendin 
 ### 11. Ajan çok sayıda karar mühürleyip sadece iyisini açabilir mi?
 **Hayır. Kontrat bu ajan için döngü başına tam bir mühüre izin verir. Aynı döngüye ikinci mühür reddedilir (`AlreadyCommitted`).**
 - Döngü numaraları kalıcıdır ve sadece artar; yeniden başlatma onları tekrar kullanmaz.
-- Dürüst: kontrat döngü numaralarının ardışık olmasını zorlamaz. Atlanan bir numara sicilde görünür bir boşluk olarak kalır, ama zincirde onu engelleyen bir şey yok. `npm run audit` ardışıklık varsaymadan bütün döngüleri okur.
+- Dürüst: kontrat döngü numaralarının ardışık olmasını zorlamaz. Atlanan bir numara sicilde görünür bir boşluk olarak kalır, ama zincirde onu engelleyen bir şey yok. `npm run audit` ardışıklık varsaymadan bütün döngüleri okur (arşiv destekli RPC ile).
 
 ### 12. Size güvenmeden kendim nasıl doğrularım?
 **Üç yol: paneldeki "Verify yourself" (kendin doğrula) düğmesi, terminal komutu ve Snowtrace.**
 - Panel: tarayıcın `keccak256(içerik ‖ salt)` değerini yeniden hesaplar ve Fuji'deki mühür işlemiyle karşılaştırır.
-- Terminal: `cd chain && npm run audit` bütün sicili okur; her açılmış döngü için içeriği ve salt'ı açılış işleminden çözer, parmak izini yeniden hesaplar, zincirdeki mühürle karşılaştırır → `MATCH`. Tek döngü için hızlı yol: `npm run verify:cycle:1`. Cüzdan ya da anahtar gerekmez.
+- Terminal: `cd chain && npm run verify:cycle:1`: içeriği ve salt'ı açılış işleminden çözer, parmak izini yeniden hesaplar, zincirdeki mühürle karşılaştırır → `MATCH`. Cüzdan ya da anahtar gerekmez.
+- Bütün sicil için `npm run audit` var ama arşiv destekli bir RPC ister. Varsayılan herkese açık Fuji uç noktası geçmiş blokları vermediği için sicil büyüdükçe hata verir; yanlış özet basmaz. Sorulursa böyle söyle; sahnede çalıştırma.
+- Paneldeki kontrol bağımsız incelemeden (R-010) geçti.
 - Snowtrace: 4 kontratın kaynak kodu doğrulanmış; örnek GrailLedger https://testnet.snowtrace.io/address/0x1B5fcf6DeFf2F9375338A2C35932224522118851#code
 
 ### 13 (ek). Hurst piyasanın yatay olduğunu gerçekten tespit ediyor mu?

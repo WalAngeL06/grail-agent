@@ -10,22 +10,25 @@ Built in one day for the OKX ATK × Avalanche Agentic Hackathon (Ankara, 17 Oct 
 
 - **It trades for real:** first live order on 17 Oct 2026 at 15:37 (UTC+3): BUY 2 USDT of BTC on OKX TR, filled, sealed on chain before it was sent.
 - **Every decision is on chain:** HOLDs and practice cycles included. Each one is committed before the order and revealed after it. Agent #1 in an ERC-8004 registry on Avalanche Fuji.
-- **You don't have to trust us:** one command re-checks every cycle against the chain.
+- **You don't have to trust us:** one click in the dashboard, or one command, re-checks a cycle against the chain.
 
 ## Verify it yourself in 60 seconds
-You need Node.js. There's no wallet, no key and no `.env`; everything is read-only public RPC.
+No wallet, no key, no `.env`; everything is read-only.
 
+**1. In the browser (primary):** open the [live demo](<PAGES_URL>) → **Decisions** → pick any cycle → **Verify yourself**. Your browser recomputes `keccak256(payload ‖ salt)` and compares it with the commit read live from Avalanche Fuji. A failed or incomplete chain read never shows as a green match. The browser check passed independent review R-010.
+
+**2. From a terminal (primary):**
 ```bash
 git clone https://github.com/WalAngeL06/grail-agent && cd grail-agent/chain && npm ci
-
-npm run verify:cycle:1   # one cycle → MATCH agent=1 cycle=1, keccak(payload||salt) == on-chain commitHash
-npm run audit            # the whole ledger: every commit/reveal pair, re-hashed and compared → report in deployments/audit-latest.md
+npm run verify:cycle:1   # → MATCH agent=1 cycle=1, keccak(payload||salt) == on-chain commitHash
 ```
+`verify:cycle:1` decodes the payload and salt from the reveal transaction's calldata, recomputes the hash and compares it with the commit stored in `GrailLedger`. It exits non-zero on any mismatch, and when the cycle hasn't been revealed yet. Any other cycle: `npm run verify:cycle -- --cycle N --commit-tx <hash> --reveal-tx <hash>` (cycle 2, the live order, is shown below).
 
-- `verify:cycle:1` decodes the payload and salt from the reveal transaction's calldata, recomputes `keccak256(payload ‖ salt)` and compares it with the commit stored in `GrailLedger`. It exits non-zero on any mismatch, and when the cycle hasn't been revealed yet.
-- `audit` reads every `DecisionCommitted` / `DecisionRevealed` event for agent #1 up to a fixed snapshot block. It doesn't assume cycle ids are consecutive. It cross-checks events against the on-chain counters and verifies each revealed cycle the same way. Last committed report: `<AUDIT_TOTAL>` cycles, all revealed, all `MATCH` (`chain/deployments/audit-latest.md`; the 16:06 snapshot had 16/16).
-- **In the browser:** open the [live demo](<PAGES_URL>) → **Decisions** → **Verify yourself**. Your browser recomputes the hash and reads the commit from Fuji. The CLI above is the reference verifier; `<R-010 status>`.
-- Public RPCs rate-limit. If you see `Too Many Requests`, wait a few seconds or set `FUJI_RPC_URL` to another Fuji endpoint.
+**3. Full-ledger audit (secondary):** `npm run audit` reads every commit/reveal event of agent #1 up to a fixed snapshot block and re-checks each cycle. It **requires an archive-capable RPC**: the default public Fuji endpoint doesn't serve historical blocks, so the audit stops with an error instead of printing a partial summary.
+
+On-chain counters right now: `commitCount = revealCount = 42` for agent #1, so 0 open (read on 17 Oct 16:47 UTC+3; anyone can call `commitCount(1)` / `revealCount(1)` on the GrailLedger page on Snowtrace).
+
+Public RPCs rate-limit. If you see `Too Many Requests`, wait a few seconds or set `FUJI_RPC_URL` to another Fuji endpoint.
 
 ## First live order: the proof
 | | |
@@ -94,7 +97,7 @@ All four contracts are deployed on Fuji, and their source code is verified on Sn
 Agent identity: ERC-8004 agent **#1** (`GRAIL-01`), wallet `0x0660f43f5307Ea7C5Dbb6685FEEB648eD9620fcf`.
 
 ## Results so far
-- **On chain (Fuji):** 25+ cycles committed and revealed, 0 open (31/31 at 16:29). One live order id; the rest are practice-mode cycles.
+- **On chain (Fuji):** 42 cycles committed, 42 revealed, 0 open (on-chain counters, 17 Oct 16:47 UTC+3). One live order id; the rest are practice-mode cycles.
 - **Tests (offline):** engine + analyst 167 · agents (OKX adapter + loop) 157 · contracts 48.
 
 **30-day replay** (simulation on real OKX 1H candles, 17 Sep → 17 Oct 2026, 50 USDT, 0.1% fee, no orders sent; `engine/out/replay-summary.md`):
@@ -155,7 +158,8 @@ npm run build:public                                           # static demo bui
 - **Hurst on 48 bars is a noisy estimate,** not a regime detector. The gate only ever reduces or delays a buy, so a false alarm can at worst cost a missed entry.
 - **The emergency stop blocks new orders; it doesn't close positions.** In the replay it never triggered.
 - **Testnet and unaudited.** The contracts run on Fuji and haven't been audited. The ERC-8004 Reputation and Validation registries are deployed but not written to yet.
-- **The public demo** shows a frozen snapshot of the agent's state; its chain checks run live. The CLI verifiers above are the reference.
+- **The public demo** shows a frozen snapshot of the agent's state; its chain checks run live from your browser.
+- **The full-ledger audit needs an archive RPC.** On the default public Fuji endpoint `npm run audit` stops with an error as the ledger grows. It fails loudly rather than printing a wrong summary. Per-cycle checks (browser and `verify:cycle`) work on public RPC.
 
 ## Repository layout
 | Path | What |
@@ -163,7 +167,7 @@ npm run build:public                                           # static demo bui
 | `engine/` | Deterministic quant engine (`validate_config`, `decide`, entry gates, replay), pure Python |
 | `analyst/` | LLM analyst guard (`review_payload`), stdlib only |
 | `agents/` | OKX Agent Trade Kit adapter (market data, guarded orders, journal) and the autonomous loop |
-| `chain/` | Hardhat: ERC-8004 registries + `GrailLedger`, tests, Fuji deploy, `verify:cycle`, `audit` |
+| `chain/` | Hardhat: ERC-8004 registries + `GrailLedger`, tests, Fuji deploy, `verify:cycle`, `audit` (archive RPC) |
 | `web/` | Vite + React + TypeScript dashboard, static public build |
 | `contracts/` | Shared schemas: config, decision/hash rule, `state.json`, `chain.json` |
 | `docs/` | Pitch deck, demo runbook, jury FAQ, UI brief and copy |

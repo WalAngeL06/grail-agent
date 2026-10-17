@@ -1,9 +1,9 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Revizyon: r41 · 2026-10-17 17:18 Europe/Istanbul. Önceki ayrıntı: coord/archive/STATE-r40-20261017.md (daha eski r26/r17 arşivleri korunur).
+- Revizyon: r42 · 2026-10-17 17:20 Europe/Istanbul. Önceki ayrıntı: coord/archive/STATE-r40-20261017.md (daha eski r26/r17 arşivleri korunur).
 - İlk CANLI:15:37 cycle2 BUY BTC2USDT filled, OKX4017748393474314240. Sürekli döngü dry_run=true; gerçek Fuji commit/reveal. Integrator runner/emir/tx başlatmaz.
 - Sözleşme: VERSION0.6.1; config/payload/state contract_version0.6, chain deploy0.5. Kullanıcı T-017 için yalnız eklemeli metrics.signals[inst].ou ve VERSION0.6.2 istedi; kart/sözleşme dört merge sonrasında hazırlanacak.
-- Bu istek sırası: chain6f19510 → docs9a0fb7f → engine4a83bd8 → agentsaf4106d, her biri ayrı merge/push; ardından T-017. Başlangıçmain1f57076 temiz/origin ile aynı; dört hedef uzak dallardan erişilebilir. Yeni dal uçları otomatik alınmaz.
+- Bu istek: chain6f19510→main81356a1 push/clean/uzak eşitliği doğrulandı; docs9a0fb7f bu merge'de. Ardından engine4a83bd8→agentsaf4106d ayrı merge/push ve T-017. Başlangıçmain1f57076 temiz/origin ile aynı; yalnız exact hedefler alınır.
 - Verify R-010 GO yalnız webc1c2361/chain23a81aa. **R-011 KAPANDI, audit jüriye GO**: kullanıcı/planner public RPC48/48 MATCH,Unopened0,Mismatch0,LIVE1,exit0; integrator54 test/typecheck PASS. Kendi audit tekrarı61→62 yeni cycle nedeniyle INCOMPLETE/exit1; beklenen fail-closed, tam rapor yazılmadı. Bunlar ayrı snapshot/kanıtlardır.
 - 17:00 freeze yalnız T-017 için kullanıcı tarafından kaldırıldı. Diğer yeni özellikler kapsam dışı; T-017 engine push17:50/chain bağımsız inceleme/merge<=18:10; yetişmezse dışarıda. UI değişen davranışı yansıtmalı, ayrı web sahibi teslimi gerekir.
 - Public kapısı: R-005 GO yalnız taranmış main9acec55/ref kümesi; son yayın SHA fark taraması hâlâ açık. Public ayarı/yayın/form/slides/video yüklemesi yapılmadı.
@@ -31,15 +31,15 @@
 | T-005 | UI+Verify | web/QA | INTEGRATED; GO | c1c2361; önceki22test/build/public PASS |
 | T-006 | Agent döngüsü+ilk canlı | agents | INTEGRATED | ilk canlıcycle2; sürekli çalışma dry_run |
 | T-007 | LLM BUY azaltma analisti | analyst/agents | INTEGRATED; Gemini kanıtı sırada | agentsaf4106d cycle45/46approved,PID48008 kullanıcı bildirimi |
-| T-008 | README/form taslakları | docs | INTEGRATED;9a0fb7f sırada | link/team/ilk canlı cycle yönlendirmesi son hazırlık |
+| T-008 | README/form taslakları | docs | INTEGRATED9a0fb7f | link/team/ilk canlı cycle yönlendirmesi ve yeni R-011GO son hazırlık |
 | T-009 | Engine İngilizce reason | engine | INTEGRATED | b7e294b |
 | T-010 | Explorer kaynak+tek cycle doğrulama | chain | INTEGRATED; R-006 GO | dört verified/önceki gerçek MATCH |
-| T-011 | Türkçe11 slayt | docs | INTEGRATED;9a0fb7f sırada | önceki11slayt/11not/PowerPoint/görsel PASS |
+| T-011 | Türkçe11 slayt | docs | INTEGRATED9a0fb7f |11slayt/11not; yalnız6/10değişti,PowerPoint render/görsel PASS |
 | T-012 |30gün replay | engine | INTEGRATED | +2.03%,düşüş4.33%,220simulated; al-tut+8.81%/14.51% |
 | T-013 | Sade UI metinleri | docs/web | INTEGRATED | R-007 ile eşleşti |
 | T-014 | Hurst+entry gate | engine/agents | INTEGRATED; yeni kanıtlar sırada | engine4a83bd8 live-gates; agentsaf4106d restart/model |
 | T-015 | Sicil audit | chain | INTEGRATED; R-011 GO |6f19510;54test/typecheck; kullanıcı bağımsız48MATCH |
-| T-016 | Türkçe FAQ+3dk runbook | docs | INTEGRATED;9a0fb7f sırada |12+1 soru; video/link/prova açık |
+| T-016 | Türkçe FAQ+3dk runbook | docs | INTEGRATED9a0fb7f |12+1 soru; yeni R-011GO/video/link/prova son hazırlık |
 | R-002/R-003 | İlk adapter/chain incelemeleri | bağımsız reviewer | DONE; koşullar işlendi | r40 arşivi/kararlar |
 | R-004/R-004b | Döngü/canlı kapı | bağımsız reviewer | DONE / APPROVE | ac96902; gerçek ilk canlı kullanıcı yaptı |
 | R-005 | Public sır taraması | reviewer | GO (taranan kapsam) | son yayın SHA tekrar taraması açık |
@@ -47,13 +47,14 @@
 | R-007 | UI matematik | engine/reviewer | DONE / INTEGRATED | c2a731b |
 | R-009 | T-014 inceleme | reviewerClaudeMax | DONE / GO koşullu |8ef0449+87539f8 kullanıcıGO; Hurst tahmin sınırı korunur |
 | R-010 | Web Verify | chain/reviewer | DONE / GO | c1c2361/23a81aa |
-| R-011 | Audit RPC düzeltmesi | chain | DONE / GO; merge/push bu adım |6f19510; planner48MATCH,integrator54test; moving-ledger fail-closed |
+| R-011 | Audit RPC düzeltmesi | chain | DONE / GO; INTEGRATED |6f19510→main81356a1 push; planner48MATCH,integrator54test; moving-ledger fail-closed |
 
 ## Bu tur kanıtları
 - Chain birleşik ağacı6f19510 ile birebir; staged fark yalnız chain/+kendi handoff'u.54test(6s)/typecheck PASS; diff --check temiz; diğer ürünler başlangıç1f57076 ile aynı. Yeni audit latest state ve fresh before/after sayaç kontrolüyle çalışır; canonical scan-head/event/hash/receipt kontrolleri korunur.
 - Audit RPC seçimi CLI>GRAIL_AUDIT_RPC_URL>FUJI_RPC_URL>PublicNode; .env/signer yüklenmez. Canlı rapor chain/runtime/audit-latest.md(ignore); tracked deployments raporu16:06/16cycle örnektir. okxOrderId hash dışı ve fill kanıtı olmadığı açık.
 - Kullanıcı bağımsız planner48/48MATCH/0açık/0mismatch/1LIVE/exit0 bildirdi. Integrator gerçek tekrarında before61/61→after62/62,scanned61/61; INCOMPLETE/exit1 ve rapor yok. Çalışan agent'ın yeni cycle'ı beklenen tamlık reddini tetikler; GO için başarılı snapshot ile karıştırılmaz.
 - Önceki R-010 gerçekcycle1/2/3 ve38history inceleyen kanıtıdır; web helper CLI canonical blockHash/event-data kapsamının tamamını taşımaz. Son web22test/iki build önceki turdadır. Bu tur tarayıcı/sır taraması yok.
+- Docs9a0fb7f actual merge farkı yalnız docs/+kendi handoff7dosya; çoklu merge-base nedeniyle üç-nokta diff'teki eski main kayıtları yeni yabancı yazım değil. Exact docs ağaç/diff--check PASS; diğer ürünlerchain81356a1 ile aynı. PPTX11slayt11not;8103126'ya göre yalnızslide6/10XML değişmiş; ikisi PowerPoint'te1280x720 render/görsel PASS.
 
 ## Bekleyenler / sınırlar
 - Docs9a0fb7f R-011 NO-GO zamanındaki archive-RPC metnini içerir; exact hedef alınır, R-011 kapandıktan sonra README/FAQ/form/runbook metni docs sahibince güncellenmeli. İlk canlıcycle2; verify:cycle:1 simülasyoncycle1. Kök README D-012/link/doğrulama kapısında.

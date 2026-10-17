@@ -1,23 +1,22 @@
 # Handoff — engine / analyst (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~15:30 (T-012 bitişi)
-- Aktif görev / durum: T-012 / READY_FOR_REVIEW. T-012 kartı main'de henüz yok; kapsam kullanıcı mesajından: "son 30 günün OKX mumlarıyla engine kararlarını geriye oynat, eşit ağırlıklı al-tut ile karşılaştır; out/replay.json + out/replay-summary.md; emir/tx yok". T-009 de READY_FOR_REVIEW (6448627, STATE'te hâlâ TODO).
-- Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`); main@6e9fc40 merge edildi.
-- contracts okunan sürüm: 0.6 (sözleşme değişikliği yok; replay.json yeni, sözleşme dışı bir çıktı).
-- Tamamlanan somut davranış (T-012):
-  - `engine/src/grail_engine/replay.py` (saf, I/O yok): `replay(candles, cfg, capital_usdt, fee_pct, window_bars)` her kapanmış 1H barda `decide()` çağırır, BUY/SELL'i bar kapanışında %0.1 ücretle simüle eder; tepe equity = en yüksek simüle equity (kill switch). Al-tut: pencere başında sermaye/5 her coine. Ayrıca `align_closes`, `max_drawdown_pct`, `count_cash_moves`, `summary_text`.
-  - `engine/scripts/replay_okx.py` (I/O): `--fetch` → `okx --json --profile grail market candles <inst> --bar 1H --limit 300 --after <ts>` ile geriye sayfalar (tek dış komut bu), sadece confirm=1 barlar → `engine/data/okx-candles-1H.json` (5 coin × 768 bar = 720 pencere + 48 ısınma). Bayraksız çalıştırma kayıtlı veriyle ağsız ve deterministik.
-  - Çıktı: `engine/out/replay.json` (`source`, `window`, `assumptions`, `grail`, `buy_hold`, `series[720]` = `t_ms,time,grail_usdt,buy_hold_usdt,grail_cash_pct,independent_bets`), `engine/out/replay-summary.md` (başlık + 3 cümle, ASCII).
-  - Sonuç (2026-09-17T13:00Z → 2026-10-17T12:00Z, 50 USDT): GRAIL 50.92 (+1.83%, max düşüş 7.48%), al-tut 54.41 (+8.81%, max düşüş 14.51%); ort. independent bets 1.36; tam nakite geçiş 9; coin çıkışı 84; barların %15.3'ü tam nakit; kill switch 166 bar (%23); 191 BUY / 191 SELL; ücret 2.07 USDT; engine hatası 0.
+- Güncelleme zamanı: 2026-10-17 ~15:50 (R-007 bitişi)
+- Aktif görev / durum: R-007 (UI matematiği incelemesi, kod yazma yok) / READY_FOR_REVIEW. Kartı main'de yok; kapsam kullanıcı mesajından: "origin/main web/src'de n_eff, ρ̄, Holy Grail eğrisi+tavan, PSR, KPI'lar engine ile aynı mı, yanlış etiket/yuvarlama var mı → coord/reviews/R-007-ui-math.md". T-009/T-012 INTEGRATED (b7e294b).
+- Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`); origin/main@9acec55 fast-forward edildi.
+- contracts okunan sürüm: 0.6 (sözleşme değişikliği yok).
+- Tamamlanan somut davranış (R-007): `coord/reviews/R-007-ui-math.md`.
+  - Formüller DOĞRU: UI `nEff`/`srP`/tavan engine `stats.py` ile cebirsel aynı; 720 barda max fark n_eff 2.3e-4, SR 6.9e-5 (engine 4 ondalık yuvarlaması), Holy Grail nokta-çizgi kayması 0.67 px.
+  - 4 MAJOR (etiket/taban): R-007-1 PSR "skill vs luck" değil (HRP tüm coinler, in-sample 48h; 107/672 barda GRAIL gerçekleşen PSR'ye zıt); R-007-2 "Return per unit of risk" = varsayım 0.5×√n_eff, ölçüm değil (GRAIL gerçekleşen Sharpe 1.26 vs ekran ort. 0.58); R-007-3 Positions "target" = HRP (limit öncesi) + now %equity / target %deploy_base taban farkı; R-007-4 başlık "real bets GRAIL holds" ama n_eff coin listesinin.
+  - MINOR: Show-the-math 71/720 barda aritmetik tutarsız (payda 2 ondalık), PSR "100%"/"0%", kill switch "after a 5% loss" metni, target_vol "at most", vol etiketi, HRP ipucu, demo fixture (HRP düşen coinlere ≠0, eski Türkçe reason'lar), state.example corr_matrix 2×2.
 - Commit edilmemiş / izlenmeyen dosyalar: yok
-- Çalıştırılan kontroller: `cd engine && uv run pytest -q` → `104 passed` (88 eski + 16 yeni; yeni testler önce kırmızıydı). `uv run python scripts/replay_okx.py --fetch` → çalıştı; bayraksız tekrar → `replay.json` bayt bayt aynı (sha256 bf5d9422…).
-- Çalıştırılmayan kontroller ve nedeni: web/agents (başka rollerin alanı; engine API'si değişmedi, sadece yeni modül).
+- Çalıştırılan kontroller: scratchpad betiği `uv run --project engine python r007_check.py <repo>` → engine `decide()` kayıtlı 30 günlük OKX verisinde (720 bar, config.example) + UI formüllerinin Python kopyası; çıktı sayıları review dosyasında. Ağ/emir/tx yok. Betik repoya eklenmedi (yalnız review dosyası istendi).
+- Çalıştırılmayan kontroller ve nedeni: tarayıcıda UI render edilmedi (inceleme koddan + sayısal); engine pytest çalıştırılmadı (engine kodu değişmedi).
 - Devam eden süreçler / portlar: yok
-- Dış eylemler (emir id, tx hash): yok. Sadece salt okunur `market candles` çağrıları.
-- Bu makinede tuzak: `%TEMP%\pytest-of-Serdar Arif` klasörünün izni bozuk (WinError 5) → testlerde `tmp_path` KULLANMA; `tempfile.TemporaryDirectory()` fixture'ı (`test_replay.py::tmp_dir`).
+- Dış eylemler (emir id, tx hash): yok.
+- Bu makinede tuzak: `%TEMP%\pytest-of-Serdar Arif` klasörünün izni bozuk (WinError 5) → testlerde `tmp_path` KULLANMA; `tempfile.TemporaryDirectory()` fixture'ı (`test_replay.py::tmp_dir`). PowerShell `Get-Content` UTF-8'i bozuk gösterir → `-Encoding utf8` ya da Read aracı. Worktree'ler ref paylaşır: başka oturum fetch ederse `origin/main` ilerleyebilir, commit öncesi tekrar kontrol et.
 - Açık konular / öneriler (integrator kararı):
-  - Ücret yükü: her barda yeniden dengeleme 382 emir, ~41× ciro, 2.07 USDT ücret (sermayenin %4.1'i). Ücretsiz getiri ≈ +6%. Öneri: hedeften sapma bandı (ör. min_order yerine %X sapma) ayrı kartla.
-  - Kill switch HOLD = pozisyonu dondurur (satmaz); %5 düşüşte zamanın %23'ü kilitli kaldı, max düşüş 7.48% (> %5). Davranış sözleşmeye uygun; değişiklik istenirse ayrı kart.
-  - Önceki açık konular (T-009): contracts örneklerindeki Türkçe reason'lar ve `errors[].message`/config mesajları hâlâ Türkçe.
+  - Engine (ayrı kart): `target_weight_pct` iki tabanda — normal yol deploy_base=min(equity,max_total_deploy), HOLD/kill/geçersiz yol equity (`tw = cur_w`, decision.py:212-213). decision.md'de taban tanımlanmalı; metrics'e (hash dışı) `deploy_base_usdt` eklenmesi UI dönüşümünü (R-007-3) mümkün kılar. Reason'daki n_eff'i `_clean(ne)` üzerinden biçimlemek hero ile 1/720 çift yuvarlama farkını kapatır.
+  - Ücret yükü (T-012): her barda yeniden dengeleme 382 emir, 2.07 USDT ücret. Öneri: hedeften sapma bandı, ayrı kart.
+  - Kill switch HOLD pozisyonu dondurur (satmaz); replay max düşüş 7.48% (> %5).
 - TEKRARLANMAMASI gereken işlem: modül adı `decide.py` yapma (paket `decide` fonksiyonu modülü gölgeliyor → `decision.py`). Git Bash heredoc içindeki Python'da `\\n` gerçek satır sonuna dönüşüyor → çok satırlı düzenlemeyi Edit aracıyla yap.
-- SIRADAKİ İLK ADIM: T-012/T-009 review bulgusu varsa düzelt; yoksa integrator'dan yeni görev kartı bekle — yeni chat, `Agentic Hack-wt/engine` içinde.
+- SIRADAKİ İLK ADIM: R-007 bulguları web'e (ve engine notu için integrator'a) taşındıysa engine kartı gelirse uygula; yoksa integrator'dan yeni görev kartı bekle — yeni chat, `Agentic Hack-wt/engine` içinde.

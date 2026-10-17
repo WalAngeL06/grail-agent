@@ -1,7 +1,10 @@
 # Handoff — engine / analyst (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~17:20 (T-017 bitişi)
-- Aktif görev / durum: T-017 (O-U ortalamaya dönüş kolu; kullanıcı freeze'i bu iş için deldi, kart integrator'da) / READY_FOR_REVIEW. Son push 17:50, merge 18:10'a yetişmezse dışarıda kalır.
+- Güncelleme zamanı: 2026-10-17 ~17:45 (Grinold ölçümü bitişi)
+- Son iş: Grinold Temel Yasası ölçümü (salt okuma analiz, planner) / READY_FOR_REVIEW. `engine/scripts/grinold_ic.py` → `engine/out/grinold-30d.{json,md}`; src'ye dokunulmadı (T-014 = betik içinde `_mr_target` kapatılarak). İki çalıştırma byte-byte aynı.
+  - Tahmin = BUY+1/HOLD0/SELL−1 (birincil), ek olarak hedef ağırlık seviyesi/değişimi. İleri getiri 1/6/24 sa; başlık ufku 24 sa (önceden seçildi). Anlamlılık = örtüşmeyen alt örnek p<0.05 VE kesit IC ortalamasında Newey-West |t|≥2 (lag h−1).
+  - Sonuç: 24 sa IC T-014 +0.0032 / T-017 +0.0002, anlamsız; hiçbir ufuk/tahmin tanımı kuralı geçmiyor (1 sa havuz p=0.03 ama NW t=0.98). Genişlik n_eff 1.36 → yıllık 495 (24 sa). Grinold IR 0.07 / 0.00; gerçekleşen IR 2.02 / 1.72 ama 30 günde SE ≈ ±3.5 → o da sıfırdan ayırt edilemez. Transfer katsayısı IC anlamsızken null.
+- Önceki görev: T-017 (O-U ortalamaya dönüş kolu) role/engine@88f00f3, kullanıcı kararıyla main'e girecek (R-012 incelemesi).
   - Kod: `stats.ou_fit`; `decision._ou_signal`, `decision._mr_target` (ayrı fonksiyonlar), sabitler `OU_*`/`MR_*` (decision.py başı). Ranging+anlamlı coinde MR kolu karar verir; momentum yolu değişmedi (T-014/R-009 testleri geçiyor). `signals[inst].ou` eklendi (sözleşme v0.6.2 integrator'da).
   - Testler: `tests/test_ou.py` (bilinen θ, rastgele yürüyüş, look-ahead, giriş/çıkış/tut/anlamsız/trend, %25 tavanı, kill switch, "MR alımı sadece 3 koşulda" 24 parametre). `test_gates.py` signals testi `ou` alanıyla güncellendi.
   - Replay (T-012 verisi): T-014 → T-017: getiri +2.03% → +1.63%, düşüş 4.33% → 4.54%, işlem 220 → 295, ücret 1.10 → 1.49 USDT. MR: 8 alış, 43 "mean-reversion exit" satışı (momentum pozisyonlarını da kapsıyor), MR'ın kendi P&L'i −0.05 USDT (pro-rata). Varyant (çıkış sadece MR boyutlu pozisyonda) daha iyi değil: +1.51%. Ölçüm betikleri scratchpad'de (`mr_replay.py`, `mr_variant.py`), repoda değil.

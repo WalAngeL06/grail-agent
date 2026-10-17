@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 from .config import bar_minutes, validate_config
 from .decision import decide
+from .peak import PeakTracker
 
 DAYS = 30
 FEE_PCT = 0.1  # OKX spot taker varsayımı (%)
@@ -83,7 +84,8 @@ def replay(candles: dict, cfg: dict, *, capital_usdt=None, fee_pct: float = FEE_
     fee, min_o = fee_pct / 100.0, float(cfg["min_order_usdt"])
 
     bh_qty = {c: capital / len(coins) * (1.0 - fee) / closes[c][start] for c in coins}
-    cash, qty, peak = capital, {c: 0.0 for c in coins}, capital
+    cash, qty = capital, {c: 0.0 for c in coins}
+    tracker = PeakTracker()  # kill switch zirvesi: son KILL_SWITCH_WINDOW_H saatin en yüksek equity'si (agents ile aynı)
     series, invested, held = [], [], {c: [] for c in coins}
     orders = {"buy": 0, "sell": 0, "hold": 0, "largest_usdt": 0.0}
     fees = 0.0
@@ -92,7 +94,7 @@ def replay(candles: dict, cfg: dict, *, capital_usdt=None, fee_pct: float = FEE_
         px = {c: closes[c][t] for c in coins}
         at_ms = ts[t] + bar_ms  # bar kapanışı
         equity = cash + sum(qty[c] * px[c] for c in coins)
-        peak = max(peak, equity)
+        peak = tracker.update(at_ms, equity)
         snap = {"cycle_id": k + 1, "at_ms": at_ms, "closes": {c: closes[c][t - lb:t + 1] for c in coins}}
         port = {"equity_usdt": equity, "cash_usdt": cash, "peak_equity_usdt": peak,
                 "positions": [{"inst_id": c, "size_base": qty[c], "value_usdt": qty[c] * px[c]} for c in coins if qty[c] > 0]}
@@ -142,7 +144,7 @@ def replay(candles: dict, cfg: dict, *, capital_usdt=None, fee_pct: float = FEE_
                    "start_ms": series[0]["t_ms"], "end_ms": series[-1]["t_ms"], "start": series[0]["time"], "end": series[-1]["time"]},
         "assumptions": {
             "capital_usdt": capital, "fee_pct": fee_pct, "fills": "simulated at each bar close, no slippage",
-            "cycle": "one engine decision per closed bar", "peak_equity": "highest simulated equity so far (kill switch)",
+            "cycle": "one engine decision per closed bar", "peak_equity": "highest simulated equity in the last 168 hours (kill switch)",
             "orders_sent": 0, "chain_tx_sent": 0, "config": {k: cfg[k] for k in CFG_KEYS},
         },
         "grail": {

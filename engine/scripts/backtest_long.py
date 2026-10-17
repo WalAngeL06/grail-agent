@@ -120,6 +120,8 @@ def simulate(job: dict) -> dict:
         setattr(mod, k, v)
 
     cash, qty, peak = capital, {c: 0.0 for c in coins}, capital
+    from grail_engine.peak import PeakTracker
+    tracker = PeakTracker() if job.get("peak") == "rolling_168h" else None  # yoksa tüm zamanlar zirvesi (eski)
     mr_qty = {c: 0.0 for c in coins}
     px: dict[str, float] = {}
     by_last: dict[float, str] = {}
@@ -146,14 +148,15 @@ def simulate(job: dict) -> dict:
         by_last.clear()
         by_last.update({float(closes[c][t]): c for c in coins})
         e0 = cash + sum(qty[c] * px[c] for c in coins)
-        peak = max(peak, e0)
+        peak = tracker.update(times[k], e0) if tracker else max(peak, e0)
         snap = {"cycle_id": k + 1, "at_ms": times[k], "closes": {c: closes[c][t - lb:t + 1] for c in coins}}
         port = {"equity_usdt": e0, "cash_usdt": cash, "peak_equity_usdt": peak,
                 "positions": [{"inst_id": c, "size_base": qty[c], "value_usdt": qty[c] * px[c]} for c in coins if qty[c] > 0]}
         res = decide(snap, port, cfg)
         kill.append(bool((res["metrics"] or {}).get("kill_switch")))
         n_tr, f_bar = 0, 0.0
-        for d in res["payload"]["decisions"]:
+        frozen = job.get("kill_freeze") and kill[-1]  # eski davranış: tetikliyken hiç işlem yok (ayrıştırma için)
+        for d in ([] if frozen else res["payload"]["decisions"]):
             c, size = d["inst_id"], float(d["size_usdt"])
             if d["action"] == "BUY":
                 spend = min(size, cash)

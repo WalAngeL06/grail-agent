@@ -12,6 +12,7 @@ import numpy as np
 
 from .config import bar_minutes, to_decimal, validate_config
 from .hrp import hrp_weights
+from .peak import KILL_SWITCH_WINDOW_H
 from .stats import avg_corr, breakout_setup, corr_matrix, hurst_dfa, n_eff, ou_fit, psr, sr_portfolio
 
 SR_SINGLE = 0.5  # Holy Grail metriği için varsayılan tekil SR (sadece gösterim)
@@ -263,9 +264,7 @@ def _decide(snap: dict, positions, cfg: dict, errors: list) -> dict:
         cur = pos_val.get(c, 0.0)
         cur_w = round(cur / equity * 100.0, 2) if equity_ok else 0
         action, size, tw = "HOLD", Decimal(0), cur_w
-        if kill:
-            reason = f"Safety stop: losses hit the limit, no trades (down {dd_pct:.1f}%, limit {cfg['kill_switch_drawdown_pct']}%)"
-        elif not equity_ok:
+        if not equity_ok:
             reason = "Account balance unknown, no trades"
         elif not info[c]["ok"]:
             reason = info[c]["why"]
@@ -316,6 +315,13 @@ def _decide(snap: dict, positions, cfg: dict, errors: list) -> dict:
                 action, size = "SELL", min(-diff, max_o)
                 if tr > 0 and mr is None:
                     reason += "; trimming to target"
+            if kill:  # kill switch: yeni BUY yok; SELL / nakde geçiş serbest (pozisyon dondurulmaz)
+                if action == "SELL":
+                    reason += f"; safety stop on (down {dd_pct:.1f}%)"
+                else:
+                    action, size, tw = "HOLD", Decimal(0), cur_w
+                    reason = (f"Safety stop: losses hit the limit, no new buys (down {dd_pct:.1f}% from the "
+                              f"{KILL_SWITCH_WINDOW_H}h high, limit {cfg['kill_switch_drawdown_pct']}%)")
             # MR alımı kendi boyutunu tüketir; kapısız momentum payından az tüketmez (sonraki coinlerin bütçesi büyümez)
             spent = max(size_u, size if action == "BUY" else Decimal(0)) if mr is not None else size_u
             budget_left -= spent

@@ -1,0 +1,130 @@
+{
+ "t014|rolling_168h|sell_ok": {
+  "full_180d": {
+   "return_pct": 2.27,
+   "sharpe": 0.42,
+   "max_drawdown_pct": 8.8,
+   "trades": 749,
+   "kill_switch_bars_pct": 0.0
+  },
+  "prior_150d_oos": {
+   "return_pct": 0.33,
+   "sharpe": 0.13,
+   "max_drawdown_pct": 8.8,
+   "trades": 643,
+   "kill_switch_bars_pct": 0.0
+  }
+ },
+ "t014|rolling_168h|freeze": {
+  "full_180d": {
+   "return_pct": 2.27,
+   "sharpe": 0.42,
+   "max_drawdown_pct": 8.8,
+   "trades": 749,
+   "kill_switch_bars_pct": 0.0
+  },
+  "prior_150d_oos": {
+   "return_pct": 0.33,
+   "sharpe": 0.13,
+   "max_drawdown_pct": 8.8,
+   "trades": 643,
+   "kill_switch_bars_pct": 0.0
+  }
+ },
+ "t014|all_time|sell_ok": {
+  "full_180d": {
+   "return_pct": -3.37,
+   "sharpe": -1.0,
+   "max_drawdown_pct": 5.16,
+   "trades": 223,
+   "kill_switch_bars_pct": 63.9
+  },
+  "prior_150d_oos": {
+   "return_pct": -3.38,
+   "sharpe": -1.09,
+   "max_drawdown_pct": 5.16,
+   "trades": 223,
+   "kill_switch_bars_pct": 56.7
+  }
+ },
+ "t014|all_time|freeze": {
+  "full_180d": {
+   "return_pct": 7.12,
+   "sharpe": 1.16,
+   "max_drawdown_pct": 5.81,
+   "trades": 641,
+   "kill_switch_bars_pct": 8.1
+  },
+  "prior_150d_oos": {
+   "return_pct": 5.17,
+   "sharpe": 1.01,
+   "max_drawdown_pct": 5.81,
+   "trades": 535,
+   "kill_switch_bars_pct": 9.7
+  }
+ },
+ "t017|rolling_168h|sell_ok": {
+  "full_180d": {
+   "return_pct": 1.17,
+   "sharpe": 0.26,
+   "max_drawdown_pct": 9.48,
+   "trades": 1077,
+   "kill_switch_bars_pct": 0.0
+  },
+  "prior_150d_oos": {
+   "return_pct": -0.47,
+   "sharpe": -0.03,
+   "max_drawdown_pct": 9.48,
+   "trades": 911,
+   "kill_switch_bars_pct": 0.0
+  }
+ },
+ "t017|rolling_168h|freeze": {
+  "full_180d": {
+   "return_pct": 1.17,
+   "sharpe": 0.26,
+   "max_drawdown_pct": 9.48,
+   "trades": 1077,
+   "kill_switch_bars_pct": 0.0
+  },
+  "prior_150d_oos": {
+   "return_pct": -0.47,
+   "sharpe": -0.03,
+   "max_drawdown_pct": 9.48,
+   "trades": 911,
+   "kill_switch_bars_pct": 0.0
+  }
+ },
+ "t017|all_time|sell_ok": {
+  "full_180d": {
+   "return_pct": -3.35,
+   "sharpe": -0.9,
+   "max_drawdown_pct": 5.25,
+   "trades": 366,
+   "kill_switch_bars_pct": 54.2
+  },
+  "prior_150d_oos": {
+   "return_pct": -3.36,
+   "sharpe": -0.99,
+   "max_drawdown_pct": 5.25,
+   "trades": 366,
+   "kill_switch_bars_pct": 45.1
+  }
+ },
+ "t017|all_time|freeze": {
+  "full_180d": {
+   "return_pct": -2.55,
+   "sharpe": -0.52,
+   "max_drawdown_pct": 5.76,
+   "trades": 628,
+   "kill_switch_bars_pct": 31.9
+  },
+  "prior_150d_oos": {
+   "return_pct": -3.16,
+   "sharpe": -0.85,
+   "max_drawdown_pct": 5.76,
+   "trades": 470,
+   "kill_switch_bars_pct": 37.2
+  }
+ }
+}

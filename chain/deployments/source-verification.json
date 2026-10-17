@@ -1,0 +1,54 @@
+{
+  "network": "fuji",
+  "chainId": 43113,
+  "checkedAt": "2026-10-17T12:18:59.509Z",
+  "contracts": {
+    "IdentityRegistry": {
+      "address": "0x120A4E53A24ddd09991633b4Cb88c3feA6166721",
+      "status": "VERIFIED",
+      "contractName": "IdentityRegistry",
+      "compilerVersion": "v0.8.20+commit.a1b79de6",
+      "optimizationUsed": "1",
+      "runs": "200",
+      "sourceCodeSha256": "775927d2c360135aeb4df56595733819f27aa14e0ba11faf5b35e1f68edb0899",
+      "abiEntries": 47,
+      "explorer": "https://testnet.snowtrace.io/address/0x120A4E53A24ddd09991633b4Cb88c3feA6166721#code"
+    },
+    "ReputationRegistry": {
+      "address": "0x326671e1e2e80121C3Cd53a9b9fA5751a669596F",
+      "status": "VERIFIED",
+      "contractName": "ReputationRegistry",
+      "compilerVersion": "v0.8.20+commit.a1b79de6",
+      "optimizationUsed": "1",
+      "runs": "200",
+      "constructorArguments": "0x000000000000000000000000120a4e53a24ddd09991633b4cb88c3fea6166721",
+      "sourceCodeSha256": "7695ae7a695e4f377004b1f31767dc4fe7ca006d6976641eb92e68509ac301f2",
+      "abiEntries": 20,
+      "explorer": "https://testnet.snowtrace.io/address/0x326671e1e2e80121C3Cd53a9b9fA5751a669596F#code"
+    },
+    "ValidationRegistry": {
+      "address": "0x1a9c67CA99391812D7b157748fB814F6c7dADf0C",
+      "status": "VERIFIED",
+      "contractName": "ValidationRegistry",
+      "compilerVersion": "v0.8.20+commit.a1b79de6",
+      "optimizationUsed": "1",
+      "runs": "200",
+      "constructorArguments": "0x000000000000000000000000120a4e53a24ddd09991633b4cb88c3fea6166721",
+      "sourceCodeSha256": "0f6a4c627e799f39979a611d864101244e05d067f3a5dbe22848dae3f41bc671",
+      "abiEntries": 18,
+      "explorer": "https://testnet.snowtrace.io/address/0x1a9c67CA99391812D7b157748fB814F6c7dADf0C#code"
+    },
+    "GrailLedger": {
+      "address": "0x1B5fcf6DeFf2F9375338A2C35932224522118851",
+      "status": "VERIFIED",
+      "contractName": "GrailLedger",
+      "compilerVersion": "v0.8.20+commit.a1b79de6",
+      "optimizationUsed": "1",
+      "runs": "200",
+      "constructorArguments": "0x000000000000000000000000120a4e53a24ddd09991633b4cb88c3fea6166721",
+      "sourceCodeSha256": "1ed7945a400936c42fa1c56bb813af580de8178aa56506dd0ef580b0cb0b482e",
+      "abiEntries": 15,
+      "explorer": "https://testnet.snowtrace.io/address/0x1B5fcf6DeFf2F9375338A2C35932224522118851#code"
+    }
+  }
+}

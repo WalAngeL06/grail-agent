@@ -1,45 +1,60 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { groupCycles, type Cycle, type Decision, type GrailState } from "../state";
-import { ActionChip, Empty, ExplorerLink, Hash, LlmBadge, ModeTag } from "../components/Bits";
-import VerifyPanel from "../components/VerifyPanel";
-import { chainHints } from "../verify";
+import { groupCycles, type Cycle, type Decision } from "../state";
+import type { ScreenProps } from "../App";
+import { ActionChip, Empty, ExplorerLink, Hash, LlmBadge, ModeTag, PageHead, Term } from "../components/Bits";
+import VerifySheet from "../components/VerifySheet";
 import { clock, coin, countdown, dayClock, price } from "../format";
 
-type Props = { s: GrailState; chainJson: unknown; now: number; demo?: boolean };
-
-export default function Decisions({ s, chainJson, now, demo }: Props) {
+export default function Decisions({ s, chain, now, demo }: ScreenProps) {
   const cycles = useMemo(() => groupCycles(s), [s]);
   const [onlyTrades, setOnlyTrades] = useState(false);
-  const fresh = useFreshKeys(s.decisions.map((d) => d.key));
+  const [verify, setVerify] = useState<Cycle | null>(null);
+  const fresh = useFreshKeys(cycles.map((c) => c.id));
   const trades = s.decisions.filter(isTrade).length;
+  const opened = cycles.filter((c) => c.reveal_tx).length;
+  const next = countdown(s.agent.next_cycle_at_ms, now);
 
   return (
     <>
-      <div className="head">
-        <div>
-          <h1>Decisions</h1>
-          <p>
-            Every cycle the engine decides BUY, SELL or HOLD per coin. The whole cycle — HOLDs included — is committed on Avalanche before any
-            order is sent, then revealed.
-          </p>
-        </div>
-        {trades > 0 && (
-          <label className="chip" style={{ cursor: "pointer", height: 30 }}>
-            <input type="checkbox" checked={onlyTrades} onChange={(e) => setOnlyTrades(e.target.checked)} /> Only trades ({trades})
-          </label>
-        )}
-      </div>
+      <PageHead
+        title="Every decision GRAIL made, sealed before it traded."
+        summary={
+          cycles.length
+            ? `${cycles.length} round${cycles.length === 1 ? "" : "s"} shown: ${trades} trade${trades === 1 ? "" : "s"}, ${s.decisions.length - trades} holds. ${opened} opened and checkable by anyone — press "Verify" on a round.`
+            : undefined
+        }
+        aside={
+          trades > 0 ? (
+            <label className="chip toggle">
+              <input type="checkbox" checked={onlyTrades} onChange={(e) => setOnlyTrades(e.target.checked)} /> Only trades ({trades})
+            </label>
+          ) : undefined
+        }
+      />
 
       {cycles.length === 0 ? (
-        <Empty title={`Waiting for first cycle${countdown(s.agent.next_cycle_at_ms, now) ? ` — next in ${countdown(s.agent.next_cycle_at_ms, now)}` : ""}`}>
-          Decisions appear here as soon as the agent finishes a cycle.
+        <Empty title={`Waiting for the first round${next ? ` — next in ${next}` : ""}`}>
+          Every {String(s.config.cycle_seconds ?? 90)} seconds GRAIL reads prices, decides buy / sell / hold for each coin, and seals that decision on Avalanche
+          before any trade. The first round appears here.
         </Empty>
       ) : (
         <div className="stack">
           {cycles.map((c) => (
-            <CycleCard key={c.id} c={c} s={s} chainJson={chainJson} onlyTrades={onlyTrades} fresh={fresh} demo={demo} />
+            <CycleCard key={c.id} c={c} explorer={s.chain.explorer ?? chain.explorer} onlyTrades={onlyTrades} flash={fresh.has(c.id)} onVerify={() => setVerify(c)} />
           ))}
         </div>
+      )}
+
+      {verify && (
+        <VerifySheet
+          cycle={verify}
+          chain={chain}
+          agentId={s.chain.agent_id ?? chain.agentId}
+          agentName={s.agent.name ?? chain.agentName}
+          explorer={s.chain.explorer ?? chain.explorer}
+          demo={demo}
+          onClose={() => setVerify(null)}
+        />
       )}
     </>
   );
@@ -47,73 +62,71 @@ export default function Decisions({ s, chainJson, now, demo }: Props) {
 
 const isTrade = (d: Decision) => d.action === "BUY" || d.action === "SELL";
 
-function CycleCard({ c, s, chainJson, onlyTrades, fresh, demo }: { c: Cycle; s: GrailState; chainJson: unknown; onlyTrades: boolean; fresh: Set<string>; demo?: boolean }) {
-  const [open, setOpen] = useState<"none" | "detail" | "verify">("none");
-  const hints = chainHints(chainJson);
-  const rows = (onlyTrades ? c.decisions.filter(isTrade) : [...c.decisions]).sort(
-    (a, b) => Number(isTrade(b)) - Number(isTrade(a)) || (a.inst_id ?? "").localeCompare(b.inst_id ?? ""),
-  );
-  if (rows.length === 0) return null;
-  const ex = s.chain.explorer;
+function CycleCard({ c, explorer, onlyTrades, flash, onVerify }: { c: Cycle; explorer?: string; onlyTrades: boolean; flash: boolean; onVerify: () => void }) {
+  const [proof, setProof] = useState(false);
+  const all = [...c.decisions].sort((a, b) => Number(isTrade(b)) - Number(isTrade(a)) || (a.inst_id ?? "").localeCompare(b.inst_id ?? ""));
+  const rows = onlyTrades ? all.filter(isTrade) : all;
+  const hidden = all.length - rows.length;
 
   return (
-    <article className="card cycle-card" aria-label={`Cycle ${c.cycle_id ?? "?"}`}>
+    <article className={`card cycle-card ${flash ? "flash" : ""}`} aria-label={`Round ${c.id}`}>
       <div className="cycle-top">
         <h3>
-          Cycle #{c.id} <span>· {dayClock(c.decided_at_ms)} · {c.decisions.length} decisions</span> <ModeTag dry={c.dry_run} />
+          Round #{c.id} <span className="mono muted">{dayClock(c.decided_at_ms)}</span> <span className="muted">· {c.decisions.length} decisions</span>{" "}
+          <ModeTag dry={c.dry_run} />
         </h3>
         <Stepper c={c} />
       </div>
-      {!c.commit_tx && <div className="failbar">commit failed → no order (fail-closed)</div>}
+      {!c.commit_tx && (
+        <div className="failbar">
+          ✕ Seal failed → no trade was placed (fail-closed). <span className="tech">commit_tx missing</span>
+        </div>
+      )}
 
-      {rows.map((d) => {
-        const trade = isTrade(d);
-        return (
-          <div className={`drow ${fresh.has(d.key) ? "flash" : ""}`} key={d.key}>
-            <span className="coin">{coin(d.inst_id)}</span>
-            <span>
-              <ActionChip action={d.action} size={d.size_usdt} />
-            </span>
-            <span className="reason">
-              {d.reason ?? <span className="dim">no reason given</span>}
-              {d.llm_flag && (
-                <span className="llm-line">
-                  <LlmBadge flag={d.llm_flag} note={d.llm_note} />
-                  {d.llm_note && <span className="llm-note">{d.llm_note}</span>}
-                </span>
-              )}
-            </span>
-            <span className="px">
-              ref {price(d.ref_price)}
-              {d.fill_price && <> → fill {price(d.fill_price)}</>}
-            </span>
-            <span className="ord">{trade ? <OrderStatus d={d} /> : null}</span>
-          </div>
-        );
-      })}
+      {rows.map((d) => (
+        <div className="drow" key={d.key}>
+          <span className="coin">{coin(d.inst_id)}</span>
+          <span>
+            <ActionChip action={d.action} size={d.size_usdt} />
+          </span>
+          <span className="reason">
+            {d.reason ?? <span className="dim">no reason given</span>}
+            {d.llm_flag && (
+              <span className="llm-line">
+                <LlmBadge flag={d.llm_flag} note={d.llm_note} />
+                {d.llm_note && !/^skipped|^exempt/.test(d.llm_note) && <span className="llm-note">{d.llm_note}</span>}
+              </span>
+            )}
+          </span>
+          <span className="px">
+            at {price(d.ref_price)}
+            {d.fill_price && <> → filled {price(d.fill_price)}</>}
+          </span>
+          <span className="ord">{isTrade(d) ? <OrderStatus d={d} failed={!c.commit_tx} /> : null}</span>
+        </div>
+      ))}
+      {onlyTrades && hidden > 0 && <div className="drow-note">{rows.length ? `+ ${hidden} hold hidden` : `${hidden} hold — no trades this round`}</div>}
 
       <div className="cycle-foot">
         <span>
-          commit <ExplorerLink explorer={ex} kind="tx" value={c.commit_tx} />
+          <Term plain="sealed" tech="commit tx" /> {c.commit_tx ? <ExplorerLink explorer={explorer} kind="tx" value={c.commit_tx} /> : <span style={{ color: "var(--danger)" }}>failed</span>}
         </span>
         <span>
-          reveal {c.reveal_tx ? <ExplorerLink explorer={ex} kind="tx" value={c.reveal_tx} /> : <span className="tag open">OPEN</span>}
+          <Term plain="opened" tech="reveal tx" />{" "}
+          {c.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={c.reveal_tx} /> : c.commit_tx ? <span className="tag open">STILL SEALED</span> : "—"}
         </span>
         <span className="grow" />
-        <button className="btn sm" aria-expanded={open === "detail"} onClick={() => setOpen(open === "detail" ? "none" : "detail")}>
-          {open === "detail" ? "Hide payload" : "Payload & proof"}
+        <button className="btn sm" aria-expanded={proof} onClick={() => setProof(!proof)}>
+          {proof ? "Hide the math" : "Show the math"}
         </button>
-        <button className="btn sm gold" aria-expanded={open === "verify"} onClick={() => setOpen(open === "verify" ? "none" : "verify")}>
-          Verify yourself
-        </button>
+        {c.commit_tx && (
+          <button className="btn sm proofbtn" onClick={onVerify}>
+            Verify yourself
+          </button>
+        )}
       </div>
 
-      {open !== "none" && (
-        <div className="detail">
-          {open === "detail" && <Proof c={c} explorer={ex} />}
-          <VerifyPanel key={open} cycle={c} rpc={hints.rpc} contract={hints.address ?? s.chain.address} demo={demo} />
-        </div>
-      )}
+      {proof && <Proof c={c} explorer={explorer} />}
     </article>
   );
 }
@@ -123,71 +136,73 @@ function Proof({ c, explorer }: { c: Cycle; explorer?: string }) {
   try {
     if (pretty) pretty = JSON.stringify(JSON.parse(pretty), null, 2);
   } catch {
-    /* show raw */
+    /* raw */
   }
   return (
-    <>
-      <dl className="kvrows">
-        <dt>commit_hash</dt>
+    <div className="detail">
+      <div style={{ flex: "3 1 340px", minWidth: 0 }}>
+        <div className="label">The sealed decision (payload_utf8 · {c.payload_utf8 ? new TextEncoder().encode(c.payload_utf8).length : 0} bytes)</div>
+        {pretty ? <pre>{pretty}</pre> : <p className="muted">Published when the round is opened (revealed).</p>}
+      </div>
+      <dl className="kvrows" style={{ flex: "2 1 280px" }}>
+        <dt>
+          <Term plain="fingerprint" tech="commit_hash" />
+        </dt>
         <dd>
           <Hash value={c.commit_hash} full />
         </dd>
-        <dt>salt_hex</dt>
-        <dd>{c.salt_hex ? <Hash value={c.salt_hex} full /> : <span className="muted">secret until reveal</span>}</dd>
-        <dt>commit tx</dt>
+        <dt>
+          <Term plain="secret key" tech="salt_hex" />
+        </dt>
+        <dd>{c.salt_hex ? <Hash value={c.salt_hex} full /> : <span className="muted">kept secret until opened</span>}</dd>
+        <dt>sealed tx</dt>
         <dd>
           <ExplorerLink explorer={explorer} kind="tx" value={c.commit_tx} full />
         </dd>
-        <dt>reveal tx</dt>
-        <dd>{c.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={c.reveal_tx} full /> : <span className="tag open">OPEN</span>}</dd>
+        <dt>opened tx</dt>
+        <dd>{c.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={c.reveal_tx} full /> : <span className="tag open">STILL SEALED</span>}</dd>
       </dl>
-      {pretty ? (
-        <pre aria-label="Committed payload">{pretty}</pre>
-      ) : (
-        <p className="muted" style={{ margin: 0 }}>
-          Payload is published with the reveal.
-        </p>
-      )}
-    </>
+    </div>
   );
 }
 
 function Stepper({ c }: { c: Cycle }) {
   const ordered = c.decisions.filter(isTrade);
   const allIds = ordered.length > 0 && ordered.every((d) => d.okx_order_id);
-  const steps: { label: string; cls: string; title?: string }[] = [
-    { label: "Decided", cls: c.decided_at_ms !== undefined ? "done" : "pending", title: clock(c.decided_at_ms) },
-    { label: "Committed", cls: c.commit_tx ? "done" : "fail" },
+  const t = (ms?: number) => (ms ? clock(ms) : "");
+  type St = { label: string; cls: string; sub: string };
+  const steps: St[] = [
+    { label: "Decided", cls: c.decided_at_ms !== undefined ? "done" : "pending", sub: t(c.decided_at_ms) || "pending" },
+    { label: "Sealed", cls: c.commit_tx ? "done proof" : "fail", sub: c.commit_tx ? "on Avalanche" : "failed" },
     c.commit_tx
       ? ordered.length === 0
-        ? { label: "no order", cls: "skip", title: "All HOLD — nothing to send" }
-        : { label: c.dry_run ? "Ordered (sim)" : "Ordered", cls: allIds ? "done" : "pending" }
-      : { label: "no order", cls: "fail", title: "Fail-closed: no commit, no order" },
-    { label: "Revealed", cls: c.reveal_tx ? "done" : c.commit_tx ? "pending" : "skip" },
-    { label: "Verified", cls: c.verified === true ? "done ok" : c.verified === false ? "fail" : c.commit_tx ? "pending" : "skip" },
+        ? { label: "Order", cls: "skip", sub: "no order" }
+        : { label: "Order", cls: allIds ? "done" : "pending", sub: allIds ? (c.dry_run ? "simulated" : "sent") : "pending" }
+      : { label: "Order", cls: "fail", sub: "not sent" },
+    { label: "Opened", cls: c.reveal_tx ? "done proof" : c.commit_tx ? "pending" : "skip", sub: c.reveal_tx ? "public" : c.commit_tx ? "pending" : "—" },
+    { label: "Checked", cls: c.verified === true ? "done ok" : c.verified === false ? "fail" : c.commit_tx ? "pending" : "skip", sub: c.verified === true ? "matches" : c.verified === false ? "mismatch" : c.commit_tx ? "pending" : "—" },
   ];
   return (
-    <div className="stepper" aria-label="Cycle lifecycle">
-      {steps.map((st, i) => (
-        <span key={st.label} style={{ display: "inline-flex", alignItems: "center" }}>
-          {i > 0 && <span className="line" />}
-          <span className={`step ${st.cls}`} title={st.title}>
-            <i aria-hidden="true" />
-            {st.label}
-            {st.cls === "pending" && <span className="dim"> pending</span>}
-          </span>
-        </span>
+    <ol className="stepper" aria-label="Round lifecycle">
+      {steps.map((st) => (
+        <li key={st.label} className={`step ${st.cls}`}>
+          <i aria-hidden="true" />
+          <span className="step-l">{st.label}</span>
+          <span className={`step-s ${st.sub === "simulated" ? "sim" : ""}`}>{st.sub}</span>
+        </li>
       ))}
-    </div>
+    </ol>
   );
 }
 
-function OrderStatus({ d }: { d: Decision }) {
+function OrderStatus({ d, failed }: { d: Decision; failed: boolean }) {
+  if (failed) return <span className="ostat fail">NOT SENT</span>;
   const st = d.order_status;
-  const cls = st === "filled" ? "filled" : st === "simulated" ? "simulated" : "other";
+  const cls = st === "filled" ? "filled" : st === "simulated" ? "simulated" : st === "pending" ? "simulated" : "other";
+  const label = st === "simulated" ? "SIMULATED" : st === "filled" ? "FILLED" : st === "pending" ? "pending" : (st ?? "no status");
   return (
-    <span style={{ display: "grid", gap: 2 }}>
-      <span className={`ostat ${cls}`}>{st === "simulated" ? "SIMULATED" : (st ?? "no status")}</span>
+    <span style={{ display: "grid", gap: 2, justifyItems: "end" }}>
+      <span className={`ostat ${cls}`}>{label}</span>
       {d.okx_order_id && (
         <span className="mono dim" style={{ fontSize: 11 }} title="OKX order id">
           {d.okx_order_id}
@@ -197,7 +212,7 @@ function OrderStatus({ d }: { d: Decision }) {
   );
 }
 
-/** Keys that appeared since the previous state (first render: none) → gold flash for 1.5 s. */
+/** Round ids that appeared since the previous state (first render: none) → gold flash. */
 function useFreshKeys(keys: string[]) {
   const seen = useRef<Set<string> | null>(null);
   const fresh = new Set(seen.current ? keys.filter((k) => !seen.current!.has(k)) : []);

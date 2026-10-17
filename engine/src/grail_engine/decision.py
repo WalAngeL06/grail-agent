@@ -75,19 +75,19 @@ def _raw_closes(snap: dict, inst: str):
 def _analyze(raw, lookback: int) -> dict:
     """Bir coinin lookback penceresi: geçerliyse getiriler + trend + bar vol, değilse HOLD sebebi."""
     if not isinstance(raw, (list, tuple)) or not raw:
-        return {"ok": False, "why": "veri yetersiz: kapanis yok"}
+        return {"ok": False, "why": "Not enough data (no prices)"}
     vals = np.array([_f(x) for x in raw], dtype=float)
     lb = min(lookback, len(vals) - 1)
     need = max(2, min(lookback, MIN_RETURNS))
     if lb < need:
-        return {"ok": False, "why": f"veri yetersiz: {len(vals)} kapanis (min {need + 1})"}
+        return {"ok": False, "why": f"Not enough data ({len(vals)} prices, need {need + 1})"}
     win = vals[-(lb + 1):]
     if not np.isfinite(win).all() or (win <= 0).any():
-        return {"ok": False, "why": "veri: NaN/gecersiz fiyat (lookback penceresinde)"}
+        return {"ok": False, "why": "Bad price data, skipping (missing or invalid price)"}
     rets = win[1:] / win[:-1] - 1.0
     sd = float(rets.std(ddof=1))
     if not sd > 1e-12:
-        return {"ok": False, "why": "vol=0 (sabit fiyat)"}
+        return {"ok": False, "why": "Price is flat, no signal"}
     return {"ok": True, "rets": rets, "trend": float(win[-1] / win[0] - 1.0), "sd": sd, "lb": lb, "last": float(win[-1])}
 
 
@@ -129,7 +129,7 @@ def decide(market_snapshot, positions, cfg) -> dict:
         decisions = [
             {"cycle_id": cycle_id, "agent": cfg["agent_name"], "mode": cfg["mode"], "dry_run": cfg["dry_run"],
              "inst_id": c, "action": "HOLD", "size_usdt": "0", "ref_price": "0", "target_weight_pct": 0,
-             "reason": f"engine hatasi: {type(e).__name__}", "decided_at_ms": at_ms}
+             "reason": f"Engine error, no trades ({type(e).__name__})", "decided_at_ms": at_ms}
             for c in sorted(cfg["coins"])
         ]
         payload = {"cycle_id": cycle_id, "agent": cfg["agent_name"], "mode": cfg["mode"], "dry_run": cfg["dry_run"],
@@ -212,25 +212,26 @@ def _decide(snap: dict, positions, cfg: dict, errors: list) -> dict:
         cur_w = round(cur / equity * 100.0, 2) if equity_ok else 0
         action, size, tw = "HOLD", Decimal(0), cur_w
         if kill:
-            reason = f"kill switch: dd {dd_pct:.1f}% >= {cfg['kill_switch_drawdown_pct']}%, emir yok"
+            reason = f"Safety stop: losses hit the limit, no trades (down {dd_pct:.1f}%, limit {cfg['kill_switch_drawdown_pct']}%)"
         elif not equity_ok:
-            reason = "portfoy gecersiz: equity yok"
+            reason = "Account balance unknown, no trades"
         elif not info[c]["ok"]:
             reason = info[c]["why"]
         else:
-            i = V.index(c)
             tr, tw = info[c]["trend"], round(weight[c] * 100.0, 2)
-            ne_s = f"{ne:.1f}" if ne is not None and math.isfinite(ne) else "inf"
+            ne_s = f"{ne:.1f}" if ne is not None and math.isfinite(ne) else "many"
             if tr > 0:
-                reason = f"trend {tr:+.1%}, hrp {hrp[i]:.2f}, vol {pv_raw:.0f}%->hedef {tv:g}%, n_eff {ne_s}"
+                reason = f"Price trending up ({tr:+.1%}), target {tw:g}% of funds ({ne_s} independent bets)"
+                if scale < 1.0:
+                    reason += f"; size cut to keep risk near {tv:g}% (was {pv_raw:.0f}%)"
             else:
-                reason = f"trend {tr:+.1%}<=0 -> nakit, n_eff {ne_s}"
+                reason = f"Price trending down ({tr:+.1%}), " + ("moving to cash" if cur > 0 else "staying in cash")
             if info[c]["lb"] < cfg["lookback_bars"]:
-                reason += f", lb {info[c]['lb']}/{cfg['lookback_bars']}"
+                reason += f"; short history ({info[c]['lb']} of {cfg['lookback_bars']} bars)"
             diff = _cents(weight[c] * deploy_base - cur)
             if abs(diff) < min_o:
                 if diff != 0:
-                    reason += f"; fark {diff}<min {min_o}"
+                    reason += f"; change too small to trade ({abs(diff)} < {min_o} USDT minimum)"
             elif diff > 0:
                 size = min(diff, max_o, budget_left, cash_left)
                 if size >= min_o:
@@ -239,9 +240,11 @@ def _decide(snap: dict, positions, cfg: dict, errors: list) -> dict:
                     cash_left -= size
                 else:
                     size = Decimal(0)
-                    reason += f"; limit: butce {budget_left}, nakit {cash_left}"
+                    reason += f"; spending limit reached (budget left {budget_left}, cash {cash_left} USDT)"
             else:
                 action, size = "SELL", min(-diff, max_o)
+                if tr > 0:
+                    reason += "; trimming to target"
         decisions.append({
             "cycle_id": cycle_id, "agent": cfg["agent_name"], "mode": cfg["mode"], "dry_run": cfg["dry_run"],
             "inst_id": c, "action": action, "size_usdt": format(size.quantize(CENT, rounding=ROUND_DOWN), "f") if action != "HOLD" else "0",

@@ -105,11 +105,11 @@ def test_constant_nan_and_single_price(cfg):
     pos = [{"inst_id": "BTC-USDT", "value_usdt": "10"}]  # bozuk veride satış da yok
     res = decide(snap, make_portfolio(positions=pos, cash="90"), cfg)
     d = by_inst(res)
-    assert d["BTC-USDT"]["action"] == "HOLD" and "vol=0" in d["BTC-USDT"]["reason"]
-    assert d["ETH-USDT"]["action"] == "HOLD" and "NaN" in d["ETH-USDT"]["reason"]
-    assert d["SOL-USDT"]["action"] == "HOLD" and "veri yetersiz" in d["SOL-USDT"]["reason"]
-    assert d["AVAX-USDT"]["action"] == "HOLD" and "NaN" in d["AVAX-USDT"]["reason"]
-    assert d["OKB-USDT"]["action"] == "BUY" and "NaN" not in d["OKB-USDT"]["reason"]
+    assert d["BTC-USDT"]["action"] == "HOLD" and "Price is flat" in d["BTC-USDT"]["reason"]
+    assert d["ETH-USDT"]["action"] == "HOLD" and "Bad price data" in d["ETH-USDT"]["reason"]
+    assert d["SOL-USDT"]["action"] == "HOLD" and "Not enough data" in d["SOL-USDT"]["reason"]
+    assert d["AVAX-USDT"]["action"] == "HOLD" and "Bad price data" in d["AVAX-USDT"]["reason"]
+    assert d["OKB-USDT"]["action"] == "BUY" and "Bad price data" not in d["OKB-USDT"]["reason"]
     json.dumps(res["metrics"], allow_nan=False)
 
 
@@ -118,7 +118,7 @@ def test_missing_coin_in_snapshot(cfg):
     res = decide(snap, make_portfolio(), cfg)
     d = by_inst(res)
     assert len(d) == 5
-    assert d["ETH-USDT"]["action"] == "HOLD" and "veri yetersiz" in d["ETH-USDT"]["reason"]
+    assert d["ETH-USDT"]["action"] == "HOLD" and "Not enough data" in d["ETH-USDT"]["reason"]
 
 
 # --- emir boyutu sınırları (tek coin, düşük vol: hedef = max_position_pct) ---
@@ -157,7 +157,7 @@ def test_kill_switch_holds_everything(cfg):
     pos = [{"inst_id": "BTC-USDT", "value_usdt": "20"}]
     res = decide(down_market(), make_portfolio(equity="90", cash="70", positions=pos, peak_equity_usdt="100"), cfg)
     assert {d["action"] for d in res["payload"]["decisions"]} == {"HOLD"}
-    assert "kill switch" in by_inst(res)["BTC-USDT"]["reason"]
+    assert by_inst(res)["BTC-USDT"]["reason"].startswith("Safety stop: losses hit the limit")
 
 
 # --- hata nesnesi, istisna yok ---
@@ -173,6 +173,7 @@ def test_garbage_inputs_do_not_raise(cfg):
     res = decide(None, None, cfg)
     assert res["ok"] is False
     assert {d["action"] for d in res["payload"]["decisions"]} == {"HOLD"}  # HOLD da commit edilir
+    assert all(d["reason"] == "Account balance unknown, no trades" for d in res["payload"]["decisions"])
 
 
 def test_unexpected_exception_becomes_hold_and_error(cfg, monkeypatch):
@@ -186,6 +187,61 @@ def test_unexpected_exception_becomes_hold_and_error(cfg, monkeypatch):
     assert res["ok"] is False and res["errors"][0]["code"] == "ENGINE_ERROR"
     assert {d["action"] for d in res["payload"]["decisions"]} == {"HOLD"}
     assert len(res["payload"]["decisions"]) == 5
+    assert {d["reason"] for d in res["payload"]["decisions"]} == {"Engine error, no trades (ZeroDivisionError)"}
+
+
+# --- reason: kullanıcıya sade İngilizce (T-009) ---
+TURKISH = ["veri", "nakit", "fark", "butce", "hedef", "emir", "gecersiz", "hatasi", "portfoy", "yetersiz", "kapanis"]
+
+
+def assert_plain(reason):
+    assert reason.isascii() and reason[0].isupper()
+    assert not any(w in reason.lower() for w in TURKISH), reason
+
+
+def test_reasons_plain_english_up_and_down(cfg):
+    up = decide(up_market(), make_portfolio(), cfg)["payload"]["decisions"]
+    for d in up:
+        assert_plain(d["reason"])
+        if d["action"] == "BUY":
+            assert d["reason"].startswith("Price trending up (+")
+            assert "% of funds" in d["reason"] and "independent bets" in d["reason"]
+    pos = [{"inst_id": "BTC-USDT", "value_usdt": "20"}]
+    down = by_inst(decide(down_market(), make_portfolio(equity="100", cash="80", positions=pos), cfg))
+    for d in down.values():
+        assert_plain(d["reason"])
+    assert down["BTC-USDT"]["reason"].startswith("Price trending down (-")
+    assert "moving to cash" in down["BTC-USDT"]["reason"]
+    assert "staying in cash" in down["ETH-USDT"]["reason"]
+
+
+def test_reasons_plain_english_order_limits(cfg):
+    snap = make_snapshot({"BTC-USDT": make_closes(seed=5, drift=0.001, vol=0.001)})
+    first = by_inst(decide(snap, make_portfolio(), single_cfg(cfg)))["BTC-USDT"]
+    pos = [{"inst_id": "BTC-USDT", "value_usdt": f"{first['target_weight_pct'] / 100 * 50 - 1:.2f}"}]
+    small = by_inst(decide(snap, make_portfolio(positions=pos), cfg))["BTC-USDT"]
+    assert_plain(small["reason"])
+    assert "change too small to trade" in small["reason"]
+
+
+def test_reasons_plain_english_budget_limit(cfg):
+    pos = [{"inst_id": "BTC-USDT", "value_usdt": "46"}]
+    res = decide(up_market(), make_portfolio(equity="200", cash="154", positions=pos), cfg)
+    reasons = [d["reason"] for d in res["payload"]["decisions"]]
+    for r in reasons:
+        assert_plain(r)
+    assert any("spending limit reached" in r for r in reasons)
+    btc = by_inst(res)["BTC-USDT"]  # 46 > hedef: trend pozitifken de kırpılır
+    assert btc["action"] == "SELL" and btc["reason"].endswith("; trimming to target")
+
+
+def test_reasons_plain_english_bad_data(cfg):
+    snap = up_market()
+    snap["closes"]["BTC-USDT"] = []
+    snap["closes"]["ETH-USDT"] = [100.0] * 5
+    d = by_inst(decide(snap, make_portfolio(), cfg))
+    assert d["BTC-USDT"]["reason"] == "Not enough data (no prices)"
+    assert d["ETH-USDT"]["reason"] == "Not enough data (5 prices, need 11)"
 
 
 def test_okx_raw_candles_any_order(cfg):

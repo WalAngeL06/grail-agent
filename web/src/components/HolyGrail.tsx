@@ -52,21 +52,21 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
       <div className="chart-legend" aria-hidden="true">
         <span>
           <i style={{ borderColor: "var(--grail)", borderTopWidth: 3 }} />
-          {isWhatIf ? `what-if ρ = ${fmt(r, 2)}` : `live ρ̄ = ${fmt(r, 2)}`}
+          {isWhatIf ? `your what-if: ${fmt(r, 2)}` : `today: coins move together ${fmt(r, 2)}`}
         </span>
         {isWhatIf && (
           <span>
             <i className="dash" style={{ borderColor: "var(--grail)" }} />
-            live ρ̄ = {fmt(live, 2)}
+            today ({fmt(live, 2)})
           </span>
         )}
         <span>
           <i className="thin" style={{ borderColor: "var(--dim)" }} />
-          reference ρ = 0, 0.2, 0.4, 0.8
+          if coins moved together 0 / 0.2 / 0.4 / 0.8
         </span>
         <span>
           <i className="dash thin" style={{ borderColor: "var(--muted)" }} />
-          correlation ceiling SR₁/√ρ
+          best you can ever get at this level
         </span>
       </div>
 
@@ -99,10 +99,10 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
             </text>
           ))}
           <text x={(M.l + W - M.r) / 2} y={H - 4} textAnchor="middle" fontSize="11" fill="var(--muted)">
-            number of assets
+            number of coins
           </text>
           <text x={12} y={(M.t + H - M.b) / 2} fontSize="11" fill="var(--muted)" textAnchor="middle" transform={`rotate(-90 12 ${(M.t + H - M.b) / 2})`}>
-            portfolio Sharpe
+            return per unit of risk
           </text>
 
           <g clipPath="url(#hg-plot)">
@@ -113,7 +113,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
               <g>
                 <line x1={M.l} x2={W - M.r} y1={y(ceiling)} y2={y(ceiling)} stroke="var(--muted)" strokeDasharray="4 4" />
                 <text x={M.l + 6} y={y(ceiling) - 6} fontSize="11" fill="var(--muted)">
-                  correlation ceiling {fmt(ceiling, 2)}
+                  ceiling {fmt(ceiling, 2)}
                 </text>
               </g>
             )}
@@ -140,7 +140,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
               <circle className="pulse" cx={x(N)} cy={y(nowSr)} r="7" fill="none" stroke="var(--grail)" strokeWidth="2" />
               <circle cx={x(N)} cy={y(nowSr)} r="6" fill="var(--grail)" stroke="var(--bg)" strokeWidth="2" />
               <text x={x(N) + 12} y={y(nowSr) - 12} fontSize="12" fontWeight="600" fill="var(--text)">
-                You are here: {N} coins ≈ {fmt(nowBets, 2, 2)} bets
+                You are here: {N} coins ≈ {fmt(nowBets, 1, 1)} bets
               </text>
             </g>
           )}
@@ -148,17 +148,17 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
 
         {hover !== null && (
           <div className="tooltip" style={{ left: `${(x(hover) / W) * 100}%`, top: 8 }}>
-            <b>{hover} assets</b>
+            <b>{hover} coins</b>
             <div>
-              ρ {fmt(r, 2)}: Sharpe {fmt(srP(sr1, hover, r), 2)} · {fmt(nEff(hover, r), 2)} bets
+              at {fmt(r, 2)}: {fmt(nEff(hover, r), 1)} independent bets · return/risk {fmt(srP(sr1, hover, r), 2)}
             </div>
-            <div className="muted">ρ 0: Sharpe {fmt(srP(sr1, hover, 0), 2)}</div>
+            <div className="muted">if fully independent: {hover} bets · {fmt(srP(sr1, hover, 0), 2)}</div>
           </div>
         )}
       </div>
 
       <div className="slider">
-        <label htmlFor="rho">Correlation ρ</label>
+        <label htmlFor="rho">What if coins moved together…</label>
         <input
           id="rho"
           type="range"
@@ -170,21 +170,22 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
           aria-valuetext={`ρ ${fmt(r, 2)}: ${N ?? 5} coins give ${fmt(nEff(N ?? 5, r), 2)} effective bets`}
         />
         <span className="val">
-          ρ {fmt(r, 2, 2)} → {fmt(!isWhatIf && nowBets !== undefined ? nowBets : nEff(N ?? 5, r), 2, 2)} bets
+          {fmt(r, 2, 2)} → {fmt(!isWhatIf && nowBets !== undefined ? nowBets : nEff(N ?? 5, r), 1, 1)} independent bets
         </span>
       </div>
       <div className="whatif">
         {isWhatIf && (
           <>
-            <span className="chip warn">what-if</span>
+            <span className="chip warn">what-if · preview only</span>
             <button className="linkbtn" onClick={() => setWhat(null)}>
-              Reset to live ρ̄ ({fmt(live, 2)})
+              Back to today ({fmt(live, 2)})
             </button>
           </>
         )}
-        {live === undefined && <span className="muted">No live correlation yet — curve uses the slider value.</span>}
+        {live === undefined && <span className="muted">Not measured yet — the curve uses the slider value.</span>}
       </div>
-      <p className="chart-note">Adding coins that move together adds almost nothing. GRAIL sizes positions by effective bets.</p>
+      <p className="chart-note">Adding coins that move together adds almost nothing. GRAIL sizes positions by independent bets, not by coin count.</p>
+      <p className="tech" style={{ marginTop: 4 }}>Holy Grail chart · y = Sharpe ratio SR₁·√n_eff, n_eff = N/(1+(N−1)ρ), ceiling SR₁/√ρ</p>
     </div>
   );
 }

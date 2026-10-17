@@ -1,7 +1,7 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
 - Durum revizyonu: r2 · 2026-10-17 12:20 (Europe/Istanbul)
-- Ürün: `coord/BRIEF.md` (kesinleşti). Fuji test cüzdanı `.env` içinde hazır (`AGENT_ADDRESS`); faucet kullanıcıda.
+- Ürün: `coord/BRIEF.md` (kesinleşti). Fuji test cüzdanı `.env` içinde hazır (`AGENT_ADDRESS`); test AVAX organizatörden kullanıcının MetaMask adresine gelecek, kullanıcı 1 AVAX agent adresine aktaracak (faucet/kupon yok).
 - OKX: `grail` profili bağlı (gerçek para; `dry_run` açık).
 - Entegrasyon: `main` @ ilk commit (iskelet)
 - Son doğrulanmış çalışan sürüm: yok (henüz ürün kodu yok)

@@ -18,3 +18,7 @@ Commit başarısızsa emir verilmez (fail-closed).
 
 ## D-004 · Backtest motoru yok
 Geçen hackathon dersi. Engine canlı/son veriden karar üretir; tarihsel kontrol gerekiyorsa küçük sabit veri ile basit vektörel tekrar.
+
+## D-005 · Kimlik = rol + worktree; iki Codex hesabı
+"GPT Plus 2" ayrı bir araç değil, ikinci hesapla açılan Codex'tir. Roller araç adıyla değil rol + worktree + branch ile ayrılır.
+İki Codex hesabı aynı anda çalışacaksa her biri ayrı `CODEX_HOME` ile oturum açar. Integrator yedeği önce Codex · hesap 2.

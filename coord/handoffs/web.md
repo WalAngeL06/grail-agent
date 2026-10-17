@@ -2,7 +2,7 @@
 
 - Güncelleme zamanı:
 - Aktif görev / durum: T-005 / TODO (15:00'te başlar)
-- Oturum: araç + hesap etiketi (ör. "Codex / GPT Plus 1"), durdu / sürüyor
+- Oturum: araç + hesap etiketi (ör. "Codex · hesap 1"), durdu / sürüyor
 - Worktree / branch / son commit:
 - contracts okunan sürüm:
 - Tamamlanan somut davranış:

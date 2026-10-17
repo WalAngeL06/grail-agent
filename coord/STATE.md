@@ -21,13 +21,13 @@
 ## Görev panosu
 | Görev | Başlık | Sahip | Durum | Bağımlılık |
 |---|---|---|---|---|
-| T-001 | Quant engine çekirdeği + golden testler | engine (Claude Max) | TODO | contracts 0.1 |
-| T-002 | ATK veri çekme + ilk demo emri | agents (Codex) | TODO | contracts 0.1 |
-| T-003 | GrailLedger kontratı + Fuji deploy | chain (GPT Plus 2) | TODO | contracts 0.1 |
-| T-004 | UI brifi (ekranlar, palet, alan eşlemesi) | docs (Claude Pro) | TODO | contracts 0.1 |
+| T-001 | Quant engine çekirdeği + golden testler | engine (Claude Code · Max) | TODO | contracts 0.1 |
+| T-002 | ATK veri çekme + ilk demo emri | agents (Codex · hesap 1) | TODO | contracts 0.1 |
+| T-003 | GrailLedger kontratı + Fuji deploy | chain (Codex · hesap 2) | TODO | contracts 0.1 |
+| T-004 | UI brifi (ekranlar, palet, alan eşlemesi) | docs (Claude · Pro) | TODO | contracts 0.1 |
 | T-005 | UI inşası | web (Antigravity) | TODO (15:00) | T-004, state.example.json |
-| T-006 | Agent döngüsü: veri → engine → commit → ATK → reveal → state.json | agents (Codex) | TODO | T-001, T-002, T-003 |
-| R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (GPT Plus 2; GPT işlerini Claude Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
+| T-006 | Agent döngüsü: veri → engine → commit → ATK → reveal → state.json | agents (Codex · hesap 1) | TODO | T-001, T-002, T-003 |
+| R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
 ## Kanıtlar (tx hash, emir kimliği, test çıktıları)
 - (boş)

@@ -27,19 +27,23 @@ her kararı emirden ÖNCE Avalanche'a commit eder, ATK ile emri verir, sonra rev
 6. UI/UX tamamlanır. Tasarım 15:00'te başlar; sonraki değişiklikler UI'a yansıtılır.
 
 ## Roller ve sahiplik — kimse başkasının alanına YAZMAZ
-| Rol | Araç / hesap | Worktree klasörü | Branch | Yazabildiği yerler |
+Kimliğin araç adı DEĞİL, **rol + worktree**'dir. İki Codex oturumu (iki ayrı hesap) aynı dosyayı okur; hangisi olduğunu
+çalıştığın klasör ve branch belirler. Aynı hesaptaki iki oturum da birbirinden habersizdir.
+
+| Rol | Araç · hesap | Worktree klasörü | Branch | Yazabildiği yerler |
 |---|---|---|---|---|
-| integrator | Codex (GPT Plus 1) | `Agentic Hack` (ana) | `main` | `coord/STATE.md`, `coord/DECISIONS.md`, `coord/tasks/`, `contracts/` (chain.json hariç), kök dosyalar, merge |
-| agents | Codex (GPT Plus 1) | `Agentic Hack-wt/agents` | `role/agents` | `agents/`, `coord/handoffs/agents.md` |
-| engine | Claude Max | `Agentic Hack-wt/engine` | `role/engine` | `engine/`, `coord/handoffs/engine.md` |
-| chain | GPT Plus 2 | `Agentic Hack-wt/chain` | `role/chain` | `chain/`, `contracts/chain.json`, `coord/handoffs/chain.md` |
+| integrator | Codex · hesap 1 | `Agentic Hack` (ana) | `main` | `coord/STATE.md`, `coord/DECISIONS.md`, `coord/tasks/`, `contracts/` (chain.json hariç), kök dosyalar, merge |
+| agents | Codex · hesap 1 | `Agentic Hack-wt/agents` | `role/agents` | `agents/`, `coord/handoffs/agents.md` |
+| engine | Claude Code · Max | `Agentic Hack-wt/engine` | `role/engine` | `engine/`, `coord/handoffs/engine.md` |
+| chain | Codex · hesap 2 | `Agentic Hack-wt/chain` | `role/chain` | `chain/`, `contracts/chain.json`, `coord/handoffs/chain.md` |
 | web | Antigravity | `Agentic Hack-wt/web` | `role/web` | `web/`, `coord/handoffs/web.md` |
-| docs | Claude Pro | `Agentic Hack-wt/docs` | `role/docs` | `docs/`, `coord/handoffs/docs.md` |
-| reviewer | GPT Plus 2 (T-003 bitince) | `Agentic Hack-wt/review` | `role/review` | sadece `coord/reviews/`, `coord/handoffs/reviewer.md` — ürün koduna YAZMAZ |
+| docs | Claude · Pro | `Agentic Hack-wt/docs` | `role/docs` | `docs/`, `coord/handoffs/docs.md` |
+| reviewer | Codex · hesap 2 (T-003 bitince) | `Agentic Hack-wt/review` | `role/review` | sadece `coord/reviews/`, `coord/handoffs/reviewer.md` — ürün koduna YAZMAZ |
 
 - **Reviewer:** merge'den önce READY_FOR_REVIEW dalı inceler (`git diff main...role/<x>`), kartın kontrol komutunu kendisi çalıştırır,
   bulguyu `coord/reviews/<görev>.md`'ye yazar: dosya:satır, tetikleme koşulu, beklenen/gözlenen, önem. Kanıtsız "yeniden yaz" önerisi yok.
-  Implementer'dan farklı model incelesin: Claude'un işini GPT, GPT'nin işini Claude (Pro) inceler.
+  Implementer'dan farklı model incelesin: Claude'un işini (engine) Codex · hesap 2; Codex'in işini (agents, chain) Claude · Pro inceler.
+  Codex · hesap 2 kendi yazdığı chain işini incelemez.
 - **Debug:** hatayı alanın sahibi düzeltir (bağlam onda). Sahibin limiti bittiyse görev handoff ile başka araca devredilir;
   devralan o alanın geçici sahibi olur, iki kişi aynı anda yazmaz. Alanlar arası (entegrasyon) hata → integrator teşhis eder,
   sahibine görev kartı açar.
@@ -89,7 +93,9 @@ Hesap veya chat değişimi aynı şeydir: yukarıdaki "YENİ CHAT AÇILDIĞINDA"
 Eski chat/oturum yazmayı bırakmadan yenisi aynı rolde yazmaz. Limit dolmadan önce handoff'u güncel tut.
 Integrator `coord/STATE.md`'yi kısa tutar (~80 satır); eski kanıtları `coord/archive/`'a taşır.
 Codex: bu dosya değişirse açık Codex oturumları yeniden başlatılmadan değişikliği görmez.
-Integrator yedeği: Codex limiti dolarsa Claude Max integrator rolünü `coord/handoffs/integrator.md` üzerinden devralır.
+Integrator yedeği: Codex · hesap 1 limiti dolarsa önce o hesabın sıfırlama hakkı kullanılır; olmuyorsa Codex · hesap 2
+(aynı araç), o da yoksa Claude Max integrator rolünü `coord/handoffs/integrator.md` üzerinden devralır.
+İki Codex hesabı aynı anda: her hesap ayrı `CODEX_HOME` klasöründe oturum açar (hesap 2 için ör. `%USERPROFILE%\.codex-hesap2`).
 
 ## Güvenlik
 - OKX: geliştirme ve testte DEMO modu. Canlı emir sadece kullanıcı açıkça izin verirse, config'teki limitlerle.

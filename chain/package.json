@@ -1,0 +1,39 @@
+{
+  "name": "grail-chain",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GRAIL ERC-8004 identity and immutable commit-reveal ledger",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:fuji": "hardhat run scripts/deploy.ts --network fuji",
+    "verify:fuji": "hardhat run scripts/verify-deployment.ts --network fuji",
+    "deploy:local": "hardhat run scripts/deploy.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "2.1.0",
+    "@nomicfoundation/hardhat-ethers": "3.1.0",
+    "@openzeppelin/contracts": "5.0.2",
+    "@types/chai": "4.3.20",
+    "@types/mocha": "10.0.10",
+    "@types/node": "24.10.1",
+    "chai": "4.5.0",
+    "dotenv": "17.2.3",
+    "ethers": "6.15.0",
+    "hardhat": "2.26.3",
+    "solc": "0.8.20",
+    "ts-node": "10.9.2",
+    "typescript": "5.9.3"
+  },
+  "keywords": [
+    "erc8004",
+    "ai-agent",
+    "ethereum",
+    "avalanche",
+    "reputation",
+    "identity",
+    "web3"
+  ],
+  "license": "MIT"
+}

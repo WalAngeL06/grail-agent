@@ -1,0 +1,35 @@
+{
+  "chainId": 43113,
+  "agentWallet": "0x0660f43f5307Ea7C5Dbb6685FEEB648eD9620fcf",
+  "steps": {
+    "IdentityRegistry": {
+      "hash": "0xc755d0b41c3b499ca0708fb3a415f610d58c582441753a7726054498a02c0a79",
+      "nonce": 0,
+      "address": "0x120A4E53A24ddd09991633b4Cb88c3feA6166721",
+      "confirmed": true
+    },
+    "ReputationRegistry": {
+      "hash": "0xfa3144faec689b626774e42d5710fb1a1c9cb53b21e1787f34759f3f32eda7f9",
+      "nonce": 1,
+      "address": "0x326671e1e2e80121C3Cd53a9b9fA5751a669596F",
+      "confirmed": true
+    },
+    "ValidationRegistry": {
+      "hash": "0x750c8c93b25131fb91d1f8b98e261a6bc3de9e62e1c082218cc288555736c7c4",
+      "nonce": 2,
+      "address": "0x1a9c67CA99391812D7b157748fB814F6c7dADf0C",
+      "confirmed": true
+    },
+    "GrailLedger": {
+      "hash": "0xde680409c053d535f55f7ab963bbb1a7dabee8b7e229a1ec819e34da17c730dd",
+      "nonce": 3,
+      "address": "0x1B5fcf6DeFf2F9375338A2C35932224522118851",
+      "confirmed": true
+    },
+    "registerAgent": {
+      "hash": "0xfa98129b1bd4c67a4549f6cb994a3697d826a6d0d8b6832aaece20f3b9e4ee93",
+      "nonce": 4,
+      "confirmed": true
+    }
+  }
+}

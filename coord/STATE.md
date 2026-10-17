@@ -1,13 +1,13 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r2 · 2026-10-17 12:20 (Europe/Istanbul)
+- Durum revizyonu: r3 · 2026-10-17 13:19 (Europe/Istanbul)
 - Ürün: `coord/BRIEF.md` (kesinleşti). Fuji test cüzdanı `.env` içinde hazır (`AGENT_ADDRESS`); 13:05 organizatörden 1 test AVAX kullanıcının MetaMask'ına (0x3b8b2…3C537, Fuji) GELDİ → kullanıcı ~0.9 AVAX agent adresine aktaracak (gas için ~0.1 MetaMask'ta kalır).
 - OKX: `grail` profili bağlı (gerçek para; `dry_run` açık).
-- Entegrasyon: `main` @ ilk commit (iskelet)
-- Son doğrulanmış çalışan sürüm: yok (henüz ürün kodu yok)
-- Aktif sözleşme: `contracts/VERSION` = 0.3
+- Entegrasyon: `main` içinde T-001 (`role/engine@f8a7dc9`); bu kayıt aynı merge commit'inin parçası.
+- Son doğrulanmış çalışan parça: engine, main üzerinde 49 test + 48 bar config kontrolü geçti (13:19); uçtan uca döngü henüz doğrulanmadı.
+- Aktif sözleşme: `contracts/VERSION` = 0.4 (D-010: risk bütçesi yorumu kabul; lookback 168 → 48; dry_run açık)
 - Kaynak: Avalanche workshop slaytı (ERC-8004 boilerplate) ve ATK yapılandırması → D-006
-- Sıradaki öncelik: T-001, T-002, T-003, T-004 ŞİMDİ paralel başlar. T-005 (UI) 15:00'te.
+- Sıradaki öncelik: T-002, T-003, T-004 RAPOR'ları → kontrol + merge; T-001 sonrası T-007 başlayabilir. T-005 (UI) 15:00'te.
 
 ## Zaman kapıları
 | Saat | Kapı | Ölçüt |
@@ -25,7 +25,7 @@
 ## Görev panosu
 | Görev | Başlık | Sahip | Durum | Bağımlılık |
 |---|---|---|---|---|
-| T-001 | Quant engine çekirdeği + golden testler | engine (Claude Code · Max) | TODO | contracts 0.3 |
+| T-001 | Quant engine çekirdeği + golden testler | engine (Claude Code · Max) | INTEGRATED | contracts 0.3; 0.4 uyumu doğrulandı |
 | T-002 | ATK veri çekme + emir katmanı (dry_run → küçük canlı) | agents (Codex · hesap 1) | TODO | contracts 0.3 |
 | T-003 | ERC-8004 kimlik + GrailLedger + Fuji deploy | chain (Codex · hesap 2) | TODO | contracts 0.3 |
 | T-004 | UI brifi (ekranlar, palet, alan eşlemesi) | docs (Claude · Pro) | TODO | contracts 0.3 |
@@ -35,7 +35,9 @@
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
 ## Kanıtlar (tx hash, emir kimliği, test çıktıları)
-- (boş)
+- T-001: `role/engine@f8a7dc9` uzak dalla aynı; sınır kontrolü yalnızca `engine/` + `coord/handoffs/engine.md` (13 dosya).
+- T-001: `cd engine && uv run pytest -q` → merge öncesi 49 passed (2.84s); main + contracts 0.4 / lookback 48 ile 49 passed (3.57s).
+- Config kontrolü: v0.4 VERSION/config/state eşleşiyor; validate_config hatasız; 49 sentetik kapanışla 48 bar, deterministik payload ve dry_run=true doğrulandı. Dış emir/tx yok.
 
 ## Bekleyen merge'ler
 - (yok)

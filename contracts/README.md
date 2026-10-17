@@ -10,6 +10,8 @@ Etkilenen roller bir sonraki görev başında `git merge main` ile alır ve RAPO
 - Sembol: OKX instId biçimi, `"BTC-USDT"`.
 - Mod: `"live"` (OKX TR gerçek bakiye). `dry_run: true` iken emir gönderilmez, `order_status: "simulated"`. Her emir ve state kaydı `mode` ve `dry_run` taşır.
 - Para limitleri (config): `max_order_usdt` emir başı, `max_total_deploy_usdt` toplam; kod emirden önce zorlar.
+- `risk_budget_pct`: coin başına yıllık volatilite katkısı tavanı; hedef ağırlık `w_i` (0–1) ve yıllık coin volatilitesi `vol_i_pct` için `w_i * vol_i_pct <= risk_budget_pct` (D-010).
+- Varsayılan `lookback_bars = 48`; `candle_bar = "1H"` ile trend penceresi 48 saat, gereken kapanış sayısı 49 (D-010).
 - Hata nesnesi: `{ "code": "ATK_TIMEOUT", "message": "...", "at_ms": 0, "where": "agents.order", "context": {} }`.
 - Bilinmeyen alanlar okuyucuyu çökertmez (ileriye uyumlu).
 

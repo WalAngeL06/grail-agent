@@ -1,5 +1,5 @@
 {
-  "contract_version": "0.2",
+  "contract_version": "0.4",
   "mode": "live",
   "dry_run": true,
   "okx_site": "tr",
@@ -8,7 +8,7 @@
   "quote": "USDT",
   "cycle_seconds": 90,
   "candle_bar": "1H",
-  "lookback_bars": 168,
+  "lookback_bars": 48,
   "risk_budget_pct": 10,
   "max_position_pct": 30,
   "target_vol_pct": 20,

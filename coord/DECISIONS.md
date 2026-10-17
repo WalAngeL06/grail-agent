@@ -57,3 +57,9 @@ OKX TR katılımcılara gerçek bakiye verdi; emirler canlı hesapta. Erişim: `
 - Agent içindeki LLM (T-007) için ücretsiz katmanlı API (varsayılan Gemini Flash, `LLM_API_KEY`); yoksa analist atlanır, döngü etkilenmez.
 - Model/efor: kritik (engine, kontrat, guardrail) high; UI/dokümantasyon medium. Takılınca önce efor, sonra model.
 - Bağlam: 1 görev = 1 chat; görev ortasında şişerse `/compact <neyi koru>`.
+
+## D-010 · T-001 kullanıcı onayları: risk bütçesi ve 48 bar pencere (contracts 0.4)
+- Kullanıcı `risk_budget_pct` yorumunu kabul etti: coin başına yıllık volatilite katkısı tavanı. Hedef ağırlık `w_i` (0–1), yıllık coin volatilitesi yüzde cinsinden `vol_i_pct` olmak üzere `w_i * vol_i_pct <= risk_budget_pct`; örnek config'te tavan %10.
+- Kullanıcı varsayılan `lookback_bars` değerinin 168 → 48 olmasını onayladı. `candle_bar = "1H"` ile 48 saatlik trend için 49 kapanış istenir. Engine'in 13:10 veri kontrolünde 168 bar bütün coinlerde HOLD üretmişti; pencere değişikliği sonraki veride BUY garantisi vermez.
+- `contracts/VERSION` 0.3 → 0.4; config ve state örneklerinin `contract_version` alanları 0.4. Alan biçimleri ve karar/hash sözleşmesi aynı; etkilenen agents, engine ve web rolleri sonraki başlangıçta `git merge main` ile alır.
+- T-001 engine uygulaması `role/engine@f8a7dc9` üzerinden main'e alınır. `dry_run: true` korunur; canlı emir yetkisi verilmedi.

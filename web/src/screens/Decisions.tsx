@@ -58,8 +58,8 @@ export default function Decisions({ s, chain, now, demo }: ScreenProps) {
         <VerifySheet
           cycle={verify}
           chain={chain}
-          agentId={s.chain.agent_id ?? chain.agentId}
-          agentName={s.agent.name ?? chain.agentName}
+          agentId={chain.agentId ?? s.chain.agent_id}
+          agentName={chain.agentName ?? s.agent.name}
           explorer={s.chain.explorer ?? chain.explorer}
           demo={demo}
           onClose={() => setVerify(null)}

@@ -252,3 +252,9 @@ details.math[open] summary { margin-bottom: 8px; }
 
 /* P2: stepper labels never wrap */
 .stepper .step-l, .stepper .step-s { white-space: nowrap; }
+
+/* R-010: unverified result + reasons */
+.result.warn { border-color: rgba(245, 165, 36, 0.5); }
+.result.warn .result-mark, .mark.warn { background: var(--warn-wash); color: var(--warn); }
+.result.warn b { color: var(--warn); }
+.result .reasons { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--sell); }

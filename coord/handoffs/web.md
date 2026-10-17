@@ -1,11 +1,25 @@
 # Handoff — web (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~16:35
-- Aktif görev / durum: UI-QA bulguları (planner "Orkestra Şefi - 2", Antigravity raporu, güncel kodla süzülmüş) / READY_FOR_REVIEW
+- Güncelleme zamanı: 2026-10-17 ~16:50
+- Aktif görev / durum: R-010 Verify karar mantığı düzeltmesi (origin/role/chain:coord/reviews/R-010-web-verify.md, hedef 0197fe9) / READY_FOR_REVIEW — chain aynı senaryolarla tekrar inceleyecek
 - Oturum: Claude Code · Max (Opus 5.5), durdu
 - Worktree / branch / son commit: `Agentic Hack-wt/web` / `role/web` / bu dosyayı içeren son commit (`git log -1`)
 - contracts okunan sürüm: v0.6
-- Bu tur:
+- Bu tur (R-010):
+  - Karar saf fonksiyonda: `web/src/verifyLogic.ts` `decideVerdict` (import yok). Kural: başarısız kontrol → Mismatch; okunamayan kontrol → Unverified (amber + Retry);
+    yeşil "Match" yalnız zincirden commitHash okunup tüm kontroller geçince. Regresyon: `cd web && npm test` (node --test, `scripts/verify-logic.test.ts`, 22 test, R-010 tablosunun 9 senaryosu + ekler).
+  - R-010-1: RPC+fallback hata / 429 / agentId yok → Unverified "Could not reach Avalanche" + Retry; "agent reported" satırı zincir okunmadan ✓ almaz.
+  - R-010-2: agentOk=false (payload.agent ≠ chain.json agentName) ve payloadMatchesRows=false → Mismatch (sebepler listelenir). Verify'a agentId/agentName artık önce chain.json'dan.
+  - R-010-3: `chain.ts checkReveal`: eth_getTransactionReceipt status=0x1, tx.to/receipt.to = chain.json GrailLedger, calldata agentId/cycleId, tx.from = chain.json agentWallet,
+    receipt'te ledger'dan DecisionRevealed(agentId, cycleId) → sorun varsa Mismatch; okunamazsa Unverified. Payload/salt yalnız bağlanmış reveal'den; okxOrderId yalnız bağlıysa gösterilir.
+    Yeni "Opening on Avalanche" satırı.
+  - R-010-4: Routescan logs'a `nocache` parametresi; event commit sayısı < commitCount ise görünür "Some check-ins may be missing… Retry"; yükleme hatası görünür.
+  - R-010-5: `safeCycle` — Number.isSafeInteger dışı cycleId açık hata (readDecision, history); reveal cycleId string olarak karşılaştırılır.
+- Kontroller: `npm test` 22/22; build + build:public geçti. Public preview'de gerçek cycle 1/2/3 → Match (5/5 bağlama kontrolü ✓; #2 OKX order 4017748393474314240).
+  Tarayıcıda fetch taklidiyle: iki uç da kapalı → amber Unverified + Retry, emirler gösterilmez; Retry → Match; sahte reveal (to=0x0, agent/cycle 99) → Mismatch, emirler gösterilmez;
+  salt'ı yalnız zincirde olan #2 ağ kesikken → Unverified ("Sample data" değil). Görüntü: web/docs/screenshots/v6-verify-unreachable.jpg.
+
+- Önceki tur (UI-QA):
   - P0: ≤600 px'te what-if slider tek sütun (input tam genişlik). Anchor: hash değişince + aynı linke tekrar tıklanınca `scrollToAnchor` (anlık kaydırma; smooth testte güvenilmezdi), `scroll-margin-top`.
   - P1: Verify'dan "(R-003-4)" kalktı; Settings dry_run → "OKX TR · prices & balance only, orders simulated"; ≤760 px üst bar tek satır yatay kaydırma, ikincil öğeler (`.tb-opt`, `.sep`) gizli (48 px);
     Holy Grail <520 px kart genişliğinde kompakt viewBox 400×280 + 13 px yazı (375 px'te ~9.8 px, önce 4.6), ilk ölçüm mount'ta senkron; Ledger ≤760 px kart düzeni + tam genişlik buton.

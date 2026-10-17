@@ -1,12 +1,12 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r37 · 2026-10-17 16:52 (Europe/Istanbul)
+- Durum revizyonu: r38 · 2026-10-17 16:55 (Europe/Istanbul)
 - Ürün: ilk CANLI 15:37 cycle2 BTC BUY2 filled kanıtı korunur. Sürekli agents döngüsünde cycle3 5 BUY / 5 approved ve planner Gemini HTTP200 kullanıcı tarafından bildirildi; bu chat yeni koşu başlatmaz.
 - Aktif sözleşme: VERSION 0.6.1 (belge/eklemeli metrik); config/payload/state contract_version=0.6, chain.json deploy=0.5. Config/adres/ABI/hash değişmedi (D-017).
-- Bu teslim: kullanıcı sırasıyla web@c1c2361, chain@23a81aa ve docs@8103126 için ayrı merge + push istedi. Web düzeltmesi birleşik ağaçta doğrulandı; chain GO raporu ve docs teslimi sonraki iki adımdır. Daha yeni dal uçları otomatik alınmaz.
+- Bu teslim: web@c1c2361 → main9322c6f push/uzak eşitliği doğrulandı; chain@23a81aa yalnız GO raporu/handoff olarak alınıyor, ürün ağacı aynı. Docs@8103126 sonraki ayrı merge/push. Daha yeni dal uçları otomatik alınmaz.
 - Bu tur kontroller: web npm test22/22, build/build:public exit0 (54 modül; 684ms/696ms); web ağacı c1c2361 ile birebir; diff/sınır temiz. Contracts/agents/engine/analyst/chain ürün kaynakları başlangıçb6d6b61 ile aynı. Engine167/agents157/chain48 önceki kanıttır.
 - Public kapısı: R-005 PUBLIC GO yalnız taranan main9acec55/ref kümesi için; MINOR-1 kapandı. Yayınlanacak son HEAD değiştiği için farklar yeniden taranır; bu chat public ayarını değiştirmez.
-- Öncelik: **Verify GO — c1c2361** (bağımsız chain23a81aa; rapor merge sırada). Audit R-011 chain'de düzeltiliyor (kullanıcı hedefi ~17:30). Agents Gemini modeli gemini-3.7-flash'a geçiyor; LLM_API_KEY kullanıcı tarafından geri ekleniyor. Yeni model/restart sonucu henüz doğrulanmadı. **17:00 freeze sonrası sadece hata düzeltme + UI.**
+- Öncelik: **Verify GO — R-010 kapandı** (webc1c2361, bağımsız chain23a81aa). Audit R-011 chain'de düzeltiliyor (kullanıcı hedefi ~17:30); canlı audit komutu GO değil. Agents gemini-3.7-flash'a geçiyor; LLM_API_KEY kullanıcı tarafından geri ekleniyor. Yeni model/restart sonucu henüz doğrulanmadı. **17:00 freeze sonrası sadece hata düzeltme + UI.**
 - Önceki ayrıntılı kanıtlar coord/archive/STATE-r26-20261017.md; daha eski kayıt r17 arşivinde.
 
 ## Zaman kapıları
@@ -42,7 +42,7 @@
 | T-012 | 30-day replay: GRAIL vs eşit ağırlık | engine | INTEGRATED (kapanış-fill modeli) | T-014/87539f8 yeni snapshot: +2.03%, düşüş4.33%, 220 emir simülasyonu; docs/pitch eşlemesi açık |
 | T-013 | Plain English UI metinleri | docs | INTEGRATED (ilk kopya) | 1d411c0; 5 kart, 21 terim, ekran/boş/hata; web uygulaması ayrı |
 | T-014 | Hurst rejimi + setup BUY azaltma katmanı | engine; runtime agents | INTEGRATED; döngü yeniden başlatma açık | 87539f8 → main6729fbb push16:29; önceki167/157/build PASS; yeni engine ile restart/sonuç kanıtı bekleniyor |
-| T-015 | npm run audit: tüm GRAIL sicili salt okuma | chain (Codex-2) | INTEGRATED | 5f9a1d5; integrator48/typecheck; kullanıcı merge talimatıyla bağımsız inceleme sonraya alındı |
+| T-015 | npm run audit: tüm GRAIL sicili salt okuma | chain (Codex-2) | INTEGRATED; R-011 düzeltmesi açık | 5f9a1d5; önceki48/typecheck; reviewer R-011 varsayılan RPC gerçek koşusu NO-GO |
 | T-016 | Jüri FAQ + 3 dk canlı demo runbook | docs (Claude Max) | INTEGRATED | 5a84ed1; 12 soru, B planı, 10 slayt/not/render; son snapshot/prova notları kartta |
 | R-002 | T-002 incelemesi: APPROVE koşullu, BLOCKER yok | Claude Code · Max (Opus 5.5) | DONE | bad30c3; R-002-1/2 T-006 kabulünde |
 | R-003 | T-003 incelemesi: APPROVE koşullu, yeniden deploy yok | reviewer (Claude Code · Opus 5.5) | DONE | a6044d7; R-003-2 decision.md v0.6, R-003-3 T-006 kabulünde |
@@ -52,7 +52,7 @@
 | R-006 | T-010 bağımsız inceleme | docs/reviewer (Claude Opus) | DONE / APPROVE | e77eaed; gerçek rapor coord/reviews/T-010.md; 1 MINOR + 3 INFO |
 | R-007 | UI matematiği ve etiket/taban incelemesi | engine/reviewer; düzeltme web | DONE; düzeltmeler INTEGRATED | c2a731b; handoff + kullanıcı/planner doğrulaması; iki build PASS |
 | R-009 | T-014 bağımsız inceleme | reviewer Claude Max | DONE / APPROVE koşullu | 8ef0449 raporu engine6e8abad için GO; engine87539f8 ek farkı için kullanıcı/planner GO |
-| R-010 | Web Verify tekrar incelemesi | chain inceleme; düzeltme web | GO; rapor merge sırada | c1c2361 için chain23a81aa APPROVE; 3 MAJOR/2 MINOR kapandı |
+| R-010 | Web Verify tekrar incelemesi | chain inceleme; düzeltme web | DONE / GO; INTEGRATED | c1c2361 için chain23a81aa APPROVE; 3 MAJOR/2 MINOR kapandı |
 | R-011 | T-015 audit düzeltmeleri | chain | IN_PROGRESS (kullanıcı) | hedef ~17:30; Verify GO bu audit kapısını kapatmaz |
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
@@ -72,7 +72,7 @@
 - LLM sağlayıcısı DOĞRULANDI (kullanıcı/planner): Gemini testi HTTP200; agents sürekli döngü cycle3 5 BUY / 5 approved. Anahtar okunmadı ve integrator sağlayıcıyı çağırmadı; cycle3 mod/fill durumu ayrıca bildirilmedi. Cycle2 skipped/no_provider tarihsel bilgisi değişmez.
 
 ## Bekleyenler / sınırlar
-- R-010 Verify GO c1c2361 için; rapor23a81aa sıradaki ayrı merge/push. Audit R-011 bağımsız açık: chain düzeltmesi hedef ~17:30, yeni teslim/inceleme beklenir.
+- R-010 kapandı, Verify GO c1c2361 için. Audit R-011 ayrı NO-GO: varsayılan RPC snapshot eth_call hatası; chain düzeltmesi hedef~17:30. Eski audit-latest yalnız16:06/16 döngü snapshot'ıdır, güncel sicil diye sunulmaz. Reviewer36b886b raporu okundu, bu istekle merge edilmedi.
 - Docs8103126 Türkçe11 slayt/FAQ/runbook/form/README taslağı sıradaki teslim. Agents gemini-3.7-flash geçişi + kullanıcının LLM_API_KEY geri eklemesi sürüyor; yeni modelle T-014 state/restart kanıtı bekleniyor. Integrator runner'a müdahale etmez.
 - T-014@87539f8 R-009-1/2/3/4 düzeltmeleri alındı ve testler yeşil. R-009-5: 48 barlık Hurst etiketi kesin tespit gibi sunulmaz. R-009-6: yeni replay +2.03%/düşüş4.33%/220 simüle emir docs-pitch rakamlarıyla eşlenmeli; bu tur docs/web dosyasına yazılmadı.
 - Public öncesi son SHA fark taraması; R-006 RPC429 + 3 INFO ve dört Snowtrace #code görsel kontrolü açık. Repo görünürlüğü aynı.

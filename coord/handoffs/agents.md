@@ -1,7 +1,7 @@
 # Handoff — agents (sadece bu rol yazar)
 
 - Güncelleme zamanı:
-- Aktif görev / durum:
+- Aktif görev / durum: T-002 / TODO
 - Oturum: araç + hesap etiketi (ör. "Codex / GPT Plus 1"), durdu / sürüyor
 - Worktree / branch / son commit:
 - contracts okunan sürüm:
@@ -13,4 +13,4 @@
 - Dış eylemler (emir id, tx hash) ve durumu; belirsiz olanlar işaretli:
 - Açık sorun / denenenler:
 - TEKRARLANMAMASI gereken işlem:
-- SIRADAKİ İLK ADIM:
+- SIRADAKİ İLK ADIM: git merge main; coord/tasks/T-002.md oku; .env'de OKX_DEMO=1 olduğunu doğrula; ATK ile ticker çek.

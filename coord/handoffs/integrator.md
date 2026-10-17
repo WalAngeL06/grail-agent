@@ -1,7 +1,7 @@
 # Handoff — integrator (sadece bu rol yazar)
 
 - Güncelleme zamanı:
-- Aktif görev / durum:
+- Aktif görev / durum: İlk merge'leri bekliyor
 - Oturum: araç + hesap etiketi (ör. "Codex / GPT Plus 1"), durdu / sürüyor
 - Worktree / branch / son commit:
 - contracts okunan sürüm:
@@ -13,4 +13,4 @@
 - Dış eylemler (emir id, tx hash) ve durumu; belirsiz olanlar işaretli:
 - Açık sorun / denenenler:
 - TEKRARLANMAMASI gereken işlem:
-- SIRADAKİ İLK ADIM:
+- SIRADAKİ İLK ADIM: Gelen RAPOR'lara göre: sınır kontrolü → kartın kontrol komutu → merge → STATE.md güncelle.

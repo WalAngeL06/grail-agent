@@ -3,6 +3,17 @@
 Bu dosyayı Codex, Claude Code (CLAUDE.md üzerinden) ve Antigravity okur. Kısa tutulur; ayrıntı `coord/` ve `contracts/` altında.
 Hackathon: OKX ATK × Avalanche, 17 Ekim 2026, üretim 10:00–19:00, teslim 19:00, final 20:00.
 
+## YENİ CHAT AÇILDIĞINDA (her rol, her araç) — önce bunu yap
+Chat'ler kısa ömürlüdür: **1 görev = 1 chat**. Bağlam şişince veya görev bitince chat kapatılır, yenisi açılır.
+Kullanıcı yeni chat'e sadece şunu yazar: **"Rol: <rol>. Devam et."** Sen de sırayla:
+1. `git rev-parse --abbrev-ref HEAD` → doğru worktree/branch'te misin? Değilsen dur ve söyle.
+2. `coord/handoffs/<rol>.md` oku → **SIRADAKİ İLK ADIM** satırı senin işin.
+3. `coord/STATE.md` içinde kendi satırını ve ilgili `coord/tasks/T-xxx.md` kartını oku. Başka dosyayı gerekmedikçe okuma.
+4. `git status` + `git log --oneline -3` ile handoff'taki iddiayı gerçek durumla karşılaştır; çelişki varsa gerçeği esas al ve yaz.
+5. İlk cevabında tek satır: "Rol X, görev T-xxx, branch@commit, contracts vY, ilk adımım: ...". Sonra çalış.
+Chat'i bitirmeden (veya her anlamlı adımdan sonra) handoff'u **üzerine yazarak** güncelle: kısa tut, geçmiş birikmesin.
+Handoff, bir sonraki chat'in hiçbir şey hatırlamadan devam edebileceği kadar somut olmalı.
+
 ## Ürün (tek cümle)
 Korelasyonun farkında, otonom bir trading agent'ı: OKX ATK'dan veri çeker, quant engine ile karar verir,
 her kararı emirden ÖNCE Avalanche'a commit eder, ATK ile emri verir, sonra reveal eder → değiştirilemez agent sicili.
@@ -24,6 +35,14 @@ her kararı emirden ÖNCE Avalanche'a commit eder, ATK ile emri verir, sonra rev
 | chain | GPT Plus 2 | `Agentic Hack-wt/chain` | `role/chain` | `chain/`, `contracts/chain.json`, `coord/handoffs/chain.md` |
 | web | Antigravity | `Agentic Hack-wt/web` | `role/web` | `web/`, `coord/handoffs/web.md` |
 | docs | Claude Pro | `Agentic Hack-wt/docs` | `role/docs` | `docs/`, `coord/handoffs/docs.md` |
+| reviewer | GPT Plus 2 (T-003 bitince) | `Agentic Hack-wt/review` | `role/review` | sadece `coord/reviews/`, `coord/handoffs/reviewer.md` — ürün koduna YAZMAZ |
+
+- **Reviewer:** merge'den önce READY_FOR_REVIEW dalı inceler (`git diff main...role/<x>`), kartın kontrol komutunu kendisi çalıştırır,
+  bulguyu `coord/reviews/<görev>.md`'ye yazar: dosya:satır, tetikleme koşulu, beklenen/gözlenen, önem. Kanıtsız "yeniden yaz" önerisi yok.
+  Implementer'dan farklı model incelesin: Claude'un işini GPT, GPT'nin işini Claude (Pro) inceler.
+- **Debug:** hatayı alanın sahibi düzeltir (bağlam onda). Sahibin limiti bittiyse görev handoff ile başka araca devredilir;
+  devralan o alanın geçici sahibi olur, iki kişi aynı anda yazmaz. Alanlar arası (entegrasyon) hata → integrator teşhis eder,
+  sahibine görev kartı açar.
 
 - Başka bir alanda değişiklik gerekiyorsa YAPMA; RAPOR'daki "istek" satırına yaz. Kullanıcı integrator'a taşır.
 - `contracts/` değişikliği sadece integrator yapar ve `contracts/VERSION` değerini artırır.
@@ -66,8 +85,9 @@ sözleşme sürümü uyumlu. Merge sonrası `main` çalışır ve demo edilebili
 Durumlar: TODO → IN_PROGRESS → READY_FOR_REVIEW → INTEGRATED (ya da BLOCKED).
 
 ## Hesap / limit değişimi
-Limit dolmadan önce handoff'u güncel tut. Yeni oturum: aynı worktree'yi kullan, handoff + `git status` + `git log -3`
-ile gerçek durumu doğrula, sonra devam et. Eski oturum yazmayı bırakmadan yenisi aynı rolde yazmaz.
+Hesap veya chat değişimi aynı şeydir: yukarıdaki "YENİ CHAT AÇILDIĞINDA" adımları. Aynı worktree kullanılır.
+Eski chat/oturum yazmayı bırakmadan yenisi aynı rolde yazmaz. Limit dolmadan önce handoff'u güncel tut.
+Integrator `coord/STATE.md`'yi kısa tutar (~80 satır); eski kanıtları `coord/archive/`'a taşır.
 Codex: bu dosya değişirse açık Codex oturumları yeniden başlatılmadan değişikliği görmez.
 Integrator yedeği: Codex limiti dolarsa Claude Max integrator rolünü `coord/handoffs/integrator.md` üzerinden devralır.
 

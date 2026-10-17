@@ -27,6 +27,7 @@
 | T-004 | UI brifi (ekranlar, palet, alan eşlemesi) | docs (Claude Pro) | TODO | contracts 0.1 |
 | T-005 | UI inşası | web (Antigravity) | TODO (15:00) | T-004, state.example.json |
 | T-006 | Agent döngüsü: veri → engine → commit → ATK → reveal → state.json | agents (Codex) | TODO | T-001, T-002, T-003 |
+| R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (GPT Plus 2; GPT işlerini Claude Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
 ## Kanıtlar (tx hash, emir kimliği, test çıktıları)
 - (boş)

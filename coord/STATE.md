@@ -1,8 +1,8 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Revizyon r52 · 2026-10-17 18:07 Europe/Istanbul. Önceki ayrıntılar coord/archive/STATE-r49-20261017.md,r40/r26/r17 arşivlerinde.
+- Revizyon r53 · 2026-10-17 18:09 Europe/Istanbul. Önceki ayrıntılar coord/archive/STATE-r49-20261017.md,r40/r26/r17 arşivlerinde.
 - Sözleşme VERSION0.6.2; config/payload/state0.6,chain deploy0.5/ABI/hash aynı. ou opsiyonel/hash dışı; sleeve momentum|mean_reversion|none. İlk CANLI15:37cycle2BTC2USDTfilled korunur; yeni canlı yetki yok.
-- Bu istek: chainfaf65cb→main94344f9 ve docs67d1ee3→maincfc704b ayrıpush/clean/uzak eşitliği tamam; web785d260 bu üçüncü merge'de. Başlangıçmainf9beb7e temiz/origin ile aynı; yalnız exact hedefler alındı.
+- Bu istek TAMAM: chainfaf65cb→main94344f9,docs67d1ee3→maincfc704b,web785d260→main8cdf0fc sırayla ayrıpush/clean/uzak eşitliği doğrulandı. Üçhedef ancestor/exactağaç PASS;başlangıçf9beb7e'ye göre contracts/engine/agents/analyst/kökREADME aynı,diff temiz. Son koordinasyon commit'i bu kanıtı kaydeder.
 - R-011 GO: yeni audit başlangıçtaki sabit döngü kümesini doğrular; sonradan gelen döngüler açıkça hariç. Büyüme tek başına hata değil; seçili kayıt değişimi/sayaç gerilemesi/reorg/eksik-çift log/RPC hata olarak kalır. --max-cycleK seçilen ID<=K kapsamını açık etiketler.
 - Bu tur chain60test(5s)/typecheck PASS. Integrator publicRPC18:01:24snapshot59605190:Total89/Revealed89/Unopened0/MATCH89/Mismatch0/LIVE1,exit0,before=after89/89. Kullanıcı/planner ayrı80→81büyüme sırasında80/80MATCH/exit0 bildirdi; sayılar farklı snapshot'lardır. Runner'a dokunulmadı.
 - T-017 main88f00f3 AÇIK;17:51merge/push kapısı sağlandı. R-012-1bilinen davranış: MR çıkışı ranging+anlamlı coinde momentum pozisyonunu da satabilir; R-012-2MINOR tutma bandı düşüş SELL'ini bastırabilir. Restart/yeniOUruntime kanıtı agents sahibinde hâlâ açık.
@@ -51,7 +51,7 @@
 - Chain actualfark6dosya yalnız chain/+handoff; exact/sınır/diff temiz,diğer ürünlerf9beb7e ile aynı. npmrun typecheck+60test PASS. Fullaudit89/89MATCHexit0,head59605190/hash0xb6c115a2951d0ce2b4eb4e4d2dbca8577a00c5b7b1db7714b15cbeeba870d14e;raporchain/runtime/audit-latest.md ignored. Sonradan gelen kayıtlar “new cycles not included” diye açık kapsam dışı;sample16cycle rapor aynı.
 - Docs67d1ee3 actual10dosya yalnızdocs/+handoff,exact/sınır/diff--check PASS;diğer ürünler94344f9 ile aynı.5finalslayt5not ve11yedek11not ZIP/XML;final5+değişen yedek1/5/6/10/11 PowerPoint1280x720render/tek tek görselPASS,kalan6yedek aynı. Renderbinary hash'leri mergeddeck ile birebir;notesUTF8/süre0:00..3:00,runbook3:00+6kısaQ&A+TUTORIALTR/EN PASS.
 - Yeni docs80/80 sayacı kullanıcı/planner snapshot'ı; integrator89/89 farklıtarihli snapshot. Docs engine/out/grinold-30d.md referansı main'de YOK(aa77641 kullanıcı merge talimatı yok); bu rapor/IC ölçümü integrator tarafından doğrulanmadı/otomatik alınmaz.
-- Önceki engine210/agents157/web22 ve iki build kanıtı r49arşivinde; ürün engine/agents değişmediği için bu tur tekrar koşulmadı. Son web785d260 test/build kontrolleri üçüncü merge'de.
+- Önceki engine210/agents157 kanıtı r49arşivinde; ürün engine/agents değişmediği için bu tur tekrar koşulmadı. Web785d260 son birleşik ağaçta test/build kontrolleri geçti;tarayıcı provası yapılmadı.
 - Web785d260 actual3dosya yalnızweb;eski webhandoff aynı. Exact/sınır/diff PASS;diğer ürünlercfc704b ile aynı. npmtest22/22,normal/public build56modül724/717ms PASS. Gerçek signals normalizer'ında6/6ad-hoc kontrol(OU/legacy/null/enum/NaN/Infinity)PASS;kalıcı ürün/test dosyası eklenmedi. OUçipi momentum/mean_reversion/none ve z/yarıömür;tarayıcı/görsel/yeni runtime denemesi yok.
 
 ## Bekleyenler / sınırlar

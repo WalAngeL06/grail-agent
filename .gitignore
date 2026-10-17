@@ -22,3 +22,7 @@ chain/typechain-types/
 # runtime output
 runtime/
 *.log
+
+# Claude app worktrees (bizim worktree düzenimiz Agentic Hack-wt altında)
+.claude/worktrees/
+**/.claude/worktrees/

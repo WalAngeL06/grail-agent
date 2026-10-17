@@ -1,16 +1,16 @@
 # Handoff — reviewer (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 16:20 Europe/Istanbul
-- Aktif görev / durum: R-009 (T-014 engine giriş katmanı) bitti → APPROVE (koşullu), **17:00 öncesi merge GO**. Önceki: R-002, R-003, R-004, R-004b (canlı GO), R-005 (PUBLIC GO).
+- Güncelleme zamanı: 2026-10-17 17:45 Europe/Istanbul
+- Aktif görev / durum: R-012 (T-017 O-U kolu) bitti → APPROVE (koşullu), **18:10 merge + AÇIK çalıştırma GO**. Önceki: R-002, R-003, R-004, R-004b (canlı GO), R-005 (PUBLIC GO), R-009 (T-014 GO), R-011 (T-015 REQUEST_CHANGES, jüri NO-GO).
 - Oturum: Claude Code · Opus 5.5 (planner'ın açtığı yan oturum), durdu
-- Worktree / branch / son commit: `Agentic Hack-wt/review` / `role/review` / "reviewer: R-009 T-014" (git log -1)
-- contracts okunan sürüm: 0.6.1 (main d449da4)
-- Tamamlanan somut davranış: `coord/reviews/T-014.md` — coin bazında kapılar sadece azaltıyor, look-ahead yok, maliyet ihmal edilebilir, payload/hash yapısı aynı, agents bozulmuyor. Bulgular: R-009-1 MAJOR (kapılı coinin boşalttığı nakitle başka coin HOLD→BUY; toplam alım artabilir, limitler içinde), R-009-2/3/4 MINOR (H [0,1] dışı + 0.55 eşiği + yuvarlama; signals geçersiz coini atlıyor; README tablo yok), R-009-5/6 bilgi (48 bar Hurst gürültülü; replay rakamları değişti).
+- Worktree / branch / son commit: `Agentic Hack-wt/review` / `role/review` / "reviewer: R-012 T-017" (git log -1)
+- contracts okunan sürüm: 0.6.2 (main fd0d200)
+- Tamamlanan somut davranış: `coord/reviews/T-017.md` — para güvenliği/limitler/kill switch/look-ahead/sayısal sağlamlık/v0.6.2/payload-hash sağlam; merge-tree temiz (sadece engine + engine handoff). R-012-1 MAJOR (ranging+anlamlı coinde MR çıkışı momentum pozisyonunu da satıyor; 2 satırlık opsiyonel düzeltme yazıldı), R-012-2 MINOR (tutma bandı düşüş satışını bastırır), R-012-3 bilgi (replay +1.6%, docs/UI güncellenmeli).
 - Commit edilmemiş / izlenmeyen dosyalar: yok
-- Çalıştırılan kontroller: scratchpad'de main + role/engine:engine birleşik ağaç → engine 139 passed, agents 157 passed; deney betikleri (maliyet, H dağılımı, nakit kısıtlı çok coin, geçersiz coin signals). Kopya/.venv silindi.
-- Çalıştırılmayan kontroller ve nedeni: web build (signals'ı okumuyor, grep ile doğrulandı); canlı/Fuji yok.
+- Çalıştırılan kontroller: scratchpad main + role/engine:engine → engine 210 passed, agents 157 passed; T-014 vs T-017 400 senaryo fark fuzz'ı → 0 ihlal, ek alım ≤ %9.3 deploy tabanı, değişen kararların hepsi mean_reversion coinlerinde, ranging dışı MR çıkışı 0. Scratchpad temizlendi.
+- Çalıştırılmayan kontroller ve nedeni: web build/test (integrator'ın merge kontrolü); canlı/Fuji yok.
 - Devam eden süreçler / portlar: yok
 - Dış eylemler (emir id, tx hash): yok
-- Açık sorun / denenenler: engine R-009-1/2 düzeltmesini 16:45'e kadar getirirse sadece o farkı incele (çok coinli nakit testi + H clamp/rounding testi). Getirmezse bilinen sapma olarak merge.
-- TEKRARLANMAMASI gereken işlem: `python -m grail_agents smoke/run`, okx komutları, Fuji tx; engine/agents worktree'lerinde test koşmak (scratchpad'e `git archive` ile aç, kısa `--basetemp`).
+- Açık sorun / denenenler: engine R-012-1 düzeltmesini getirirse sadece o farkı incele (MR boyu kadar çıkış + büyük momentum pozisyonu korunuyor testi).
+- TEKRARLANMAMASI gereken işlem: `python -m grail_agents smoke/run`, okx komutları, Fuji tx; diğer worktree'lerde test koşmak (scratchpad'e `git archive`, kısa `--basetemp`); junction'ı `rm -rf` ile silmek.
 - SIRADAKİ İLK ADIM: READY_FOR_REVIEW olan dalı STATE.md'den bul; `git fetch && git merge origin/main`; `git diff origin/main...origin/role/<x>`; `coord/reviews/<görev>.md` yaz.

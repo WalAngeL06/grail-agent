@@ -91,6 +91,113 @@ describe("Full read-only ledger audit", function () {
     expect(audit.summary).to.deep.equal({ total: 0, revealed: 0, unopened: 0, matches: 0, mismatches: 0, liveOrders: 0 });
   });
 
+  it("works without historical eth_call and freshly reads both counters before and after verification", async function () {
+    await cycle(7n, true, "");
+    const selectors: string[] = [];
+    const latestOnly = override("call", async tx => {
+      if (tx.blockTag !== "latest") throw new Error("historical eth_call unavailable");
+      selectors.push(tx.data.slice(0, 10));
+      return provider.call(tx);
+    });
+    const audit = await auditLedger(latestOnly, deployment, noWait);
+    expect(audit.summary.matches).to.equal(1);
+    for (const name of ["commitCount", "revealCount"]) {
+      expect(selectors.filter(selector => selector === ledger.interface.getFunction(name)!.selector)).to.have.length(3);
+    }
+    expect(selectors).to.include(ledger.interface.getFunction("decisions")!.selector);
+  });
+
+  it("audits the starting cohort successfully when new cycles arrive during the scan", async function () {
+    await cycle(7n, true, "");
+    let appended = false;
+    const moving = override("getLogs", async filter => {
+      const logs = await provider.getLogs(filter);
+      if (!appended) { appended = true; await cycle(8n, true, ""); }
+      return logs;
+    });
+    const audit = await auditLedger(moving, deployment, noWait);
+    expect(audit.rows.map(row => row.cycleId)).to.deep.equal(["7"]);
+    expect(audit.summary).to.deep.equal({ total: 1, revealed: 1, unopened: 0, matches: 1, mismatches: 0, liveOrders: 0 });
+    expect(audit.counterCheck).to.deep.equal({ beforeCommits: "1", beforeReveals: "1", afterCommits: "2", afterReveals: "2" });
+    expect(renderAuditMarkdown(audit)).to.contain("Audited 1 cycles; ledger grew to 2 during the scan (new cycles not included)");
+  });
+
+  it("rejects a reveal arriving after the fixed log head even when the commit count is unchanged", async function () {
+    await cycle(7n, true, "", false);
+    let opened = false;
+    const moving = override("getLogs", async filter => {
+      const logs = await provider.getLogs(filter);
+      if (!opened) {
+        opened = true;
+        const payload = ethers.toUtf8Bytes('{"agent":"GRAIL-01","cycle_id":7,"decisions":[{"inst_id":"BTC-USDT","action":"BUY"},{"inst_id":"ETH-USDT","action":"SELL"}],"dry_run":true}');
+        await (await ledger.revealDecision(1, 7, payload, salt, "")).wait();
+      }
+      return logs;
+    });
+    const audit = await auditLedger(moving, deployment, noWait);
+    expect(audit.summary.mismatches).to.equal(1);
+    expect(audit.rows[0].error).to.contain("Reveal event missing");
+  });
+
+  it("reselects the starting head if a cycle arrives while reading the initial counters", async function () {
+    await cycle(7n, true, "");
+    let appended = false;
+    const moving = override("getBlockNumber", async () => {
+      if (!appended) { appended = true; await cycle(8n, true, ""); }
+      return provider.getBlockNumber();
+    });
+    const audit = await auditLedger(moving, deployment, noWait);
+    expect(audit.summary.matches).to.equal(2);
+    expect(audit.counterCheck.beforeCommits).to.equal("2");
+  });
+
+  it("limits verification and summary to max-cycle without reading excluded decisions", async function () {
+    await cycle(1n, true, "");
+    await cycle(2n, false, '{"BTC-USDT":"123"}');
+    await cycle(3n, true, "", false);
+    await cycle(9007199254740993n, true, "");
+    const calls: bigint[] = [];
+    const bounded = override("call", async tx => {
+      const call = ledger.interface.parseTransaction({ data: tx.data });
+      if (call?.name === "decisions") calls.push(call.args[1]);
+      return provider.call(tx);
+    });
+    const audit = await auditLedger(bounded, deployment, { ...noWait, maxCycle: 2n });
+    expect(audit.rows.map(row => row.cycleId)).to.deep.equal(["1", "2"]);
+    expect(audit.summary).to.deep.equal({ total: 2, revealed: 2, unopened: 0, matches: 2, mismatches: 0, liveOrders: 1 });
+    expect(calls).to.deep.equal([1n, 2n, 1n, 2n]);
+    expect(renderAuditMarkdown(audit)).to.contain("max-cycle 2").and.contain("starting ledger 4 cycles");
+    const empty = await auditLedger(provider, deployment, { ...noWait, maxCycle: 0n });
+    expect(empty.summary.total).to.equal(0);
+  });
+
+  it("rejects either counter moving backwards", async function () {
+    await cycle(7n, true, "");
+    for (const name of ["commitCount", "revealCount"]) {
+      let reads = 0;
+      const rolledBack = override("call", async tx => {
+        const call = ledger.interface.parseTransaction({ data: tx.data });
+        if (call?.name === name && ++reads === 3) return ledger.interface.encodeFunctionResult(name, [0]);
+        return provider.call(tx);
+      });
+      await rejects(() => auditLedger(rolledBack, deployment, noWait), "counter decreased");
+    }
+  });
+
+  it("rejects changes inside the selected cohort after the first verification", async function () {
+    await cycle(7n, true, "");
+    let reads = 0;
+    const changed = override("call", async tx => {
+      const result = await provider.call(tx);
+      const call = ledger.interface.parseTransaction({ data: tx.data });
+      if (call?.name !== "decisions" || ++reads === 1) return result;
+      const values = [...ledger.interface.decodeFunctionResult("decisions", result)];
+      values[0] = ethers.ZeroHash;
+      return ledger.interface.encodeFunctionResult("decisions", values);
+    });
+    await rejects(() => auditLedger(changed, deployment, noWait), "Selected cycle 7 changed");
+  });
+
   it("covers deployBlock through the fixed head without gaps or scanning other agents", async function () {
     await cycle(7n, true, "");
     await provider.send("hardhat_mine", ["0x69"]);
@@ -176,6 +283,8 @@ describe("Full read-only ledger audit", function () {
     expect(markdown).to.contain(audit.rows[0].commitHash!).and.contain(audit.rows[0].computedHash!);
     expect(markdown).to.contain('{"BTC-USDT":"123"}');
     expect(markdown).to.contain("not proof of exchange execution");
+    expect(markdown).to.contain("okxOrderId is revealed alongside the payload but is not part of the committed hash; it is not proof of exchange execution");
+    expect(markdown).to.contain("latest").and.contain("before").and.contain("after");
     expect(renderAuditTable(audit)).to.contain("LIVE").and.contain("123").and.contain(audit.rows[0].commitTx!);
   });
 });

@@ -1,15 +1,30 @@
-# GRAIL — jüri SSS (12 zor soru + 1 ek, kısa ve dürüst cevaplar)
+# GRAIL — jüri SSS
+
+**GRAIL — Proof before profit.** · Önce kanıt, sonra kâr.
+
+## 2 dakikalık soru-cevap (önce bunlar; her biri TEK cümle)
+
+1. **"Getiri al-tuttan düşük, bu neden iyi?"** Getiride üstünlük iddiamız yok: 30 günde +%1,6'ya karşı +%8,8 kazandık, ama en kötü düşüşümüz %4,5'e karşı %14,5 ve asıl ürünümüz herkesin doğrulayabildiği sicil.
+2. **"İsabetiniz ne? (Grinold / IC)"** Grinold'un temel yasasını ölçtük: 30 günde isabet (IC) sıfıra yakın ve istatistiksel olarak anlamsız; isabet iddiamız yok, ölçtüğümüz ve yönettiğimiz şey genişlik, yani 5 coinin aslında 1,4 bağımsız bahis olması.
+3. **"Ajan kötü kararlarını saklayabilir mi?"** Hayır: kontrat her döngüye tek mühür izin veriyor, açılmamış zarflar zincirde sayılıyor ve npm run audit 80 döngünün 80'inin açıldığını ve eşleştiğini gösteriyor.
+4. **"Gerçek para riskini nasıl sınırladınız?"** API anahtarında para çekme yetkisi yok; sadece spot, kaldıraç yok, emir başı 10 ve toplam 50 dolar limit kodda, gerçek moda geçişi sadece insan açıyor; ilk gerçek emir 2 USDT'ydi.
+5. **"Yapay zekâ ne yapıyor, ya yanılırsa?"** Sadece alımlara bakıyor ve onları sadece küçültebilir ya da iptal edebilir, asla büyütemez; sağlayıcı çökerse karar değişmeden geçer, nitekim 24–44. döngülerde kota yüzünden görüş vermedi.
+6. **"Hurst ve ortalamaya dönüş kolu ne kadar güvenilir?"** 48 saatlik Hurst bir tahmin, kesin tespit değil; trendde momentum, yatayda ortalamaya dönüş seçiyoruz ve bu kol 30 günde getiriyi +%2,0'dan +%1,6'ya düşürdü, bunu saklamıyoruz.
+
+---
+
+## Ayrıntılı SSS (12 zor soru + 1 ek)
 
 Sunucu için. Final sunum Türkçe. Önce **kalın cümleyi** söyle; alttakiler jüri üstelerse yedek.
 Buradaki her sayının kaynağı repo: `coord/STATE.md` r31, `contracts/chain.json`, `engine/out/replay.json` (T-014 sonrası, role/engine@87539f8),
-`chain/deployments/audit-latest.md` (`npm run audit`), Fuji `commitCount/revealCount(1)` ve agents canlı runtime state'i. Sayıyı yuvarlayıp büyütme, yenisini uydurma.
-Ekran/UI adları İngilizce kalır (site İngilizce): "Verify yourself" (kendin doğrula).
+`npm run audit` (son koşu: 80/80 MATCH, agent çalışırken), `engine/out/grinold-30d.md`, `engine/out/live-gates-today.md`, Fuji `commitCount/revealCount(1)` ve agents canlı runtime state'i. Sayıyı yuvarlayıp büyütme, yenisini uydurma.
+Site Türkçe (menü: Panel · Kararlar · Zincir Kaydı · Güvenlik limitleri · Rehber · Nasıl çalışır); düğme adları İngilizce: "Verify yourself" (kendin doğrula), "Try to cheat" (hile yapmayı dene).
 
 ---
 
 ### 1. Ajan hiç açmazsa (reveal etmezse) ne olur?
 **Herkes görür. Mühür Avalanche'ta kalır ve kontrat mühürleri ve açılışları ayrı ayrı sayar.**
-- Sicil her (ajan, döngü) için tek bir mühür tutar ve açılışları sayar; "Unrevealed" (açılmamış) hem panelde hem zincirde görünür. Şu an zincirde 25+ döngü var, hepsi açılmış (16:29'da 31 mühür / 31 açılış).
+- Sicil her (ajan, döngü) için tek bir mühür tutar ve açılışları sayar; "Unrevealed" (açılmamış) hem panelde hem zincirde görünür. `npm run audit` son koşusu: 80 döngü, 80 açılış, 0 açık, 80 MATCH, 0 uyuşmazlık.
 - Rastgele değer (salt) olmadan zarfı kimse açamaz. Ajan da başka bir kararla değiştiremez: kontrat parmak iziyle (hash) eşleşmeyen her içeriği reddeder (`HashMismatch`).
 - Çökme güvenliği: içerik ve salt mühürden *önce* diske yazılır; yeniden başlayınca ajan önce açık zarfı açar.
 - Dürüst sınır: açılmamış mühür için zincirde bir ceza (slashing) henüz yok. Bedeli itibar kaybı, ama bu kayıp herkese açık ve kalıcı.
@@ -28,8 +43,8 @@ Ekran/UI adları İngilizce kalır (site İngilizce): "Verify yourself" (kendin 
 
 ### 4. Getiri al-tuttan düşük. Bu neden iyi?
 **Getiride daha iyi değil ve öyle olduğunu iddia etmiyoruz. GRAIL riski kontrol etmek ve doğrulanabilir olmak için yapıldı.**
-- 30 günlük tekrar oynatma (gerçek OKX saatlik fiyatları, 17 Eylül → 17 Ekim, 50 USDT, emir gönderilmeden): GRAIL getirisi +%2,0, en kötü düşüşü %4,3. Aynı 5 coinin eşit ağırlıklı al-tut stratejisi: getiri +%8,8, en kötü düşüş %14,5.
-- Akıllı giriş kapılarıyla işlem sayısı 382'den 220'ye indi. Acil durdurma (kill switch) bu 30 günde hiç tetiklenmedi.
+- 30 günlük tekrar oynatma (gerçek OKX saatlik fiyatları, 17 Eylül → 17 Ekim, 50 USDT, emir gönderilmeden): GRAIL getirisi +%1,6, en kötü düşüşü %4,5 (ortalamaya dönüş kolu olmadan: +%2,0 / %4,3). Aynı 5 coinin eşit ağırlıklı al-tut stratejisi: getiri +%8,8, en kötü düşüş %14,5.
+- Akıllı giriş kapılarıyla işlem sayısı 382'den 220'ye indi; ortalamaya dönüş koluyla 295. İsabet (IC) sıfıra yakın ve anlamsız (`engine/out/grinold-30d.md`); isabet iddiamız yok. Acil durdurma (kill switch) bu 30 günde hiç tetiklenmedi.
 - Varsayımlar: emir bar kapanışında dolar, %0,1 ücret, kayma yok, yapay zekâ analisti yok. 30 gün bir stratejiyi yargılamak için çok kısa.
 - Ürünün özü *doğrulanabilir sicil*. Daha iyi ya da daha kötü her strateji aynı mühürle-işle-aç döngüsüne takılabilir.
 
@@ -38,7 +53,7 @@ Ekran/UI adları İngilizce kalır (site İngilizce): "Verify yourself" (kendin 
 - Modelin ne dediğinden bağımsız olarak bunu kod zorlar: ters yön beklemeye döner, daha büyük tutar geri kırpılır, minimum emrin altına düşen her şey beklemeye döner.
 - Anahtar yoksa, zaman aşımı olursa (en fazla 8 sn) ya da cevap bozuksa karar değişmeden geçer ve `skipped` olarak işaretlenir.
 - Yapay zekânın notu ve kararı *parmak izinin içine* girer; görüşü de mühürlenir.
-- Dürüst: ilk canlı emirde (cycle 2) analist çalışmadı (`skipped: no_provider`); anahtar sonradan eklendi. Sonraki deneme döngüsünde (cycle 3) analist 5 alımı onayladı (kullanıcı bildirimi, STATE r31). Canlı bir alımı veto ettiği bir döngüyü henüz göstermedik.
+- Dürüst: ilk canlı emirde (cycle 2) analist çalışmadı (`skipped: no_provider`); anahtar sonradan eklendi. Deneme döngülerinde 3–23 arası 105 alımın hepsini onayladı. 24–44 arası sağlayıcı kota yüzünden cevap vermedi; kararlar değişmeden geçti (fail-open). Bugüne kadar hiçbir alımı küçültmedi ya da veto etmedi.
 
 ### 6. Zincirdeki kimlik kartı (ERC-8004) ne katıyor?
 **Ajana herkese açık, taşınabilir bir kimlik. Sicil anonim bir cüzdana değil, kayıtlı bir kimliğe (1 numaralı ajan) ait.**
@@ -64,7 +79,7 @@ Ekran/UI adları İngilizce kalır (site İngilizce): "Verify yourself" (kendin 
 ### 9. Gerçekten otonom mu?
 **Evet. Her döngü kendi kendine işler: piyasayı oku → karar ver → yapay zekâ kontrolü → mühürle → emri ver → aç → güncelle. Kimse "onayla"ya basmaz.**
 - İnsan kuralları (ayarları) koyar ve canlı modun açık olup olmadığına karar verir. Ajan ikisini de değiştirmez.
-- Dürüst: canlı modda bilerek, güvenlik için tam bir döngü çalıştırdık. Sürekli döngü deneme modunda gerçek piyasa verisi ve gerçek Fuji mühürleriyle çalıştı; zincirde 25+ döngü var.
+- Dürüst: canlı modda bilerek, güvenlik için tam bir döngü çalıştırdık. Sürekli döngü deneme modunda gerçek piyasa verisi ve gerçek Fuji mühürleriyle çalıştı; zincirde 80 döngü var, hepsi açılmış ve eşleşiyor (npm run audit).
 
 ### 10. OKX ya da Avalanche döngünün ortasında çökerse?
 **Güvenle durur. Mühür başarısız olursa emir gönderilmez. Emir sonucu belirsizse emri kimliğiyle sorgular, asla iki kez göndermez.**
@@ -80,12 +95,15 @@ Ekran/UI adları İngilizce kalır (site İngilizce): "Verify yourself" (kendin 
 ### 12. Size güvenmeden kendim nasıl doğrularım?
 **Üç yol: paneldeki "Verify yourself" (kendin doğrula) düğmesi, terminal komutu ve Snowtrace.**
 - Panel: tarayıcın `keccak256(içerik ‖ salt)` değerini yeniden hesaplar ve Fuji'deki mühür işlemiyle karşılaştırır.
-- Terminal: `cd chain && npm run audit` bütün sicili okur; her açılmış döngü için içeriği ve salt'ı açılış işleminden çözer, parmak izini yeniden hesaplar, zincirdeki mühürle karşılaştırır → `MATCH`. Tek döngü için hızlı yol: `npm run verify:cycle:1`. Cüzdan ya da anahtar gerekmez.
+- Terminal: `cd chain && npm run audit` bütün sicili okur (~1–2 dk). Her açılmış döngü için içeriği ve salt'ı açılış işleminden çözer, parmak izini yeniden hesaplar, zincirdeki mühürle karşılaştırır. Son koşu: 48 döngü, 48 MATCH, 0 uyuşmazlık. Bir şey eksikse özet basmaz, hata verir. Tek döngü için birkaç saniyelik yol: `npm run verify:cycle:1`. Cüzdan ya da anahtar gerekmez.
+- Paneldeki kontrol bağımsız incelemeden (R-010) geçti.
 - Snowtrace: 4 kontratın kaynak kodu doğrulanmış; örnek GrailLedger https://testnet.snowtrace.io/address/0x1B5fcf6DeFf2F9375338A2C35932224522118851#code
 
 ### 13 (ek). Hurst piyasanın yatay olduğunu gerçekten tespit ediyor mu?
 **Hayır, tahmin ediyor. 48 saatlik veride bu tahmin gürültülü; biz onu kesin bir tespit değil, bir temkin sinyali olarak kullanıyoruz.**
-- Kapı sadece azaltır: yatay görünen bir piyasada momentum alımını bekletir; asla alım üretmez, asla satışa dokunmaz. Yanlış alarm en kötü ihtimalle bir alımı kaçırtır.
+- Bugün canlıda (deneme modu, aynı piyasa verisi) 5 coinden 4'ü "yatay" göründü ve bekledi, ETH yarım boyutla alındı; döngü başına alım 5 → 1, tutar −%86. Bu bir temkin seçimi, piyasanın yatay olduğunun kanıtı değil.
+- Yatay görünen ve Ornstein-Uhlenbeck uyumu anlamlı olan coinde ayrı bir ortalamaya dönüş kolu (T-017) devrede: fiyat ortalamanın belirgin altındaysa (z ≤ −1,5) küçük alım yapar, ortalamaya yaklaşınca çıkar; kol toplamı bütçenin %25'iyle sınırlı, diğer limitler aynı. 30 günde getiriyi +%2,0'dan +%1,6'ya düşürdü.
+- Momentum kapısı sadece azaltır: yatay görünen bir piyasada momentum alımını bekletir; kendisi asla alım üretmez, asla satışa dokunmaz. Yanlış alarm en kötü ihtimalle bir alımı kaçırtır.
 - İnceleme (R-009-5) aynı şeyi söylüyor: kısa pencerede rastgele veride bile "yatay" etiketi sık çıkabiliyor. Daha uzun geçmiş ya da daha geniş ölü bant, freeze sonrası iş.
 
 ---

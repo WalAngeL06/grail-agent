@@ -10,11 +10,13 @@ const OUT = path.join(__dirname, "GRAIL-pitch.pptx");
 // engine/out/replay.json (role/engine@87539f8, T-014 sonrası), Fuji commitCount/revealCount(1) = 31/31 @ 16:29.
 const V = {
   bets: "1,36",              // 30 günlük ortalama bağımsız bahis (replay)
-  cyclesOnChain: "25+",      // Fuji: 31 commit / 31 reveal @16:29, açık 0; npm run audit
+  cyclesOnChain: "80",       // npm run audit (planner, public RPC): Total 48 | Revealed 48 | MATCH 48 | Mismatch 0 | LIVE 1
+  t017: true,               // T-017 (yatayda OU ortalamaya dönüş) main'e girerse true yap ve yeniden üret
+  gates: { buysBefore: "5", buysAfter: "1", amountDrop: "−%86", ranging: "4", onChain: "48/48" }, // role/engine@4a83bd8 out/live-gates-today.md
   liveOrder: { when: "17 Ekim 15:37", what: "BTC 2 USDT alım", okx: "4017748393474314240", commit: "0x16f2…9569", reveal: "0xae65…41f7" },
   replay: {
-    ddGrail: "%4,3", ddHold: "%14,5", ddOld: "%7,5", retGrail: "+%2,0", retHold: "+%8,8",
-    tradesOld: "382", tradesNew: "220",
+    ddGrail: "%4,5", ddHold: "%14,5", ddOld: "%7,5", retGrail: "+%1,6", retHold: "+%8,8",
+    tradesOld: "382", tradesNew: "295",
   },
   cycleSeconds: "90",
   maxOrder: "$10",
@@ -73,7 +75,10 @@ function badge(s, x, y, label, color, d) {
   const s = base(null, null);
   s.addText("OKX AGENT TRADE KIT  ×  AVALANCHE", { x: 0.5, y: 0.55, w: 5, h: 0.3, fontFace: BODY, fontSize: 11, bold: true, color: C.gold, charSpacing: 3, margin: 0 });
   s.addText("GRAIL", { x: 0.5, y: 0.95, w: 5, h: 1.0, fontFace: HEAD, fontSize: 60, bold: true, color: C.text, margin: 0 });
-  s.addText("Sicili herkesçe doğrulanabilen otonom alım-satım ajanı.", { x: 0.5, y: 2.0, w: 4.6, h: 0.9, fontFace: BODY, fontSize: 22, color: C.muted, margin: 0, valign: "top" });
+  s.addText([
+    { text: "Proof before profit.", options: { fontFace: HEAD, fontSize: 26, bold: true, color: C.gold, breakLine: true } },
+    { text: "Önce kanıt, sonra kâr.", options: { fontSize: 18, color: C.muted } },
+  ], { x: 0.5, y: 2.0, w: 4.8, h: 0.95, fontFace: BODY, margin: 0, valign: "top" });
   s.addText([
     { text: "5 coin tutuyorsun. ", options: { color: C.text } },
     { text: "Birlikte hareket ettikleri için son 30 günde ortalama " + V.bets + " bağımsız bahis (n_eff) gibi davrandılar.", options: { color: C.muted } },
@@ -202,46 +207,69 @@ function badge(s, x, y, label, color, d) {
   );
 }
 
-// ---------- 5 · Akıllı giriş ----------
+// ---------- 5 · Akıllı giriş: rejime göre strateji ----------
+// V.t017 = true yalnız T-017 (yatayda Ornstein-Uhlenbeck ortalamaya dönüş kolu) main'e girerse; aksi halde "yatayda bekler".
 {
-  const s = base("AKILLI GİRİŞ", "Alımdan önce iki kapı");
-  const gates = [
-    ["1", "Piyasa yatay mı? (Hurst)", "Son 48 saatlik fiyattan bir tahmin: fiyat bir yöne mi gidiyor, yoksa bir aşağı bir yukarı mı? Kısa geçmişte gürültülüdür; kesin tespit değil, temkin sinyalidir."],
-    ["2", "Kırılım geri test edildi mi?", "Fiyat eski tepeyi aştıysa, alımdan önce o seviyeye geri dönüp tutunmasını bekler."],
-  ];
-  gates.forEach((g, i) => {
-    const y = 1.45 + i * 1.5;
-    card(s, 0.5, y, 4.35, 1.35);
-    badge(s, 0.7, y + 0.18, g[0]);
-    s.addText(g[1], { x: 1.3, y: y + 0.18, w: 3.4, h: 0.42, fontFace: BODY, fontSize: 15, bold: true, color: C.text, valign: "middle", margin: 0 });
-    s.addText(g[2], { x: 0.7, y: y + 0.68, w: 4.0, h: 0.62, fontFace: BODY, fontSize: 11, color: C.muted, margin: 0, valign: "top" });
-  });
-  card(s, 5.1, 1.45, 4.35, 2.85, C.surface2);
-  s.addText("Durum → alım büyüklüğü", { x: 5.35, y: 1.6, w: 3.9, h: 0.35, fontFace: BODY, fontSize: 13, bold: true, color: C.gold, margin: 0 });
+  const s = base("AKILLI GİRİŞ", "Rejime göre strateji seçimi");
+  const rangingAction = V.t017 ? "ortalamaya dönüş (Ornstein-Uhlenbeck)" : "bekler, alım yapmaz";
+  // Sol: kapı 1 (rejim tahmini)
+  card(s, 0.5, 1.45, 4.35, 1.75);
+  badge(s, 0.7, 1.6, "1");
+  s.addText("Piyasa trend mi, yatay mı? (Hurst)", { x: 1.3, y: 1.6, w: 3.45, h: 0.42, fontFace: BODY, fontSize: 14, bold: true, color: C.text, valign: "middle", margin: 0 });
+  s.addText([
+    { text: "Trend → ", options: { bold: true, color: C.gold } },
+    { text: "momentum alımı", options: { color: C.text, breakLine: true } },
+    { text: "Yatay → ", options: { bold: true, color: C.gold } },
+    { text: rangingAction, options: { color: C.text } },
+  ], { x: 0.7, y: 2.1, w: 4.0, h: 0.6, fontFace: BODY, fontSize: 13, margin: 0, valign: "top" });
+  s.addText("48 barlık Hurst bir tahmindir; rastgele veride de ~%41 \"yatay\" çıkar.", { x: 0.7, y: 2.75, w: 4.0, h: 0.4, fontFace: BODY, fontSize: 10, italic: true, color: C.muted, margin: 0, valign: "top" });
+  // Sol: kapı 2 (kırılım geri testi)
+  card(s, 0.5, 3.35, 4.35, 1.0);
+  badge(s, 0.7, 3.5, "2");
+  s.addText("Kırılım geri test edildi mi?", { x: 1.3, y: 3.5, w: 3.45, h: 0.42, fontFace: BODY, fontSize: 14, bold: true, color: C.text, valign: "middle", margin: 0 });
+  s.addText("Eski tepe aşıldıysa, alımdan önce geri dönüp tutunmasını bekler.", { x: 0.7, y: 3.97, w: 4.0, h: 0.35, fontFace: BODY, fontSize: 11, color: C.muted, margin: 0, valign: "top" });
+  // Sağ: tablo
+  card(s, 5.1, 1.45, 4.35, 1.75, C.surface2);
+  s.addText("Durum → alım büyüklüğü", { x: 5.3, y: 1.52, w: 3.9, h: 0.3, fontFace: BODY, fontSize: 12, bold: true, color: C.gold, margin: 0 });
   const rows = [
-    ["Piyasa yatay görünüyor (Hurst < 0,45)", "0 · bekle", C.muted],
+    ["Yatay görünüyor (Hurst < 0,45)", V.t017 ? "ortalamaya dönüş" : "0 · bekle", V.t017 ? C.proof : C.muted],
     ["Kırılım var, geri test yok", "0 · bekle", C.muted],
     ["Henüz kırılım yok", "yarım", C.text],
     ["Kırılım + geri test", "tam", C.green],
   ];
   rows.forEach((r, i) => {
-    const y = 2.05 + i * 0.55;
-    s.addShape(pres.shapes.LINE, { x: 5.35, y: y - 0.04, w: 3.9, h: 0, line: { color: C.border, width: 0.75 } });
-    s.addText(r[0], { x: 5.35, y, w: 2.75, h: 0.46, fontFace: BODY, fontSize: 12, color: C.text, valign: "middle", margin: 0 });
-    s.addText(r[1], { x: 8.1, y, w: 1.15, h: 0.46, fontFace: BODY, fontSize: 13, bold: true, color: r[2], align: "right", valign: "middle", margin: 0 });
+    const y = 1.86 + i * 0.32;
+    s.addShape(pres.shapes.LINE, { x: 5.3, y: y - 0.02, w: 3.95, h: 0, line: { color: C.border, width: 0.75 } });
+    s.addText(r[0], { x: 5.3, y, w: 2.6, h: 0.3, fontFace: BODY, fontSize: 11, color: C.text, valign: "middle", margin: 0 });
+    s.addText(r[1], { x: 7.85, y, w: 1.4, h: 0.3, fontFace: BODY, fontSize: 11, bold: true, color: r[2], align: "right", valign: "middle", margin: 0 });
   });
+  // Sağ: bugünkü canlı kanıt
+  card(s, 5.1, 3.35, 4.35, 1.0, C.surface2);
+  s.addText("Bugün canlıda (deneme modu, aynı piyasa verisi)", { x: 5.3, y: 3.42, w: 4.0, h: 0.25, fontFace: BODY, fontSize: 11, bold: true, color: C.gold, margin: 0 });
+  s.addText("Döngü başına alım " + V.gates.buysBefore + " → " + V.gates.buysAfter + ", tutar " + V.gates.amountDrop + ". " +
+    V.gates.ranging + " coin yatay bekledi, ETH yarım boyut. Hata 0; " + V.gates.onChain + " döngü zincirde.",
+    { x: 5.3, y: 3.67, w: 4.0, h: 0.42, fontFace: BODY, fontSize: 10.5, color: C.text, margin: 0, valign: "top" });
+  s.addText("Not: 34–44. döngülerde yapay zekâ kota yüzünden görüş vermedi.",
+    { x: 5.3, y: 4.08, w: 4.0, h: 0.25, fontFace: BODY, fontSize: 9, italic: true, color: C.muted, margin: 0 });
+  // Alt şerit
   card(s, 0.5, 4.5, 8.95, 0.7, C.surface2);
-  s.addText([
+  s.addText(V.t017 ? [
+    { text: "Momentum kapıları sadece azaltır, asla alım üretmez. ", options: { bold: true, color: C.gold } },
+    { text: "Yatay piyasada ayrı bir ortalamaya dönüş kolu çalışır; limitler aynı. 30 günlük tekrar oynatma: işlem " + V.replay.tradesOld + " → " + V.replay.tradesNew + ".", options: { color: C.text } },
+  ] : [
     { text: "Kapılar sadece azaltır, asla alım üretmez. ", options: { bold: true, color: C.gold } },
     { text: "Satışlara dokunmaz. 30 günlük tekrar oynatmada işlem " + V.replay.tradesOld + " → " + V.replay.tradesNew +
       ", en kötü düşüş " + V.replay.ddOld + " → " + V.replay.ddGrail + ".", options: { color: C.text } },
   ], { x: 0.75, y: 4.5, w: 8.5, h: 0.7, fontFace: BODY, fontSize: 13, valign: "middle", margin: 0 });
   s.addNotes(
-    "Trend pozitif bir coin için bile hemen almıyoruz; iki kapıdan geçiyor. Birincisi: piyasa yatay mı? Bunu Hurst değeriyle TAHMİN ediyoruz. " +
-    "48 saatlik veride bu tahmin gürültülü; o yüzden 'tespit' demiyoruz, bir temkin sinyali diyoruz. Yatay görünüyorsa momentum alımını bekletiyoruz. " +
-    "İkincisi: fiyat eski tepeyi kırdıysa, geri dönüp o seviyeyi test etmesini bekliyoruz; kırılım yoksa yarım boyut, kırılım ve geri test varsa tam boyut. " +
-    "En önemli kural: kapılar sadece azaltır. Bekleyen bir coini alıma çeviremez, bir alımı büyütemez, satışa dokunmaz. " +
-    "Aynı 30 günlük veride işlem sayısı " + V.replay.tradesOld + "'den " + V.replay.tradesNew + "'ye, en kötü düşüş " + V.replay.ddOld + "'ten " + V.replay.ddGrail + "'e indi."
+    "Ajan piyasanın rejimine göre davranışını seçiyor. Trend varsa momentum alımı; piyasa yatay görünüyorsa " +
+    (V.t017 ? "ayrı bir ortalamaya dönüş (Ornstein-Uhlenbeck) koluna geçiyor. " : "alım yapmadan bekliyor. ") +
+    "Rejimi Hurst değeriyle TAHMİN ediyoruz; 48 saatlik veride bu tahmin gürültülü, rastgele veride bile yaklaşık %41 'yatay' çıkıyor. O yüzden 'tespit' demiyoruz. " +
+    "İkinci kapı: kırılım olduysa geri dönüp seviyeyi test etmesini bekliyoruz; kırılım yoksa yarım, kırılım ve geri test varsa tam boyut. " +
+    "Bugün canlıda, deneme modunda, aynı piyasa verisiyle: döngü başına alım " + V.gates.buysBefore + "'ten " + V.gates.buysAfter + "'e, tutar " + V.gates.amountDrop + ". " +
+    V.gates.ranging + " coin yatay göründüğü için bekledi, ETH kırılım olmadığı için yarım boyutla alındı. Motor hatası 0, " + V.gates.onChain + " döngünün hepsi zincirde. " +
+    "Dürüst not: 34 ile 44. döngüler arasında yapay zekâ sağlayıcısı kota nedeniyle cevap vermedi; kararlar değişmeden geçti (fail-open). " +
+    "30 günlük tekrar oynatmada işlem sayısı " + V.replay.tradesOld + "'den " + V.replay.tradesNew + "'ye, en kötü düşüş " + V.replay.ddOld + "'ten " + V.replay.ddGrail + "'e indi."
   );
 }
 
@@ -252,7 +280,7 @@ function badge(s, x, y, label, color, d) {
   s.addText(V.cycleSeconds + " sn", { x: 0.75, y: 1.65, w: 2.9, h: 0.95, fontFace: HEAD, fontSize: 48, bold: true, color: C.gold, margin: 0 });
   s.addText("insan tıklaması olmadan bir tam döngü", { x: 0.75, y: 2.6, w: 2.9, h: 0.35, fontFace: BODY, fontSize: 13, color: C.muted, margin: 0 });
   s.addText(V.cyclesOnChain, { x: 0.75, y: 3.15, w: 2.9, h: 0.6, fontFace: HEAD, fontSize: 28, bold: true, color: C.text, margin: 0 });
-  s.addText("döngü mühürlendi, hepsi açıldı", { x: 0.75, y: 3.75, w: 2.9, h: 0.35, fontFace: BODY, fontSize: 13, color: C.muted, margin: 0 });
+  s.addText("döngü mühürlendi ve eşleşti", { x: 0.75, y: 3.75, w: 2.9, h: 0.35, fontFace: BODY, fontSize: 13, color: C.muted, margin: 0 });
   s.addText("Kuralları bir kez sen koyarsın. Her işlem için \"onayla\" düğmesi yok.", { x: 0.75, y: 4.2, w: 2.9, h: 0.7, fontFace: BODY, fontSize: 12, italic: true, color: C.text, margin: 0, valign: "top" });
 
   const flow = [
@@ -401,7 +429,7 @@ function badge(s, x, y, label, color, d) {
   s.addText([
     { text: "Terminalden: ", options: { color: C.muted } },
     { text: "cd chain && npm run audit", options: { color: C.proof, fontFace: MONO } },
-    { text: "  →  her döngü MATCH", options: { color: C.green, bold: true } },
+    { text: "  →  " + V.cyclesOnChain + "/" + V.cyclesOnChain + " MATCH (~1–2 dk)", options: { color: C.green, bold: true } },
   ], { x: 0.5, y: 4.62, w: 9, h: 0.3, fontFace: BODY, fontSize: 12, margin: 0 });
   s.addText("Yedek video: " + V.backupVideo, { x: 0.5, y: 4.98, w: 9, h: 0.3, fontFace: BODY, fontSize: 12, color: C.dim, margin: 0 });
   s.addNotes(
@@ -434,6 +462,7 @@ function badge(s, x, y, label, color, d) {
     { text: "Sırada: ", options: { bold: true, color: C.gold } },
     { text: "her kararı zincirde inceleyen ikinci bir \"risk bekçisi\" ajanı · açılmış zarflardan oluşan itibar puanı · Avalanche ana ağı", options: { color: C.text } },
   ], { x: 0.5, y: 4.25, w: 9, h: 0.6, fontFace: BODY, fontSize: 13, margin: 0, valign: "top" });
+  s.addText("GRAIL — Proof before profit. · Önce kanıt, sonra kâr.", { x: 0.5, y: 4.62, w: 9, h: 0.3, fontFace: BODY, fontSize: 13, bold: true, color: C.gold, margin: 0 });
   s.addText(V.repo, { x: 0.5, y: 4.95, w: 9, h: 0.3, fontFace: MONO, fontSize: 11, color: C.proof, margin: 0 });
   s.addNotes(
     "Risk tarafı tek cümle: aynı 30 günde en kötü düşüş " + V.replay.ddGrail + ", eşit ağırlıklı al-tut " + V.replay.ddHold + "; acil durdurma hiç tetiklenmedi. " +

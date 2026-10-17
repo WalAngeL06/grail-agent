@@ -24,9 +24,18 @@ const numMap = (v: unknown): Record<string, number> => {
   return out;
 };
 
-export type Signal = { hurst?: number; regime?: "trending" | "unclear" | "ranging"; setup?: "none" | "breakout" | "retest" };
+/** T-017 (v0.6.2, optional): Ornstein-Uhlenbeck mean-reversion fit per coin. */
+export type OU = { half_life_h?: number; z?: number; significant: boolean; sleeve: "momentum" | "mean_reversion" | "none" };
+export type Signal = { hurst?: number; regime?: "trending" | "unclear" | "ranging"; setup?: "none" | "breakout" | "retest"; ou?: OU };
 const REGIMES = ["trending", "unclear", "ranging"] as const;
 const SETUPS = ["none", "breakout", "retest"] as const;
+const SLEEVES = ["momentum", "mean_reversion", "none"] as const;
+function ou(v: unknown): OU | undefined {
+  if (!isObj(v)) return undefined;
+  const sl = str(v.sleeve);
+  if (!(SLEEVES as readonly string[]).includes(sl ?? "")) return undefined;
+  return { half_life_h: num(v.half_life_h), z: num(v.z), significant: bool(v.significant) === true, sleeve: sl as OU["sleeve"] };
+}
 function signals(v: unknown): Record<string, Signal> {
   const out: Record<string, Signal> = {};
   for (const [k, x] of Object.entries(obj(v))) {
@@ -37,8 +46,9 @@ function signals(v: unknown): Record<string, Signal> {
       hurst: num(o.hurst),
       regime: (REGIMES as readonly string[]).includes(r ?? "") ? (r as Signal["regime"]) : undefined,
       setup: (SETUPS as readonly string[]).includes(st ?? "") ? (st as Signal["setup"]) : undefined,
+      ou: ou(o.ou),
     };
-    if (sig.hurst !== undefined || sig.regime || sig.setup) out[k] = sig;
+    if (sig.hurst !== undefined || sig.regime || sig.setup || sig.ou) out[k] = sig;
   }
   return out;
 }

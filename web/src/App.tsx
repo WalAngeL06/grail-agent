@@ -3,19 +3,22 @@ import { useGrailFeed, type Feed, type GrailState } from "./state";
 import { readChainJson, type ChainInfo } from "./chain";
 import { Boundary, Toaster } from "./components/Bits";
 import { ago, countdown } from "./format";
+import { P, T, setLang, useLang } from "./i18n";
 import Dashboard from "./screens/Dashboard";
 import Decisions from "./screens/Decisions";
 import Ledger from "./screens/Ledger";
 import Settings from "./screens/Settings";
 import HowItWorks from "./screens/HowItWorks";
+import Guide from "./screens/Guide";
 
-export type Route = "dashboard" | "decisions" | "ledger" | "settings" | "how";
-const ROUTES: { id: Route; label: string; short: string; icon: JSX.Element }[] = [
-  { id: "dashboard", label: "Dashboard", short: "Home", icon: <IconGrid /> },
-  { id: "decisions", label: "Decisions", short: "Decisions", icon: <IconList /> },
-  { id: "ledger", label: "On-chain Ledger", short: "Ledger", icon: <IconSeal /> },
-  { id: "settings", label: "Safety limits", short: "Limits", icon: <IconShield /> },
-  { id: "how", label: "How it works", short: "How", icon: <IconHelp /> },
+export type Route = "dashboard" | "decisions" | "ledger" | "settings" | "guide" | "how";
+const ROUTES: { id: Route; label: () => string; short: () => string; icon: JSX.Element }[] = [
+  { id: "dashboard", label: () => T("Dashboard", "Panel"), short: () => T("Home", "Panel"), icon: <IconGrid /> },
+  { id: "decisions", label: () => T("Decisions", "Kararlar"), short: () => T("Decisions", "Kararlar"), icon: <IconList /> },
+  { id: "ledger", label: () => T("On-chain Ledger", "Zincir Kaydı"), short: () => T("Ledger", "Kayıt"), icon: <IconSeal /> },
+  { id: "settings", label: () => T("Safety limits", "Güvenlik limitleri"), short: () => T("Limits", "Limitler"), icon: <IconShield /> },
+  { id: "guide", label: () => T("Tutorial", "Rehber"), short: () => T("Guide", "Rehber"), icon: <IconBook /> },
+  { id: "how", label: () => T("How it works", "Nasıl çalışır"), short: () => T("How", "Nasıl"), icon: <IconHelp /> },
 ];
 
 const readRoute = (): Route => {
@@ -27,6 +30,7 @@ export type ScreenProps = { s: GrailState; chain: ChainInfo; now: number; demo: 
 
 export default function App() {
   const feed = useGrailFeed();
+  const lang = useLang();
   const [route, setRoute] = useState<Route>(readRoute);
   const now = useNow(1000);
   const chain = useMemo(() => readChainJson(feed.chainJson), [feed.chainJson]);
@@ -62,20 +66,24 @@ export default function App() {
   const props = s ? { s, chain, now, demo: feed.source === "demo" } : null;
 
   return (
-    <div className="shell">
+    <div className="shell" key={lang}>
       <aside className="side">
         <a className="brand" href="#/dashboard" aria-label="GRAIL dashboard">
           <i className="diamond" aria-hidden="true" />
-          <b>GRAIL</b>
+          <span className="brand-name">
+            <b>GRAIL</b>
+            <small className="motto">Proof before profit.</small>
+            {lang === "tr" && <small className="motto tr">Önce kanıt, sonra kâr.</small>}
+          </span>
         </a>
         <nav className="nav" aria-label="Screens">
           {ROUTES.map((r) => (
             <a key={r.id} href={`#/${r.id}`} aria-current={route === r.id ? "page" : undefined}>
               {r.icon}
-              <span className="nav-label">{r.label}</span>
-              <span className="nav-short">{r.short}</span>
+              <span className="nav-label">{r.label()}</span>
+              <span className="nav-short">{r.short()}</span>
               {r.id === "ledger" && open !== undefined && open > 0 && (
-                <span className="badge" title={`${open} decision${open === 1 ? "" : "s"} still sealed (not opened yet)`}>
+                <span className="badge" title={T(`${open} decision${open === 1 ? "" : "s"} still sealed (not opened yet)`, `${open} karar hâlâ mühürlü (henüz açılmadı)`)}>
                   {open}
                 </span>
               )}
@@ -86,7 +94,7 @@ export default function App() {
           <div>
             <i aria-hidden="true" /> Avalanche Fuji · OKX TR
           </div>
-          <div>Read-only · no wallet, no orders</div>
+          <div>{T("Read-only · no wallet, no orders", "Salt okunur · cüzdan yok, emir yok")}</div>
         </div>
       </aside>
 
@@ -94,12 +102,14 @@ export default function App() {
         <TopBar feed={feed} now={now} />
         <main className="content">
           <Strips feed={feed} now={now} />
-          {route !== "how" && <Intro />}
+          {route !== "how" && route !== "guide" && <Intro />}
           {route === "how" ? (
             <HowItWorks s={s} />
+          ) : route === "guide" ? (
+            <Guide />
           ) : !props ? (
             <div className="stack" aria-busy="true" aria-label="Loading">
-              <p className="muted">Connecting to the agent… the first reading usually takes a second.</p>
+              <p className="muted">{T("Connecting to the agent… the first reading usually takes a second.", "Agent'a bağlanılıyor… ilk okuma genelde bir saniye sürer.")}</p>
               <div className="skeleton" style={{ height: 180 }} />
               <div className="cols four">
                 {[0, 1, 2, 3].map((i) => (
@@ -108,7 +118,7 @@ export default function App() {
               </div>
             </div>
           ) : (
-            <Boundary key={route} name={ROUTES.find((r) => r.id === route)!.label}>
+            <Boundary key={route} name={ROUTES.find((r) => r.id === route)!.label()}>
               {route === "dashboard" && <Dashboard {...props} />}
               {route === "decisions" && <Decisions {...props} />}
               {route === "ledger" && <Ledger {...props} />}
@@ -151,27 +161,30 @@ function Intro() {
     }
   };
   return (
-    <section className="intro" aria-label="Quick tour">
+    <section className="intro" aria-label={T("Quick tour", "Kısa tur")}>
       <ol>
         <li>
-          <b>1 · An AI trades for you</b>
-          <span>GRAIL picks coins on OKX and sizes them by how independent they really are.</span>
+          <b>{T("1 · An AI trades for you", "1 · Senin yerine bir AI işlem yapar")}</b>
+          <span>{T("GRAIL picks coins on OKX and sizes them by how independent they really are.", "GRAIL, OKX'te coin seçer ve her birine gerçekte ne kadar bağımsız olduğuna göre pay verir.")}</span>
         </li>
         <li>
-          <b>2 · Every decision is sealed first</b>
-          <span>Before any trade, the decision is locked on Avalanche. Nobody can change it later.</span>
+          <b>{T("2 · Every decision is sealed first", "2 · Her karar önce mühürlenir")}</b>
+          <span>{T("Before any trade, the decision is locked on Avalanche. Nobody can change it later.", "Hiçbir işlemden önce karar Avalanche'a kilitlenir. Sonradan kimse değiştiremez.")}</span>
         </li>
         <li>
-          <b>3 · You can check it yourself</b>
-          <span>Press "Verify yourself" on any decision: your browser re-checks the seal against the blockchain.</span>
+          <b>{T("3 · You can check it yourself", "3 · Kendin kontrol edebilirsin")}</b>
+          <span>{T('Press "Verify yourself" on any decision: your browser re-checks the seal against the blockchain.', "Herhangi bir kararda \"Verify yourself\" düğmesine bas: tarayıcın mührü blockchain'e karşı yeniden kontrol eder.")}</span>
         </li>
       </ol>
       <div className="intro-actions">
-        <a className="btn sm" href="#/how" onClick={close}>
-          How it works
+        <a className="btn sm" href="#/guide" onClick={close}>
+          {T("Tutorial", "Rehber")}
         </a>
-        <button className="btn sm" onClick={close} aria-label="Close the tour">
-          Got it ✕
+        <a className="btn sm" href="#/how" onClick={close}>
+          {T("How it works", "Nasıl çalışır")}
+        </a>
+        <button className="btn sm" onClick={close} aria-label={T("Close the tour", "Turu kapat")}>
+          {T("Got it ✕", "Anladım ✕")}
         </button>
       </div>
     </section>
@@ -184,8 +197,10 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
     return (
       <header className="topbar" role="status">
         <span className="agent">
-          <span className="dot" /> connecting…
+          <span className="dot" /> {T("connecting…", "bağlanıyor…")}
         </span>
+        <span className="grow" />
+        <LangSwitch />
       </header>
     );
   const running = s.agent.status === "running";
@@ -194,29 +209,32 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
   const errs = s.errors.length;
   return (
     <header className="topbar" role="status" aria-live="off">
-      <span className="agent" title={`agent status: ${s.agent.status ?? "unknown"}`}>
+      <span className="agent" title={`${T("agent status", "agent durumu")}: ${s.agent.status ?? "unknown"}`}>
         <span className={`dot ${running ? "on" : ""}`} />
         {s.agent.name ?? "agent"}
         <span className="muted tb-opt" style={{ fontWeight: 400, fontSize: 12 }}>
-          {running ? "running" : (s.agent.status ?? "status unknown")}
+          {running ? T("running", "çalışıyor") : (s.agent.status ?? T("status unknown", "durum bilinmiyor"))}
         </span>
       </span>
       <ModeChip state={s} />
       {(feed.source === "mock" || feed.source === "bundled") && (
-        <span className="chip mock" title="No live agent data found. Showing sample data.">
+        <span className="chip mock" title={T("No live agent data found. Showing sample data.", "Canlı agent verisi bulunamadı. Örnek veri gösteriliyor.")}>
           MOCK DATA
         </span>
       )}
       {feed.source === "snapshot" && (
         <span
           className="chip snap"
-          title="Agent data is a frozen snapshot of the real practice-mode run. The Ledger and every Verify read Avalanche live from your browser."
+          title={T(
+            "Agent data is a frozen snapshot of the real practice-mode run. The Ledger and every Verify read Avalanche live from your browser.",
+            "Agent verisi, gerçek deneme modu (dry run) çalışmasının dondurulmuş bir kopyasıdır. Zincir Kaydı ve her Verify, Avalanche'ı tarayıcından canlı okur.",
+          )}
         >
-          Snapshot of {s.generated_at_ms ? new Date(s.generated_at_ms).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"} · live chain checks
+          {T("Snapshot of", "Kopya:")} {s.generated_at_ms ? new Date(s.generated_at_ms).toLocaleString(T("en-GB", "tr-TR"), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"} · {T("live chain checks", "zincir kontrolü canlı")}
         </span>
       )}
       {feed.source === "demo" && (
-        <span className="chip mock" title="web/fixtures/demo-state.json — one real Fuji cycle plus made-up demo cycles">
+        <span className="chip mock" title={T("web/fixtures/demo-state.json — one real Fuji cycle plus made-up demo cycles", "web/fixtures/demo-state.json — bir gerçek Fuji döngüsü + uydurma demo döngüleri")}>
           DEMO DATA
         </span>
       )}
@@ -225,25 +243,26 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
         Check-in <b>#{s.agent.cycle_id ?? "—"}</b>
       </span>
       {feed.source !== "snapshot" && (
-        <span>{!running ? "paused" : next ? <>next in <b className="mono">{next}</b></> : "next check-in overdue"}</span>
+        <span>{!running ? T("paused", "duraklatıldı") : next ? <>{T("next in", "sonraki:")} <b className="mono">{next}</b></> : T("next check-in overdue", "sonraki check-in gecikti")}</span>
       )}
       <span className="sep" />
       {(c.commits !== undefined || c.reveals !== undefined) && (
-        <a className="mini tb-opt" href="#/ledger" title="Decisions sealed on Avalanche / opened / still sealed">
-          <b>{c.commits ?? "—"}</b> sealed <b>{c.reveals ?? "—"}</b> opened{" "}
+        <a className="mini tb-opt" href="#/ledger" title={T("Decisions sealed on Avalanche / opened / still sealed", "Avalanche'ta mühürlenen / açılan / hâlâ mühürlü kararlar")}>
+          <b>{c.commits ?? "—"}</b> {T("sealed", "mühürlü")} <b>{c.reveals ?? "—"}</b> {T("opened", "açıldı")}{" "}
           <b className={(c.unrevealed ?? 0) > 0 ? "open" : ""}>{c.unrevealed ?? "—"}</b>
-          <span className={(c.unrevealed ?? 0) > 0 ? "open" : ""}>still sealed</span>
+          <span className={(c.unrevealed ?? 0) > 0 ? "open" : ""}>{T("still sealed", "hâlâ mühürlü")}</span>
         </a>
       )}
-      <a className={`chip ${errs > 0 ? "danger" : ""}`} href="#/settings/system" title="Errors the agent reported (it skips the check-in and keeps running)">
-        {errs} {errs === 1 ? "error" : "errors"}
+      <a className={`chip ${errs > 0 ? "danger" : ""}`} href="#/settings/system" title={T("Errors the agent reported (it skips the check-in and keeps running)", "Agent'ın bildirdiği hatalar (o check-in'i atlar, çalışmaya devam eder)")}>
+        {errs} {P(errs, "error", "errors", "hata")}
       </a>
       <span className="grow" />
       {feed.source !== "snapshot" && (
         <span className="tb-opt" title={s.generated_at_ms ? new Date(s.generated_at_ms).toISOString() : ""}>
-          updated {ago(s.generated_at_ms, now)}
+          {T("updated", "güncellendi:")} {ago(s.generated_at_ms, now)}
         </span>
       )}
+      <LangSwitch />
     </header>
   );
 }
@@ -251,17 +270,17 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
 function ModeChip({ state }: { state: GrailState }) {
   if (state.dry_run === false)
     return (
-      <span className="chip danger" title="Real money on OKX TR">
-        LIVE · real funds
+      <span className="chip danger" title={T("Real money on OKX TR", "OKX TR'de gerçek para")}>
+        LIVE · {T("real funds", "gerçek para")}
       </span>
     );
   if (state.dry_run === true)
     return (
-      <span className="chip warn" title="Practice mode (dry run): orders are simulated, but every decision is really sealed on Avalanche.">
-        PRACTICE MODE · orders simulated
+      <span className="chip warn" title={T("Practice mode (dry run): orders are simulated, but every decision is really sealed on Avalanche.", "Deneme modu (dry run): emirler simüle edilir ama her karar gerçekten Avalanche'ta mühürlenir.")}>
+        PRACTICE MODE · {T("orders simulated", "emirler simüle")}
       </span>
     );
-  return <span className="chip">mode unknown</span>;
+  return <span className="chip">{T("mode unknown", "mod bilinmiyor")}</span>;
 }
 
 function Strips({ feed, now }: { feed: Feed; now: number }) {
@@ -274,24 +293,39 @@ function Strips({ feed, now }: { feed: Feed; now: number }) {
     <>
       {feed.error && (
         <div className="strip-msg danger" role="alert">
-          Can't read the agent's data right now. Retrying — showing the last known state.
+          {T("Can't read the agent's data right now. Retrying — showing the last known state.", "Agent'ın verisi şu an okunamıyor. Yeniden deneniyor — bilinen son durum gösteriliyor.")}
           <span className="tech">{feed.error}</span>
         </div>
       )}
       {feed.missingPath && (
         <div className="strip-msg mock">
-          The agent hasn't written live data yet, so example data is shown. <span className="tech">missing: {feed.missingPath}</span>
+          {T("The agent hasn't written live data yet, so example data is shown.", "Agent henüz canlı veri yazmadı, bu yüzden örnek veri gösteriliyor.")} <span className="tech">missing: {feed.missingPath}</span>
         </div>
       )}
       {stale && (
         <div className="strip-msg warn" role="alert">
-          No update from the agent for {Math.max(1, Math.round(age! / 60000))}m — showing the last known state.
+          {T(`No update from the agent for ${Math.max(1, Math.round(age! / 60000))}m — showing the last known state.`, `Agent'tan ${Math.max(1, Math.round(age! / 60000))} dakikadır güncelleme yok — bilinen son durum gösteriliyor.`)}
         </div>
       )}
       {stopped && (
-        <div className="strip-msg warn">The agent is stopped. No new check-ins until it is restarted.</div>
+        <div className="strip-msg warn">{T("The agent is stopped. No new check-ins until it is restarted.", "Agent durdu. Yeniden başlatılana kadar yeni check-in yok.")}</div>
       )}
     </>
+  );
+}
+
+/** EN | TR switch; Turkish is the default (final presentation). Terms and method names stay English in both. */
+function LangSwitch() {
+  const lang = useLang();
+  return (
+    <span className="lang" role="group" aria-label="Language / Dil">
+      <button aria-pressed={lang === "en"} onClick={() => setLang("en")}>
+        EN
+      </button>
+      <button aria-pressed={lang === "tr"} onClick={() => setLang("tr")}>
+        TR
+      </button>
+    </span>
   );
 }
 
@@ -336,6 +370,14 @@ function IconShield() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
       <path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.3 7.5 9.5 4.4-1.2 7.5-4.9 7.5-9.5V6L12 3Z" />
       <path d="M12 8v5M12 16v.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconBook() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v15H5.5c-.8 0-1.5.7-1.5 1.5V5.5Z" />
+      <path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v15h5.5c.8 0 1.5.7 1.5 1.5V5.5Z" />
     </svg>
   );
 }

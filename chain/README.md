@@ -7,20 +7,45 @@ cd chain
 npm run audit
 ```
 
-This reads every agent #1 commit/reveal from the ledger deployment block through
-one fixed Fuji block, using the public
+This selects agent #1's starting ledger and reads its commit/reveal events from
+the deployment block through one fixed Fuji block, using the public
 [PublicNode Fuji RPC](https://avalanche.publicnode.com/?fuji). It prints terminal
-tables and saves [`deployments/audit-latest.md`](deployments/audit-latest.md).
+tables and saves `runtime/audit-latest.md` in a git-ignored directory.
+The tracked [`deployments/audit-latest.md`](deployments/audit-latest.md) is a
+**sample snapshot from 16:06 on 2026-10-17, containing 16 cycles**; running the
+audit never replaces that example.
 The standalone command does not load Hardhat configuration or `.env`, request a
 signer, send transactions, or call OKX. No key or RPC setup is required.
 
 The scan uses contiguous windows of at most 1,000 blocks, with a 150 ms pause
 between windows. Rate limits (including HTTP 429) have four retries with
 500/1,000/2,000/4,000 ms backoff. The deployment block comes from the verified
-deployment receipt. Event counts must equal `commitCount` and `revealCount` at
-the snapshot block; missing/duplicate events or RPC failures stop the audit.
-The snapshot block hash is checked again at the end. Newer cycles are included
-on the next run.
+deployment receipt. Logs have a fixed upper block, but `commitCount`,
+`revealCount` and `decisions` are read at **latest**, since public RPCs may not
+support historical `eth_call`. Fresh counter pairs bracket selection of the
+starting head, so commits arriving at that boundary are included consistently.
+Starting event counts must exactly match those counters. Verification covers
+only this starting cohort; later commits are excluded. All selected `decisions`
+records and both counters are read again without caching at the end. Append-only
+growth succeeds with `Audited N cycles; ledger grew to M during the scan (new
+cycles not included)`. A decreased counter or changed selected record fails as
+**INCOMPLETE**; a pending selected cycle becoming revealed also requires a
+rerun. Missing/duplicate events, hash mismatches and RPC failures remain errors.
+The scan head's block hash is also checked again at the end.
+
+For the fast demo, run `npm run audit -- --max-cycle 3`. Only cycle IDs at most
+3 are verified and counted in the summary; the report states the cap and the
+size of the starting ledger. This does not claim to audit the excluded cycles.
+The log scan still checks the complete starting event counts, but receipt,
+calldata, hash and storage verification runs only for the selected cycles.
+`--max-cycle K` accepts a decimal uint256 (including 0 for an empty selection),
+without JavaScript number rounding; `--max-cycle=K` also works.
+
+Choose another RPC with `npm run audit -- --rpc URL`. Precedence is `--rpc`,
+then `GRAIL_AUDIT_RPC_URL`, then `FUJI_RPC_URL`, then PublicNode. These are shell
+environment variables; the command still does not load `.env`. A custom RPC
+must support Fuji, the log windows and latest state reads. Output identifies
+only its origin, keeping credential paths and query parameters out of reports.
 
 Each row includes commit/reveal tx hashes, block times in UTC, elapsed seconds,
 `dry_run (SIMULATED)`/`LIVE`, hash verification and the exact `okxOrderId` string.
@@ -34,8 +59,9 @@ order IDs. Unopened commitments are `PENDING`; their mode/order result and
 preimage cannot be known yet. LIVE order IDs count only MATCH rows with
 `dry_run=false`, excluding `simulated` and `unknown`. The ledger records the
 agent's reported order IDs; it does not prove exchange execution or fills.
+**okxOrderId is revealed alongside the payload but is not part of the committed hash; it is not proof of exchange execution.**
 
-Exit 0 means a complete scan with no mismatches; valid pending commitments are
+Exit 0 means the stated starting scope was audited with no mismatches; valid pending commitments are
 allowed. Mismatches are reported per row and exit 1. RPC/completeness failures
 exit 1 and leave the last completed report unchanged. The output is replaced
 only after the scan and its checks complete.

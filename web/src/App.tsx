@@ -1,22 +1,22 @@
 import { useEffect, useState } from "react";
 import { useGrailFeed, type Feed, type GrailState } from "./state";
-import { Boundary, Skeleton } from "./components/Bits";
-import { ago, time } from "./format";
+import { Boundary } from "./components/Bits";
+import { ago, countdown } from "./format";
 import Dashboard from "./screens/Dashboard";
 import Decisions from "./screens/Decisions";
 import Ledger from "./screens/Ledger";
 import Settings from "./screens/Settings";
 
-type Route = "dashboard" | "kararlar" | "sicil" | "limitler";
+export type Route = "dashboard" | "decisions" | "ledger" | "settings";
 const ROUTES: { id: Route; label: string; icon: JSX.Element }[] = [
-  { id: "dashboard", label: "Portföy", icon: <IconGrail /> },
-  { id: "kararlar", label: "Karar akışı", icon: <IconList /> },
-  { id: "sicil", label: "On-chain sicil", icon: <IconSeal /> },
-  { id: "limitler", label: "Yetki ve limitler", icon: <IconShield /> },
+  { id: "dashboard", label: "Dashboard", icon: <IconGrid /> },
+  { id: "decisions", label: "Decisions", icon: <IconList /> },
+  { id: "ledger", label: "On-chain Ledger", icon: <IconSeal /> },
+  { id: "settings", label: "Settings", icon: <IconShield /> },
 ];
 
 const readRoute = (): Route => {
-  const h = window.location.hash.replace(/^#\/?/, "") as Route;
+  const h = window.location.hash.replace(/^#\/?/, "").split("/")[0] as Route;
   return ROUTES.some((r) => r.id === h) ? h : "dashboard";
 };
 
@@ -31,153 +31,154 @@ export default function App() {
     return () => window.removeEventListener("hashchange", on);
   }, []);
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const anchor = window.location.hash.split("/")[2];
+    if (anchor) document.getElementById(anchor)?.scrollIntoView();
+    else window.scrollTo(0, 0);
   }, [route]);
 
   const s = feed.state;
-  const unrevealed = s?.chain.unrevealed;
+  const open = s?.chain.unrevealed;
 
   return (
     <div className="shell">
-      <aside className="rail">
-        <a className="brand" href="#/dashboard" aria-label="GRAIL ana ekran">
-          <IconGrail size={30} />
-          <div>
-            <b>GRAIL</b>
-            <span>mühürlü agent sicili</span>
-          </div>
+      <aside className="side">
+        <a className="brand" href="#/dashboard" aria-label="GRAIL dashboard">
+          <IconGrail />
+          <b>GRAIL</b>
         </a>
-
-        {s && (
-          <div className="agent-id">
-            <div className="row">
-              <span>
-                <span className={`dot ${statusDot(s.agent.status)}`} />
-                {s.agent.name ?? "agent"}
-              </span>
-              <span className="muted">{statusLabel(s.agent.status)}</span>
-            </div>
-            <div className="row faint">
-              <span>döngü #{s.agent.cycle_id ?? "—"}</span>
-              <span>{nextCycle(s, now)}</span>
-            </div>
-          </div>
-        )}
-
-        <nav className="nav" aria-label="Ekranlar">
+        <nav className="nav" aria-label="Screens">
           {ROUTES.map((r) => (
             <a key={r.id} href={`#/${r.id}`} aria-current={route === r.id ? "page" : undefined}>
-              <span className="ico">{r.icon}</span>
+              {r.icon}
               <span>{r.label}</span>
-              {r.id === "kararlar" && s && <span className="count">{s.decisions.length}</span>}
-              {r.id === "sicil" && unrevealed !== undefined && unrevealed > 0 && (
-                <span className="count alert" title="Açıkta kalan commit">
-                  {unrevealed} açık
+              {r.id === "ledger" && open !== undefined && open > 0 && (
+                <span className="badge" title="Open (unrevealed) commits">
+                  {open} open
                 </span>
               )}
             </a>
           ))}
         </nav>
-
-        {s && <ModeSeal state={s} />}
+        <div className="side-foot">
+          <i aria-hidden="true" />
+          Avalanche Fuji · OKX TR
+        </div>
       </aside>
 
-      <main className="main">
-        <StatusStrip feed={feed} now={now} />
-        {!s ? (
-          <div style={{ maxWidth: 640, marginTop: 40 }}>
-            <Skeleton lines={4} />
-            <p className="faint">Agent durumu okunuyor…</p>
-          </div>
-        ) : (
-          <Boundary key={route} name={ROUTES.find((r) => r.id === route)!.label}>
-            {route === "dashboard" && <Dashboard s={s} />}
-            {route === "kararlar" && <Decisions s={s} chainJson={feed.chainJson} />}
-            {route === "sicil" && <Ledger s={s} chainJson={feed.chainJson} />}
-            {route === "limitler" && <Settings s={s} />}
-          </Boundary>
-        )}
-      </main>
+      <div className="page">
+        <TopBar feed={feed} now={now} />
+        <main className="content">
+          <Strips feed={feed} now={now} />
+          {!s ? (
+            <div className="stack" aria-busy="true" aria-label="Loading">
+              <div className="skeleton" style={{ height: 180 }} />
+              <div className="cols four">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="skeleton" style={{ height: 90 }} />
+                ))}
+              </div>
+              <div className="skeleton" style={{ height: 320 }} />
+            </div>
+          ) : (
+            <Boundary key={route} name={ROUTES.find((r) => r.id === route)!.label}>
+              {route === "dashboard" && <Dashboard s={s} />}
+              {route === "decisions" && <Decisions s={s} chainJson={feed.chainJson} now={now} demo={feed.source === "demo"} />}
+              {route === "ledger" && <Ledger s={s} chainJson={feed.chainJson} now={now} demo={feed.source === "demo"} />}
+              {route === "settings" && <Settings s={s} />}
+            </Boundary>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
 
-function StatusStrip({ feed, now }: { feed: Feed; now: number }) {
+function TopBar({ feed, now }: { feed: Feed; now: number }) {
   const s = feed.state;
+  if (!s)
+    return (
+      <header className="topbar" role="status">
+        <span className="agent">
+          <span className="dot" /> connecting…
+        </span>
+      </header>
+    );
+  const running = s.agent.status === "running";
+  const next = countdown(s.agent.next_cycle_at_ms, now);
+  const c = s.chain;
+  const errs = s.errors.length;
+  return (
+    <header className="topbar" role="status" aria-live="off">
+      <span className="agent" title={`status: ${s.agent.status ?? "unknown"}`}>
+        <span className={`dot ${running ? "on" : ""}`} />
+        {s.agent.name ?? "agent"}
+        {!running && <span className="muted" style={{ fontWeight: 400 }}>{s.agent.status ?? "status unknown"}</span>}
+      </span>
+      <ModeChip state={s} />
+      {(feed.source === "mock" || feed.source === "bundled") && (
+        <span className="chip mock" title={feed.source === "bundled" ? "No state server; bundled example state" : "runtime/state.json not found; contracts/state.example.json"}>
+          MOCK DATA
+        </span>
+      )}
+      {feed.source === "demo" && (
+        <span className="chip mock" title="web/fixtures/demo-state.json — real hashes, made-up tx ids">
+          DEMO DATA
+        </span>
+      )}
+      <span className="sep" />
+      <span>
+        Cycle <b>#{s.agent.cycle_id ?? "—"}</b>
+      </span>
+      {next && (
+        <span>
+          next in <b>{next}</b>
+        </span>
+      )}
+      <span className="sep" />
+      {c.commits !== undefined || c.reveals !== undefined ? (
+        <a className="mini" href="#/ledger" style={{ textDecoration: "none" }} title="commits / reveals / unrevealed">
+          <span>chain</span>
+          <b>{c.commits ?? "—"}</b>/<b>{c.reveals ?? "—"}</b>/<b className={(c.unrevealed ?? 0) > 0 ? "open" : ""}>{c.unrevealed ?? "—"}</b>
+        </a>
+      ) : null}
+      <a className={`chip ${errs > 0 ? "danger" : ""}`} href="#/settings/system" title="Agent errors (Settings › System)">
+        {errs} {errs === 1 ? "error" : "errors"}
+      </a>
+      <span className="grow" />
+      <span title={s.generated_at_ms ? new Date(s.generated_at_ms).toISOString() : ""}>updated {ago(s.generated_at_ms, now)}</span>
+    </header>
+  );
+}
+
+function ModeChip({ state }: { state: GrailState }) {
+  if (state.dry_run === false) return <span className="chip danger">LIVE · real funds</span>;
+  if (state.dry_run === true) return <span className="chip warn">DRY RUN · simulated orders</span>;
+  return <span className="chip">mode unknown</span>;
+}
+
+function Strips({ feed, now }: { feed: Feed; now: number }) {
+  const s = feed.state;
+  const cyc = Number(s?.config.cycle_seconds);
   const age = s?.generated_at_ms !== undefined ? now - s.generated_at_ms : undefined;
-  const stale = feed.source === "live" && age !== undefined && age > 5 * 60_000;
+  const stale = feed.source === "live" && age !== undefined && Number.isFinite(cyc) && cyc > 0 && age > 3 * cyc * 1000;
   return (
     <>
-      <div className="strip" role="status" aria-live="polite">
-        <SourcePill feed={feed} />
-        {s?.chain.network && (
-          <span className="pill avax" title={`chain_id ${s.chain.chain_id ?? "?"}`}>
-            Avalanche {s.chain.network === "fuji" ? "Fuji" : s.chain.network}
-          </span>
-        )}
-        <span>
-          state yazıldı: <b className="num">{time(s?.generated_at_ms)}</b>{" "}
-          <span className="faint">({ago(s?.generated_at_ms, now)})</span>
-        </span>
-        <span className="sp" />
-        {s?.contract_version && <span className="faint">sözleşme v{s.contract_version}</span>}
-      </div>
       {feed.error && (
-        <div className="banner warn" role="alert">
-          <div>
-            <b>Son okuma başarısız:</b> {feed.error}.{" "}
-            {feed.state ? "Ekranda en son okunan durum duruyor; 3 sn'de bir yeniden deneniyor." : ""}
-          </div>
+        <div className="strip-msg danger" role="alert">
+          Can't read state.json (retrying) — {feed.error}. {s ? "Last good state shown." : ""}
         </div>
       )}
       {feed.missingPath && (
-        <div className="banner warn">
-          <div>
-            <b>GRAIL_STATE_PATH bulunamadı:</b> <span className="mono">{feed.missingPath}</span>. Agent henüz state yazmadı; örnek
-            (mock) veri gösteriliyor.
-          </div>
+        <div className="strip-msg mock">
+          GRAIL_STATE_PATH points to <span className="mono">{feed.missingPath}</span>, which doesn't exist yet. Showing mock data.
         </div>
       )}
       {stale && (
-        <div className="banner warn">
-          <div>
-            <b>State {Math.round(age! / 60000)} dakikadır güncellenmedi.</b> Agent durmuş olabilir; döngü süresi{" "}
-            {String(s?.config.cycle_seconds ?? "?")} sn.
-          </div>
+        <div className="strip-msg warn" role="alert">
+          Agent silent for {Math.max(1, Math.round(age! / 60000))}m — last state shown.
         </div>
       )}
     </>
-  );
-}
-
-function SourcePill({ feed }: { feed: Feed }) {
-  switch (feed.source) {
-    case "live":
-      return <span className="pill ok">● canlı state.json</span>;
-    case "demo":
-      return <span className="pill warn" title="web/fixtures/demo-state.json — gerçek hash'ler, uydurma tx'ler">demo verisi</span>;
-    case "bundled":
-      return <span className="pill warn">paketlenmiş örnek (sunucu yok)</span>;
-    case "mock":
-      return <span className="pill warn" title="contracts/state.example.json">örnek veri (mock)</span>;
-    default:
-      return <span className="pill">bağlanıyor…</span>;
-  }
-}
-
-function ModeSeal({ state }: { state: GrailState }) {
-  if (state.dry_run === false)
-    return (
-      <div className="seal live">
-        <strong>Canlı mod</strong>
-        <p>Emirler OKX TR'ye gerçek bakiyeyle gidiyor. Limitler kodda zorlanır.</p>
-      </div>
-    );
-  return (
-    <div className="seal">
-      <strong>{state.dry_run === undefined ? "Mod bilinmiyor" : "dry_run açık"}</strong>
-      <p>Kararlar zincire mühürlenir; emirler OKX'e gönderilmez, simüle edilir.</p>
-    </div>
   );
 }
 
@@ -190,21 +191,19 @@ function useNow(ms: number) {
   return now;
 }
 
-const statusDot = (st?: string) => (st === "running" ? "on" : st === "stopped" || st === "error" ? "off" : "warn");
-const statusLabel = (st?: string) =>
-  ({ running: "çalışıyor", stopped: "durdu", error: "hata", paused: "duraklatıldı", killed: "kill switch" })[st ?? ""] ?? st ?? "bilinmiyor";
-function nextCycle(s: GrailState, now: number) {
-  const t = s.agent.next_cycle_at_ms;
-  if (t === undefined) return "";
-  const d = Math.round((t - now) / 1000);
-  return d > 0 ? `sonraki ${d} sn` : `sonraki ${time(t)}`;
-}
-
-function IconGrail({ size = 18 }: { size?: number }) {
+function IconGrail() {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <path d="M9 6h14c0 6.5-3 10.5-7 10.5S9 12.5 9 6Z" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" style={{ color: "var(--gold)" }} />
-      <path d="M16 16.5V23m-5.5 2.5h11" stroke="var(--gold)" strokeWidth="2.2" strokeLinecap="round" />
+    <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M9 6h14c0 6.5-3 10.5-7 10.5S9 12.5 9 6Z" fill="none" stroke="var(--grail)" strokeWidth="2.2" strokeLinejoin="round" />
+      <path d="M16 16.5V23m-5.5 2.5h11" stroke="var(--grail)" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconGrid() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M4 19V5M4 19h16" strokeLinecap="round" />
+      <path d="M7 15c3-6 6-7.5 13-8.5" strokeLinecap="round" />
     </svg>
   );
 }

@@ -15,7 +15,7 @@ export type LocalResult =
 export function computeCommit(payloadUtf8: string, saltHex: string, expected?: string): LocalResult {
   const clean = saltHex.trim().replace(/^0x/i, "");
   if (!/^[0-9a-fA-F]*$/.test(clean) || clean.length % 2 !== 0 || clean.length === 0)
-    return { ok: false, error: "salt_hex geçerli bir hex dizisi değil" };
+    return { ok: false, error: "salt_hex is not valid hex" };
   const payload = utf8ToBytes(payloadUtf8);
   const salt = hexToBytes(clean);
   const buf = new Uint8Array(payload.length + salt.length);
@@ -32,25 +32,38 @@ export function computeCommit(payloadUtf8: string, saltHex: string, expected?: s
 
 export type RowCheck = { ok: boolean; note: string } | null;
 
-/** Payload içindeki aynı coinin kararı, ekrandaki satırla aynı mı? (aksiyon + tutar) */
-export function payloadMatchesRow(payloadUtf8: string, inst?: string, action?: string, size?: string): RowCheck {
+/** Do the decisions inside the sealed payload match the rows shown on screen (action + size, per coin)? */
+export function payloadMatchesRows(payloadUtf8: string, rows: { inst_id?: string; action?: string; size_usdt?: string }[]): RowCheck {
   let p: unknown;
   try {
     p = JSON.parse(payloadUtf8);
   } catch {
-    return { ok: false, note: "payload JSON olarak çözülemedi" };
+    return { ok: false, note: "payload is not valid JSON" };
   }
   const list = (p as { decisions?: unknown })?.decisions;
   if (!Array.isArray(list)) return null;
-  const d = list.find((x) => (x as { inst_id?: unknown })?.inst_id === inst) as
-    | { action?: string; size_usdt?: string }
-    | undefined;
-  if (!d) return { ok: false, note: `payload'da ${inst ?? "bu coin"} için karar yok` };
-  const sameAction = !action || d.action === action;
-  const sameSize = !size || d.size_usdt === undefined || Number(d.size_usdt) === Number(size);
-  return sameAction && sameSize
-    ? { ok: true, note: `payload'daki karar: ${d.action} ${d.size_usdt ?? ""} USDT` }
-    : { ok: false, note: `payload ${d.action} ${d.size_usdt} diyor, ekranda ${action} ${size}` };
+  const bad: string[] = [];
+  for (const r of rows) {
+    const d = list.find((x) => (x as { inst_id?: unknown })?.inst_id === r.inst_id) as { action?: string; size_usdt?: string } | undefined;
+    if (!d) bad.push(`${r.inst_id ?? "?"} missing`);
+    else if ((r.action && d.action !== r.action) || (r.size_usdt && d.size_usdt !== undefined && Number(d.size_usdt) !== Number(r.size_usdt)))
+      bad.push(`${r.inst_id}: payload says ${d.action} ${d.size_usdt}, screen shows ${r.action} ${r.size_usdt}`);
+  }
+  return bad.length
+    ? { ok: false, note: bad.join("; ") }
+    : { ok: true, note: `all ${rows.length} decisions on screen match the sealed payload` };
+}
+
+/** Mock placeholders like "0x5a..." can't be hashed; say so instead of showing a red ❌. */
+export function isVerifiable(payloadUtf8?: string, saltHex?: string): boolean {
+  if (!payloadUtf8 || !saltHex) return false;
+  if (!/^0x[0-9a-fA-F]+$/.test(saltHex.trim()) || saltHex.trim().length % 2 !== 0) return false;
+  try {
+    JSON.parse(payloadUtf8);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export type ChainResult =
@@ -68,7 +81,7 @@ export async function checkOnChain(
   rpcUrl: string,
   contract?: string,
 ): Promise<ChainResult> {
-  if (!isHex32(commitTx)) return { kind: "skipped", why: "commit_tx geçerli bir tx hash değil" };
+  if (!isHex32(commitTx)) return { kind: "skipped", why: "commit_tx is not a valid transaction hash" };
   try {
     const ctrl = new AbortController();
     const t = window.setTimeout(() => ctrl.abort(), 8000);
@@ -80,7 +93,7 @@ export async function checkOnChain(
     });
     window.clearTimeout(t);
     const j = (await res.json()) as { result?: { input?: string; to?: string; blockNumber?: string } | null; error?: { message?: string } };
-    if (j.error) return { kind: "unreachable", error: j.error.message ?? "RPC hatası" };
+    if (j.error) return { kind: "unreachable", error: j.error.message ?? "RPC error" };
     if (!j.result) return { kind: "not_found" };
     const input = (j.result.input ?? "").toLowerCase();
     const to = j.result.to ?? undefined;
@@ -93,7 +106,7 @@ export async function checkOnChain(
   }
 }
 
-/** chain.json'dan (şekli henüz belli değil) RPC ve kontrat adresini toleranslı çıkar. */
+/** chain.json shape is not final yet (T-003): pick RPC / contract / agentId tolerantly. */
 export function chainHints(chainJson: unknown): { rpc: string; address?: string; agentId?: string } {
   const o = (typeof chainJson === "object" && chainJson) || {};
   const pick = (...keys: string[]): string | undefined => {

@@ -1,14 +1,16 @@
-import { Component, type ReactNode } from "react";
+import { Component, useState, type ReactNode } from "react";
 import { isAddress, isHex32 } from "../verify";
 import { shortHash } from "../format";
 
-export function Section(props: { title: string; meta?: ReactNode; children: ReactNode; id?: string }) {
+export function Card(props: { title?: ReactNode; meta?: ReactNode; children: ReactNode; className?: string; id?: string }) {
   return (
-    <section className="section" id={props.id}>
-      <header>
-        <h2>{props.title}</h2>
-        {props.meta && <span className="meta">{props.meta}</span>}
-      </header>
+    <section className={`card ${props.className ?? ""}`} id={props.id}>
+      {props.title && (
+        <h2 className="card-title">
+          <span>{props.title}</span>
+          {props.meta && <span className="label">{props.meta}</span>}
+        </h2>
+      )}
       {props.children}
     </section>
   );
@@ -23,41 +25,93 @@ export function Empty(props: { title: string; children?: ReactNode }) {
   );
 }
 
-export function Skeleton({ lines = 3 }: { lines?: number }) {
+export function CopyButton({ value }: { value: string }) {
+  const [done, setDone] = useState(false);
   return (
-    <div aria-busy="true" aria-label="Yükleniyor">
-      {Array.from({ length: lines }, (_, i) => (
-        <div key={i} className="skeleton" style={{ width: `${90 - i * 17}%` }} />
-      ))}
-    </div>
+    <button
+      className="copy"
+      title={done ? "Copied" : "Copy"}
+      aria-label={done ? "Copied" : `Copy ${value}`}
+      onClick={() => {
+        navigator.clipboard?.writeText(value).then(
+          () => {
+            setDone(true);
+            window.setTimeout(() => setDone(false), 1200);
+          },
+          () => undefined,
+        );
+      }}
+    >
+      {done ? (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--buy)" strokeWidth="2.4" aria-hidden="true">
+          <path d="m5 12 5 5 9-10" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <rect x="8" y="8" width="12" height="12" rx="2" />
+          <path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" />
+        </svg>
+      )}
+    </button>
   );
 }
 
-/** Snowtrace bağlantısı; değer gerçek bir hash/adres değilse (ör. "0xabc...") bağlantı vermez, olduğu gibi gösterir. */
-export function ExplorerLink(props: { explorer?: string; kind: "tx" | "address"; value?: string; full?: boolean }) {
+/** Hash in mono, shortened, with a copy button. */
+export function Hash({ value, full }: { value?: string; full?: boolean }) {
+  if (!value) return <span className="dim">—</span>;
+  return (
+    <span style={{ whiteSpace: full ? "normal" : "nowrap" }}>
+      <span className="mono" title={value} style={{ fontSize: 12.5 }}>
+        {full ? value : shortHash(value)}
+      </span>
+      <CopyButton value={value} />
+    </span>
+  );
+}
+
+/** Snowtrace link; when the value isn't a real hash/address (e.g. mock "0xabc...") it is shown as plain text, never linked. */
+export function ExplorerLink(props: { explorer?: string; kind: "tx" | "address"; value?: string; full?: boolean; label?: string }) {
   const { explorer, kind, value } = props;
-  if (!value) return <span className="faint">—</span>;
+  if (!value) return <span className="dim">—</span>;
   const valid = kind === "tx" ? isHex32(value) : isAddress(value);
-  const label = props.full ? value : shortHash(value, 8, 6);
+  const text = props.label ?? (props.full ? value : shortHash(value));
   if (!valid || !explorer)
     return (
-      <span className="mono faint" title={valid ? value : "Geçerli bir hash değil; bağlantı verilmedi"}>
-        {label}
+      <span className="mono dim" style={{ fontSize: 12.5 }} title={valid ? value : "Not a valid hash — no explorer link"}>
+        {text}
       </span>
     );
   return (
-    <a className="mono link" href={`${explorer.replace(/\/$/, "")}/${kind}/${value}`} target="_blank" rel="noreferrer" title={value}>
-      {label}
-    </a>
+    <span style={{ whiteSpace: "nowrap" }}>
+      <a className="proof" href={`${explorer.replace(/\/$/, "")}/${kind}/${value}`} target="_blank" rel="noreferrer" title={value}>
+        {text} ↗
+      </a>
+      <CopyButton value={value} />
+    </span>
   );
 }
 
-export function DryTag({ dry }: { dry?: boolean }) {
-  if (dry === undefined) return <span className="tag" title="dry_run bilgisi yok">dry_run ?</span>;
+export function ModeTag({ dry }: { dry?: boolean }) {
+  if (dry === undefined) return <span className="tag unk">?</span>;
   return dry ? (
-    <span className="tag" title="dry_run: emir OKX'e gönderilmedi, simüle edildi">simülasyon</span>
+    <span className="tag sim" title="dry_run: order simulated, not sent to OKX">
+      SIM
+    </span>
   ) : (
-    <span className="tag live" title="Gerçek emir (OKX TR)">canlı emir</span>
+    <span className="tag live" title="Real order on OKX TR">
+      LIVE
+    </span>
+  );
+}
+
+export function ActionChip({ action, size }: { action?: string; size?: string }) {
+  const known = action === "BUY" || action === "SELL" || action === "HOLD";
+  const amount = action !== "HOLD" && size && Number(size) > 0 ? `$${Number(size).toFixed(2)}` : null;
+  return (
+    <span className={`act ${known ? action : "other"}`}>
+      {action ?? "?"}
+      {amount && <b>{amount}</b>}
+    </span>
   );
 }
 
@@ -69,13 +123,13 @@ export class Boundary extends Component<{ children: ReactNode; name: string }, {
   render() {
     if (this.state.err)
       return (
-        <div className="banner bad" role="alert">
-          <div>
-            <b>{this.props.name} ekranı çizilemedi.</b> Diğer ekranlar çalışıyor. Hata: <span className="mono">{this.state.err}</span>{" "}
-            <button className="btn" onClick={() => this.setState({ err: null })}>
-              Tekrar dene
-            </button>
-          </div>
+        <div className="strip-msg danger" role="alert">
+          <span>
+            The {this.props.name} screen failed to render ({this.state.err}). Other screens still work.
+          </span>
+          <button className="btn sm" onClick={() => this.setState({ err: null })}>
+            Retry
+          </button>
         </div>
       );
     return this.props.children;

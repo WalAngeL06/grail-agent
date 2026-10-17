@@ -190,6 +190,48 @@ export function normalize(raw: unknown): GrailState {
   };
 }
 
+/** Bir döngünün bütün kararları tek payload / tek commit'tir (contracts/decision.md); zincir alanları grubun ilk dolu satırından. */
+export type Cycle = {
+  id: string;
+  cycle_id?: number;
+  decisions: Decision[];
+  decided_at_ms?: number;
+  commit_tx?: string;
+  reveal_tx?: string;
+  commit_hash?: string;
+  payload_utf8?: string;
+  salt_hex?: string;
+  verified?: boolean;
+  dry_run?: boolean;
+  trades: number;
+};
+
+export function groupCycles(s: GrailState): Cycle[] {
+  const map = new Map<string, Decision[]>();
+  for (const d of s.decisions) {
+    const k = d.cycle_id !== undefined ? String(d.cycle_id) : "?";
+    if (!map.has(k)) map.set(k, []);
+    map.get(k)!.push(d);
+  }
+  const first = <K extends keyof Decision>(ds: Decision[], k: K) => ds.find((d) => d[k] !== undefined && d[k] !== null)?.[k];
+  return [...map.entries()]
+    .map(([id, ds]) => ({
+      id,
+      cycle_id: ds[0].cycle_id,
+      decisions: ds,
+      decided_at_ms: first(ds, "decided_at_ms"),
+      commit_tx: first(ds, "commit_tx"),
+      reveal_tx: first(ds, "reveal_tx"),
+      commit_hash: first(ds, "commit_hash"),
+      payload_utf8: first(ds, "payload_utf8"),
+      salt_hex: first(ds, "salt_hex"),
+      verified: first(ds, "verified"),
+      dry_run: decisionDryRun({ ...ds[0], payload_utf8: first(ds, "payload_utf8") }, s),
+      trades: ds.filter((d) => d.action === "BUY" || d.action === "SELL").length,
+    }))
+    .sort((a, b) => (b.cycle_id ?? -1) - (a.cycle_id ?? -1));
+}
+
 /** Bir döngünün etkin dry_run bayrağı: karar → payload → state. */
 export function decisionDryRun(d: Decision, s: GrailState): boolean | undefined {
   if (d.dry_run !== undefined) return d.dry_run;
@@ -236,13 +278,13 @@ export function useGrailFeed(): Feed {
     const tick = async () => {
       try {
         const res = await fetch("/api/state", { cache: "no-store" });
-        if (!res.ok) throw new Error(`state isteği ${res.status} döndü`);
+        if (!res.ok) throw new Error(`state request returned HTTP ${res.status}`);
         const text = await res.text();
         let raw: unknown;
         try {
           raw = JSON.parse(text);
         } catch {
-          throw new Error("state.json okunamadı: geçersiz JSON (agent yazarken yakalanmış olabilir, tekrar denenecek)");
+          throw new Error("state.json is not valid JSON (possibly caught mid-write)");
         }
         const src = (res.headers.get("X-Grail-Source") as Source | null) ?? "mock";
         if (!alive.current) return;

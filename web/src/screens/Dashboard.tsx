@@ -1,229 +1,157 @@
-import type { GrailState } from "../state";
+import { groupCycles, type GrailState } from "../state";
 import HolyGrail, { nEff } from "../components/HolyGrail";
-import { Empty, Section } from "../components/Bits";
-import { coin, dateTime, n, pct, price, signedPct, usdt } from "../format";
+import { ActionChip, Card, Empty } from "../components/Bits";
+import { coin, n, pct, price, signedPct, usd } from "../format";
 
 export default function Dashboard({ s }: { s: GrailState }) {
   const m = s.metrics;
-  const N = m.n_assets ?? (s.config.coins as unknown[] | undefined)?.length;
+  const N = m.n_assets ?? (Array.isArray(s.config.coins) ? (s.config.coins as unknown[]).length : undefined);
   const ne = m.n_eff ?? (N && m.avg_corr !== undefined ? nEff(N, m.avg_corr) : undefined);
+  const last = groupCycles(s).find((c) => c.cycle_id === s.agent.cycle_id) ?? groupCycles(s)[0];
 
   return (
-    <>
-      <div className="hero">
-        <div className="equation">
-          {N !== undefined && ne !== undefined ? (
-            <div className="pair" aria-label={`${N} coin, ${n(ne, 2)} efektif bağımsız bahis`}>
-              <div className="figure from">
-                <span className="big num">{N}</span>
-                <span className="lbl">coin izleniyor</span>
-              </div>
-              <div className="rule" />
-              <div className="figure to">
-                <span className="big num">{n(ne, 2)}</span>
-                <span className="lbl">gerçekte bu kadar bağımsız bahis</span>
-              </div>
-            </div>
-          ) : (
-            <Empty title="Efektif bahis sayısı henüz hesaplanmadı">Engine ilk döngüde korelasyonu yazınca burada görünür.</Empty>
-          )}
-          <p className="lede">
-            {m.avg_corr !== undefined ? (
+    <div className="stack">
+      <div className="hero-row">
+        <Card className="hero">
+          <div>
+            <div className="label">Effective bets</div>
+            {ne !== undefined ? (
               <>
-                Coinler arası ortalama korelasyon <b>{n(m.avg_corr, 2)}</b>. Bu yüzden {N ?? "bu"} coin, risk açısından{" "}
-                <b>{n(ne, 2)}</b> ayrı bahis gibi davranıyor. Agent ağırlıkları buna göre (HRP + volatilite hedefi) dağıtır.
+                <div className="num" aria-label={`${n(ne, 2)} effective bets`}>
+                  {n(ne, 2, 2)}
+                </div>
+                <div className="cap">
+                  effective bets out of {N ?? "?"} coins <span>· ρ̄ = {n(m.avg_corr, 2, 2)}</span>
+                </div>
               </>
             ) : (
-              <>Çeşitlendirmenin gerçek değeri korelasyona bağlı; korelasyon gelince burada özetlenir.</>
+              <Empty title="Not computed yet">The engine writes correlation after its first cycle.</Empty>
             )}
+          </div>
+          <p>
+            Average pairwise correlation decides how many independent bets a basket really is. GRAIL sizes positions on this number, not on
+            the coin count.
           </p>
-          <dl className="kv">
-            <div>
-              <dt>Portföy SR tahmini</dt>
-              <dd className="num">{n(m.sr_portfolio_est, 2)}</dd>
+          <div>
+            <div className="label" style={{ marginBottom: 8 }}>
+              Last cycle {last?.cycle_id !== undefined ? `#${last.cycle_id}` : ""}
             </div>
-            <div>
-              <dt>Tek coin SR varsayımı</dt>
-              <dd className="num">{n(m.sr_single_assumed, 2)}</dd>
-            </div>
-            <div>
-              <dt>PSR</dt>
-              <dd className="num" title="Probabilistic Sharpe Ratio">
-                {m.psr !== undefined ? pct(m.psr * 100, 0) : "—"}
-              </dd>
-            </div>
-          </dl>
-        </div>
-        <HolyGrail nAssets={N} rho={m.avg_corr} nEffNow={ne} srSingle={m.sr_single_assumed} />
+            {last ? (
+              <div className="lastcycle">
+                {[...last.decisions]
+                  .sort((a, b) => (a.inst_id ?? "").localeCompare(b.inst_id ?? ""))
+                  .map((d) => (
+                    <span key={d.key} style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                      <span style={{ fontWeight: 600 }}>{coin(d.inst_id)}</span>
+                      <ActionChip action={d.action} />
+                    </span>
+                  ))}
+                <a className="linkbtn" href="#/decisions">
+                  → Decisions
+                </a>
+              </div>
+            ) : (
+              <span className="muted">Waiting for the first cycle.</span>
+            )}
+          </div>
+          <div className="stat">
+            <span className="label">PSR (probabilistic Sharpe)</span>
+            <span className="v" style={{ fontSize: 18 }}>
+              {m.psr !== undefined ? pct(m.psr * 100, 0) : <span className="muted">— (needs history)</span>}
+            </span>
+          </div>
+        </Card>
+
+        <Card title="Holy Grail: Sharpe vs number of assets" meta={m.window_bars ? `correlation over ${m.window_bars} bars` : undefined}>
+          <HolyGrail nAssets={N} rho={m.avg_corr} srSingle={m.sr_single_assumed} srNow={m.sr_portfolio_est} curve={m.holy_grail_curve} />
+        </Card>
       </div>
 
-      <div className="grid-2">
-        <Portfolio s={s} />
-        <Regime s={s} />
+      <div className="cols four">
+        <Stat label="Equity" value={usd(s.portfolio.equity_usdt)} sub={s.dry_run ? "simulated balance" : "OKX TR spot"} />
+        <Stat label="Cash" value={usd(s.portfolio.cash_usdt)} sub={cashShare(s)} />
+        <Stat
+          label="Portfolio Sharpe (est.)"
+          value={n(m.sr_portfolio_est, 2, 2)}
+          sub={m.sr_single_assumed !== undefined ? `vs ${n(m.sr_single_assumed, 2, 2)} single coin` : undefined}
+        />
+        <Stat
+          label="Portfolio volatility"
+          value={pct(m.portfolio_vol_pct)}
+          sub={typeof s.config.target_vol_pct === "number" ? `target ${pct(s.config.target_vol_pct as number, 0)}` : "annualised"}
+        />
       </div>
 
-      <div className="grid-2">
+      <div className="cols wide">
+        <Positions s={s} />
         <Correlation s={s} />
-        <Market s={s} />
       </div>
 
-      <Errors s={s} />
-    </>
+      <Signals s={s} />
+    </div>
   );
 }
 
-function Portfolio({ s }: { s: GrailState }) {
-  const p = s.portfolio;
-  const eq = Number(p.equity_usdt);
-  const cash = Number(p.cash_usdt);
-  const tw = s.metrics.target_weights_pct;
-  const positions = p.positions.filter((x) => x.inst_id);
+function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <Section title="Portföy" meta={s.dry_run ? "simülasyon bakiyesi" : "OKX TR spot hesabı"}>
-      <dl className="kv" style={{ marginBottom: 14 }}>
-        <div>
-          <dt>Toplam değer</dt>
-          <dd className="num">{usdt(p.equity_usdt)}</dd>
-        </div>
-        <div>
-          <dt>Nakit</dt>
-          <dd className="num">{usdt(p.cash_usdt)}</dd>
-        </div>
-        <div>
-          <dt>Pozisyonda</dt>
-          <dd className="num">{Number.isFinite(eq) && Number.isFinite(cash) ? usdt(eq - cash) : "—"}</dd>
-        </div>
-      </dl>
-      {Number.isFinite(eq) && eq > 0 && (
-        <div className="alloc" role="img" aria-label="Portföy dağılımı">
-          {positions.map((x) => {
-            const w = x.weight_pct ?? (Number(x.value_usdt) / eq) * 100;
-            return Number.isFinite(w) && w > 0 ? (
-              <span key={x.inst_id} title={`${coin(x.inst_id)} ${pct(w)}`} style={{ width: `${w}%`, background: "var(--gold-chart)" }} />
-            ) : null;
-          })}
-          {Number.isFinite(cash) && <span title={`Nakit ${pct((cash / eq) * 100)}`} style={{ flex: 1, background: "var(--surface-3)" }} />}
-        </div>
-      )}
-      {positions.length === 0 ? (
-        <Empty title="Açık pozisyon yok">Agent şu an tamamen nakitte. Trend filtresi pozitif coin bulunca alım yapar.</Empty>
+    <div className="card stat">
+      <span className="label">{label}</span>
+      <div className="v">{value}</div>
+      {sub && <div className="sub">{sub}</div>}
+    </div>
+  );
+}
+
+function cashShare(s: GrailState) {
+  const eq = Number(s.portfolio.equity_usdt);
+  const cash = Number(s.portfolio.cash_usdt);
+  return Number.isFinite(eq) && eq > 0 && Number.isFinite(cash) ? `${pct((cash / eq) * 100, 0)} of equity` : undefined;
+}
+
+function Positions({ s }: { s: GrailState }) {
+  const rows = s.portfolio.positions.filter((p) => p.inst_id);
+  const hrp = s.metrics.hrp_weights_pct;
+  const mk = new Map(s.market.map((r) => [r.inst_id, r]));
+  const scale = Math.max(40, ...rows.map((r) => r.weight_pct ?? 0), ...Object.values(hrp));
+  return (
+    <Card title="Positions" meta="weight vs HRP target">
+      {rows.length === 0 ? (
+        <Empty title="All cash — trend filter is risk-off">Cash: {usd(s.portfolio.cash_usdt)}</Empty>
       ) : (
-        <div className="table-scroll">
+        <div className="scroll-x">
           <table className="table">
             <thead>
               <tr>
                 <th>Coin</th>
-                <th className="r">Miktar</th>
-                <th className="r">Değer</th>
-                <th>Ağırlık / hedef</th>
+                <th className="r">Size</th>
+                <th className="r">Value</th>
+                <th>Weight / target</th>
+                <th className="r">Last</th>
+                <th className="r">24h</th>
               </tr>
             </thead>
             <tbody>
-              {positions.map((x) => {
-                const target = x.inst_id ? tw[x.inst_id] : undefined;
+              {rows.map((p) => {
+                const t = p.inst_id ? hrp[p.inst_id] : undefined;
+                const q = mk.get(p.inst_id);
                 return (
-                  <tr key={x.inst_id}>
-                    <td>
-                      <b>{coin(x.inst_id)}</b>
-                    </td>
-                    <td className="r num">{x.size_base ?? "—"}</td>
-                    <td className="r num">{usdt(x.value_usdt)}</td>
+                  <tr key={p.inst_id}>
+                    <td style={{ fontWeight: 600 }}>{coin(p.inst_id)}</td>
+                    <td className="r mono">{p.size_base ?? "—"}</td>
+                    <td className="r">{usd(p.value_usdt)}</td>
                     <td>
                       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                        <div className="bar" style={{ flex: 1 }} title={`ağırlık ${pct(x.weight_pct)}${target !== undefined ? `, hedef ${pct(target)}` : ""}`}>
-                          <span style={{ width: `${Math.min(100, (x.weight_pct ?? 0) * 2.5)}%` }} />
-                          {target !== undefined && <em style={{ left: `${Math.min(100, target * 2.5)}%` }} />}
+                        <div className="dbar" style={{ flex: 1 }} title={`weight ${pct(p.weight_pct)} · HRP target ${pct(t)}`}>
+                          <span className="w" style={{ width: `${((p.weight_pct ?? 0) / scale) * 100}%` }} />
+                          <span className="t" style={{ width: `${((t ?? 0) / scale) * 100}%` }} />
                         </div>
-                        <span className="num" style={{ minWidth: 92, textAlign: "right" }}>
-                          {pct(x.weight_pct)}
-                          {target !== undefined && <span className="faint"> / {pct(target)}</span>}
+                        <span style={{ minWidth: 92, textAlign: "right" }}>
+                          {pct(p.weight_pct)} <span className="muted">/ {pct(t)}</span>
                         </span>
                       </div>
                     </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          <p className="faint" style={{ fontSize: 12.5, margin: "6px 0 0" }}>
-            Çubuk ölçeği %40'a kadar; dikey işaret engine'in hedef ağırlığı.
-          </p>
-        </div>
-      )}
-    </Section>
-  );
-}
-
-function Regime({ s }: { s: GrailState }) {
-  const m = s.metrics;
-  const coins = Object.keys(m.trend_pct).length
-    ? Object.keys(m.trend_pct)
-    : ((s.config.coins as string[] | undefined) ?? []).filter((c) => typeof c === "string");
-  const ups = coins.filter((c) => (m.trend_pct[c] ?? 0) > 0).length;
-  const known = Object.keys(m.trend_pct).length > 0;
-  const regime = !known
-    ? { label: "Rejim bilgisi yok", text: "Engine trend verisini yazınca coin başına sinyal burada görünür." }
-    : ups === 0
-      ? { label: "Savunmada", text: "Hiçbir coinin trendi pozitif değil; agent nakitte bekliyor." }
-      : ups === coins.length
-        ? { label: "Trend pozitif", text: "Bütün coinlerde trend pozitif; ağırlıklar risk bütçesiyle sınırlı." }
-        : { label: "Seçici", text: `${ups} / ${coins.length} coinde trend pozitif; diğerleri nakde çekildi.` };
-  const tv = s.config.target_vol_pct as number | undefined;
-  const ks = s.config.kill_switch_drawdown_pct as number | undefined;
-
-  return (
-    <Section title="Piyasa rejimi" meta={m.window_bars ? `${m.window_bars} bar pencere` : undefined}>
-      <p style={{ margin: "0 0 12px" }}>
-        <b>{regime.label}.</b> <span className="muted">{regime.text}</span>
-      </p>
-      <dl className="kv" style={{ marginBottom: 14 }}>
-        <div>
-          <dt>Portföy volatilitesi</dt>
-          <dd className="num">
-            {pct(m.portfolio_vol_pct)}
-            {typeof tv === "number" && <span className="faint" style={{ fontSize: 13 }}> / hedef {pct(tv, 0)}</span>}
-          </dd>
-        </div>
-        <div>
-          <dt>Düşüş (drawdown)</dt>
-          <dd className="num">
-            {pct(m.drawdown_pct)}
-            {typeof ks === "number" && <span className="faint" style={{ fontSize: 13 }}> / sınır {pct(ks, 0)}</span>}
-          </dd>
-        </div>
-        <div>
-          <dt>Kill switch</dt>
-          <dd style={{ color: m.kill_switch ? "var(--bad)" : m.kill_switch === false ? "var(--ok)" : undefined }}>
-            {m.kill_switch ? "Tetiklendi" : m.kill_switch === false ? "Hazır, tetiklenmedi" : "—"}
-          </dd>
-        </div>
-      </dl>
-      {coins.length > 0 && (
-        <div className="table-scroll">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Coin</th>
-                <th className="r">Trend</th>
-                <th className="r">Yıllık vol</th>
-                <th className="r">HRP</th>
-                <th className="r">Hedef</th>
-              </tr>
-            </thead>
-            <tbody>
-              {coins.map((c) => {
-                const t = m.trend_pct[c];
-                return (
-                  <tr key={c}>
-                    <td>
-                      <b>{coin(c)}</b>
-                    </td>
-                    <td className={`r num ${t === undefined ? "" : t > 0 ? "trend-up" : "trend-down"}`}>
-                      {t === undefined ? "—" : `${t > 0 ? "▲" : "▼"} ${signedPct(t, 2)}`}
-                    </td>
-                    <td className="r num">{pct(m.vol_pct[c])}</td>
-                    <td className="r num">{pct(m.hrp_weights_pct[c])}</td>
-                    <td className="r num">{pct(m.target_weights_pct[c])}</td>
+                    <td className="r mono">{price(q?.last)}</td>
+                    <td className={`r ${q?.change_24h_pct === undefined ? "" : q.change_24h_pct >= 0 ? "up" : "down"}`}>{signedPct(q?.change_24h_pct)}</td>
                   </tr>
                 );
               })}
@@ -231,7 +159,7 @@ function Regime({ s }: { s: GrailState }) {
           </table>
         </div>
       )}
-    </Section>
+    </Card>
   );
 }
 
@@ -239,19 +167,22 @@ function Correlation({ s }: { s: GrailState }) {
   const c = s.metrics.corr;
   if (!c)
     return (
-      <Section title="Korelasyon matrisi">
-        <Empty title="Korelasyon matrisi yok">Engine en az iki coin için getiri hesaplayınca görünür.</Empty>
-      </Section>
+      <Card title="Correlation">
+        <Empty title="No correlation matrix yet">Appears once the engine has returns for two or more coins.</Empty>
+      </Card>
     );
   const k = c.labels.length;
+  // ρ=0 → surface-2, ρ=1 → grail; negative → blue (ui-brief §3)
   const color = (v: number | null) => {
     if (v === null) return "var(--surface-2)";
     const a = Math.min(1, Math.abs(v));
-    return v >= 0 ? `rgba(187, 138, 46, ${0.12 + a * 0.68})` : `rgba(91, 143, 224, ${0.12 + a * 0.68})`;
+    const [r0, g0, b0] = [26, 33, 48];
+    const [r1, g1, b1] = v >= 0 ? [232, 176, 75] : [59, 130, 246];
+    return `rgb(${Math.round(r0 + (r1 - r0) * a)}, ${Math.round(g0 + (g1 - g0) * a)}, ${Math.round(b0 + (b1 - b0) * a)})`;
   };
   return (
-    <Section title="Korelasyon matrisi" meta="getiri korelasyonu, pencere içinde">
-      <div className="heat" style={{ gridTemplateColumns: `56px repeat(${k}, minmax(0, 1fr))` }} role="table" aria-label="Korelasyon matrisi">
+    <Card title="Correlation" meta="pairwise, return window">
+      <div className="heat" style={{ gridTemplateColumns: `48px repeat(${k}, minmax(0, 1fr))` }} role="table" aria-label="Correlation matrix">
         <span />
         {c.labels.map((l) => (
           <span key={l} className="lab top" role="columnheader">
@@ -266,77 +197,61 @@ function Correlation({ s }: { s: GrailState }) {
             {c.labels.map((col, j) => {
               const v = c.values[i]?.[j] ?? null;
               return (
-                <span key={col} className="cell" role="cell" style={{ background: color(v) }} title={`${coin(row)} × ${coin(col)}: ${v === null ? "—" : n(v, 2)}`}>
-                  {v === null ? "—" : n(v, 2)}
+                <span
+                  key={col}
+                  role="cell"
+                  className={`cell ${i === j ? "diag" : ""}`}
+                  style={{ background: color(v), color: v !== null && v > 0.6 ? "#0b0e14" : undefined }}
+                  title={`${coin(row)} × ${coin(col)}: ${v === null ? "—" : n(v, 2, 2)}`}
+                >
+                  {v === null ? "—" : n(v, 2, 2)}
                 </span>
               );
             })}
           </div>
         ))}
       </div>
-      <p className="faint" style={{ fontSize: 12.5, margin: "8px 0 0" }}>
-        Koyu altın = birlikte hareket (çeşitlendirme yok). Mavi = ters yönlü.
-      </p>
-    </Section>
+    </Card>
   );
 }
 
-function Market({ s }: { s: GrailState }) {
-  const rows = s.market.filter((x) => x.inst_id);
+function Signals({ s }: { s: GrailState }) {
+  const m = s.metrics;
+  const coins = Object.keys(m.trend_pct);
+  if (!coins.length) return null; // engine metrics beyond the v0.4 example: show only when present
+  const ups = coins.filter((c) => m.trend_pct[c] > 0).length;
+  const regime = ups === 0 ? "Risk-off: no coin is trending up, agent holds cash." : ups === coins.length ? "Risk-on: every coin is trending up." : `Selective: ${ups} of ${coins.length} coins trending up; the rest go to cash.`;
   return (
-    <Section title="Piyasa (OKX TR)" meta={rows[0]?.at_ms ? `ticker ${dateTime(rows[0].at_ms)}` : undefined}>
-      {rows.length === 0 ? (
-        <Empty title="Ticker verisi yok">Agent OKX ATK'dan fiyat çekince burada listelenir.</Empty>
-      ) : (
+    <Card title="Signals by coin" meta={regime}>
+      <div className="scroll-x">
         <table className="table">
           <thead>
             <tr>
-              <th>Parite</th>
-              <th className="r">Son fiyat</th>
-              <th className="r">24 sa</th>
+              <th>Coin</th>
+              <th className="r">Trend</th>
+              <th className="r">Volatility (ann.)</th>
+              <th className="r">HRP weight</th>
+              <th className="r">Target weight</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.inst_id}>
-                <td>
-                  <b>{coin(r.inst_id)}</b> <span className="faint">/ USDT</span>
-                </td>
-                <td className="r num">{price(r.last)}</td>
-                <td className={`r num ${r.change_24h_pct === undefined ? "" : r.change_24h_pct >= 0 ? "trend-up" : "trend-down"}`}>
-                  {signedPct(r.change_24h_pct)}
-                </td>
-              </tr>
-            ))}
+            {coins.map((c) => {
+              const t = m.trend_pct[c];
+              return (
+                <tr key={c}>
+                  <td style={{ fontWeight: 600 }}>{coin(c)}</td>
+                  <td className={`r ${t > 0 ? "up" : "down"}`}>
+                    {t > 0 ? "▲" : "▼"} {signedPct(t, 2)}
+                  </td>
+                  <td className="r">{pct(m.vol_pct[c])}</td>
+                  <td className="r">{pct(m.hrp_weights_pct[c])}</td>
+                  <td className="r">{pct(m.target_weights_pct[c])}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
-      )}
-    </Section>
-  );
-}
-
-function Errors({ s }: { s: GrailState }) {
-  return (
-    <Section title="Hata günlüğü" meta="hata olursa döngü atlanır, agent durmaz">
-      {s.errors.length === 0 ? (
-        <p className="muted" style={{ margin: 0 }}>
-          Kayıtlı hata yok.
-        </p>
-      ) : (
-        <div className="errlist">
-          <ul>
-            {s.errors.slice(0, 12).map((e, i) => (
-              <li key={i}>
-                <span className="mono code">{e.code ?? "HATA"}</span>
-                <span>
-                  {e.message ?? "—"} {e.where && <span className="faint">({e.where})</span>}
-                </span>
-                <span className="faint num">{dateTime(e.at_ms)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </Section>
+      </div>
+    </Card>
   );
 }

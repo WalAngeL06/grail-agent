@@ -1,165 +1,141 @@
-import { useMemo, useState } from "react";
-import type { Decision } from "../state";
-import { checkOnChain, computeCommit, payloadMatchesRow, type ChainResult } from "../verify";
-import { ExplorerLink } from "./Bits";
+import { useEffect, useMemo, useState } from "react";
+import type { Cycle } from "../state";
+import { checkOnChain, computeCommit, isVerifiable, payloadMatchesRows, type ChainResult } from "../verify";
 
-type Props = { d: Decision; explorer?: string; rpc: string; contract?: string; onClose: () => void };
+type Props = { cycle: Cycle; rpc: string; contract?: string; demo?: boolean };
 
-/** "Bize güvenme, kendin hesapla": hash tarayıcıda hesaplanır, sonra zincirdeki commit tx'iyle karşılaştırılır. */
-export default function VerifyPanel({ d, explorer, rpc, contract, onClose }: Props) {
-  const original = d.payload_utf8 ?? "";
+/** "Verify yourself" (ui-brief §1.3): hash computed in this browser, compared with the stated hash and the commit tx on Fuji. */
+export default function VerifyPanel({ cycle, rpc, contract, demo }: Props) {
+  const original = cycle.payload_utf8 ?? "";
+  const salt = cycle.salt_hex ?? "";
   const [payload, setPayload] = useState(original);
+  const [computing, setComputing] = useState(true);
   const [chain, setChain] = useState<ChainResult | "loading" | null>(null);
-  const salt = d.salt_hex ?? "";
-  const edited = payload !== original;
+  const verifiable = isVerifiable(cycle.payload_utf8, cycle.salt_hex);
 
-  const local = useMemo(() => (payload && salt ? computeCommit(payload, salt, d.commit_hash) : null), [payload, salt, d.commit_hash]);
-  const row = useMemo(() => (payload ? payloadMatchesRow(payload, d.inst_id, d.action, d.size_usdt) : null), [payload, d]);
+  const local = useMemo(() => (verifiable ? computeCommit(payload, salt, cycle.commit_hash) : null), [verifiable, payload, salt, cycle.commit_hash]);
+  const origLocal = useMemo(() => (verifiable ? computeCommit(original, salt, cycle.commit_hash) : null), [verifiable, original, salt, cycle.commit_hash]);
+  const rows = useMemo(() => (verifiable ? payloadMatchesRows(payload, cycle.decisions) : null), [verifiable, payload, cycle.decisions]);
 
-  if (!d.payload_utf8 || !d.salt_hex) {
+  useEffect(() => {
+    // The hash takes <1 ms; the 400 ms pause makes the moment visible in the demo (brief §1.3).
+    const t = window.setTimeout(() => setComputing(false), 400);
+    let alive = true;
+    if (demo) setChain({ kind: "skipped", why: "demo data — tx ids are made up, nothing to read on Fuji" });
+    else if (verifiable && origLocal?.ok) {
+      setChain("loading");
+      checkOnChain(cycle.commit_tx, origLocal.computed, rpc, contract).then((r) => alive && setChain(r));
+    }
+    return () => {
+      alive = false;
+      window.clearTimeout(t);
+    };
+  }, []);
+
+  if (!verifiable) {
+    const notRevealed = !cycle.reveal_tx && !cycle.payload_utf8;
     return (
-      <div className="verify" role="region" aria-label="Kendin doğrula">
-        <h4>Bu karar henüz doğrulanamaz</h4>
-        <p className="muted" style={{ margin: 0 }}>
-          {d.reveal_tx || d.verified
-            ? "State'te payload veya salt yok; agent bu döngüyü reveal etmiş görünüyor ama ham veriyi yazmamış."
-            : "Döngü zincire commit edildi ama henüz reveal edilmedi. Salt reveal'a kadar gizli tutulur, bu yüzden hash şimdilik hesaplanamaz. Reveal edilmeyen her commit On-chain sicil ekranında açıkta kalan olarak sayılır; seçici gösterim yapılamaz."}
-        </p>
-        <div style={{ marginTop: 12 }}>
-          <button className="btn" onClick={onClose}>
-            Kapat
-          </button>
+      <div className="verify" role="region" aria-label="Verify yourself">
+        <p className="formula">commit_hash = keccak256( utf8(payload) ‖ salt )</p>
+        <div className="verdict grey">
+          {notRevealed ? "Not revealed yet — cannot verify" : "Mock data — cannot verify"}
         </div>
+        <p className="muted" style={{ margin: "6px 0 0", fontSize: 13 }}>
+          {notRevealed
+            ? "The salt stays secret until the reveal transaction. Until then this commit is counted as open on the ledger, so it can't be quietly dropped."
+            : "This state has placeholder payload/salt values (e.g. \"0x5a...\"), so there is nothing real to hash."}
+        </p>
       </div>
     );
   }
 
-  const runChain = async () => {
-    if (!local?.ok) return;
-    setChain("loading");
-    setChain(await checkOnChain(d.commit_tx, local.computed, rpc, contract));
-  };
+  const edited = payload !== original;
+  const localOk = local?.ok === true && local.matches;
+  const chainLine = chainText(chain, origLocal?.ok ? origLocal.computed : undefined);
+  const chainBad = chain && chain !== "loading" && (chain.kind === "mismatch" || chain.kind === "not_found" || chain.kind === "wrong_contract");
 
   return (
-    <div className="verify" role="region" aria-label="Kendin doğrula">
-      <h4>Kendin doğrula: döngü #{d.cycle_id ?? "?"}</h4>
-      <p className="formula">commit_hash = keccak256( utf8(payload) ‖ salt )</p>
+    <div className="verify" role="region" aria-label="Verify yourself">
+      <h4>Verify yourself · cycle #{cycle.cycle_id ?? "?"}</h4>
+      <p className="formula">commit_hash = keccak256( utf8(payload) ‖ salt ) — computed in your browser</p>
 
-      <div className="steps">
-        <div className="step">
-          <span className="no">1</span>
-          <div>
-            <p>
-              <b>Agent'ın mühürlediği karar metni</b>{" "}
-              <span className="faint">(düzenleyebilirsiniz; tek karakter değişse hash tutmaz)</span>
-            </p>
-            <textarea value={payload} onChange={(e) => {
-                setPayload(e.target.value);
-                setChain(null);
-              }} spellCheck={false} aria-label="Payload" />
-            {edited && (
-              <div className="edited">
-                Metni değiştirdiniz.{" "}
-                <button className="btn" style={{ padding: "2px 8px" }} onClick={() => {
-                    setPayload(original);
-                    setChain(null);
-                  }}>
-                  Orijinale dön
-                </button>
-              </div>
-            )}
-            <div className="hashline">
-              <span className="faint">salt</span>
-              <span className="mono">{salt}</span>
+      {computing ? (
+        <div className="verdict grey">computing…</div>
+      ) : (
+        <>
+          <div className="lines">
+            <span className="muted">computed</span>
+            <span className="mono">{local?.ok ? local.computed : local && !local.ok ? local.error : "—"}</span>
+            <span>{local?.ok ? (local.matches ? "✅" : "❌") : ""}</span>
+            <span className="muted">stated</span>
+            <span className="mono">{cycle.commit_hash ?? "—"}</span>
+            <span />
+            <span className="muted">on-chain</span>
+            <span className="mono" style={{ color: chainBad ? "var(--danger)" : chain && chain !== "loading" && chain.kind === "match" ? undefined : "var(--muted)" }}>
+              {chainLine}
+            </span>
+            <span>{chain && chain !== "loading" ? (chain.kind === "match" ? "✅" : chainBad ? "❌" : "") : ""}</span>
+          </div>
+
+          {localOk && !chainBad ? (
+            <div className="verdict ok">
+              ✅ Match — you didn't have to trust us
+              {chain && chain !== "loading" && chain.kind !== "match" && <small>(on-chain check unavailable)</small>}
             </div>
-          </div>
-        </div>
-
-        <div className={`step ${local?.ok && local.matches ? "ok" : "bad"}`}>
-          <span className="no">2</span>
-          <div>
-            <p>
-              <b>Tarayıcınızda hesaplanan hash</b>
-            </p>
-            {local && !local.ok ? (
-              <p className="verdict bad">❌ {local.error}</p>
-            ) : (
-              local?.ok && (
-                <>
-                  <div className="hashline">
-                    <span className="faint">hesaplanan</span>
-                    <span className="mono">{local.computed}</span>
-                    <span className="faint">state'teki</span>
-                    <span className="mono">{d.commit_hash ?? "—"}</span>
-                  </div>
-                  <p className={`verdict ${local.matches ? "ok" : "bad"}`} style={{ marginTop: 6 }}>
-                    {local.matches ? "✅ Eşleşiyor: karar metni commit'ten sonra değiştirilmemiş." : "❌ Eşleşmiyor: metin veya salt commit edilenle aynı değil."}
-                  </p>
-                  {local.saltBytes !== 32 && <p className="verdict wait">Uyarı: salt {local.saltBytes} bayt; sözleşme 32 bayt diyor.</p>}
-                </>
-              )
-            )}
-          </div>
-        </div>
-
-        {row && (
-          <div className={`step ${row.ok ? "ok" : "bad"}`}>
-            <span className="no">3</span>
-            <div>
-              <p>
-                <b>Metindeki karar ekrandaki satırla aynı mı</b>
-              </p>
-              <p className={`verdict ${row.ok ? "ok" : "bad"}`}>
-                {row.ok ? "✅" : "❌"} {row.note}
-              </p>
+          ) : (
+            <div className="verdict bad">
+              ❌ Mismatch
+              <small>
+                {edited
+                  ? "You changed the payload — one character is enough to break the seal."
+                  : !localOk
+                    ? "The payload or salt is not what was committed."
+                    : "The commit transaction on Fuji does not carry this hash."}
+              </small>
             </div>
-          </div>
+          )}
+          {rows && (
+            <p className={rows.ok ? "muted" : ""} style={{ margin: "8px 0 0", fontSize: 13, color: rows.ok ? undefined : "var(--danger)" }}>
+              {rows.ok ? "✓ " : "✕ "}
+              {rows.note}
+            </p>
+          )}
+        </>
+      )}
+
+      <details className="tamper">
+        <summary>Try tampering with the payload</summary>
+        <textarea
+          value={payload}
+          onChange={(e) => setPayload(e.target.value)}
+          spellCheck={false}
+          aria-label="Payload to hash"
+        />
+        {edited && (
+          <button className="btn sm" onClick={() => setPayload(original)}>
+            Restore original
+          </button>
         )}
-
-        <div className={`step ${chain && chain !== "loading" ? (chain.kind === "match" ? "ok" : chain.kind === "skipped" || chain.kind === "unreachable" ? "" : "bad") : ""}`}>
-          <span className="no">{row ? 4 : 3}</span>
-          <div>
-            <p>
-              <b>Avalanche Fuji'deki commit işlemi bu hash'i taşıyor mu</b>
-            </p>
-            <p className="muted" style={{ margin: "2px 0 8px", fontSize: 13 }}>
-              Commit tx: <ExplorerLink explorer={explorer} kind="tx" value={d.commit_tx} /> · salt-okunur RPC, cüzdan gerekmez
-            </p>
-            <button className="btn primary" onClick={runChain} disabled={!local?.ok || chain === "loading"}>
-              {chain === "loading" ? "Zincir okunuyor…" : "Zincirde kontrol et"}
-            </button>
-            {chain && chain !== "loading" && <ChainVerdict r={chain} />}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ marginTop: 14 }}>
-        <button className="btn" onClick={onClose}>
-          Kapat
-        </button>
-      </div>
+      </details>
     </div>
   );
 }
 
-function ChainVerdict({ r }: { r: ChainResult }) {
-  const p = (cls: string, text: string) => (
-    <p className={`verdict ${cls}`} style={{ marginTop: 8 }}>
-      {text}
-    </p>
-  );
+function chainText(r: ChainResult | "loading" | null, hash?: string): string {
+  if (r === null) return "—";
+  if (r === "loading") return "reading Fuji…";
   switch (r.kind) {
     case "match":
-      return p("ok", `✅ Zincirdeki commit tx'i bu hash'i içeriyor${r.block ? ` (blok ${r.block})` : ""}. Karar, emirden önce mühürlenmiş.`);
+      return `${hash} (in commit tx calldata${r.block ? `, block ${r.block}` : ""})`;
     case "mismatch":
-      return p("bad", "❌ Tx bulundu ama calldata'sında bu hash yok.");
+      return "commit tx found, but it does not carry this hash";
     case "wrong_contract":
-      return p("bad", `❌ Tx başka bir kontrata gitmiş (${r.to}).`);
+      return `commit tx went to another contract (${r.to})`;
     case "not_found":
-      return p("bad", "❌ Bu tx Fuji'de bulunamadı.");
+      return "commit tx not found on Fuji";
     case "unreachable":
-      return p("wait", `Fuji RPC'ye ulaşılamadı: ${r.error}. Yerel hash kontrolü yine de geçerli.`);
+      return `Fuji RPC unreachable (${r.error})`;
     case "skipped":
-      return p("wait", `Zincir kontrolü yapılamadı: ${r.why}.`);
+      return r.why;
   }
 }

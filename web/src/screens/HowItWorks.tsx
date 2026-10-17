@@ -93,7 +93,8 @@ export default function HowItWorks({ s }: { s: GrailState | null }) {
           <div>
             <div className="eyebrow">Last {days} days · simulation on real OKX hourly prices, no real orders</div>
             <h2>
-              Half the worst drop: <span className="gold">{n(g.max_drawdown_pct, 1, 1)}%</span> vs {n(b.max_drawdown_pct, 1, 1)}%
+              {drawdownHeadline(g.max_drawdown_pct, b.max_drawdown_pct)}: <span className="gold">{n(g.max_drawdown_pct, 1, 1)}%</span> vs{" "}
+              {n(b.max_drawdown_pct, 1, 1)}%
             </h2>
             <p className="muted">
               Starting from {n(R_START(), 0)} USDT, GRAIL's worst fall from a high was {n(g.max_drawdown_pct, 1, 1)}%, against {n(b.max_drawdown_pct, 1, 1)}% for
@@ -156,6 +157,20 @@ export default function HowItWorks({ s }: { s: GrailState | null }) {
       </details>
     </>
   );
+}
+
+/** Headline from the replay numbers themselves, so it stays true when replay.json changes. */
+export function drawdownHeadline(g?: number, b?: number): string {
+  if (g === undefined || b === undefined || !(b > 0)) return "Worst drop";
+  const f = g / b;
+  if (f > 1.1) return "A deeper worst drop than buy-and-hold";
+  if (f >= 0.9) return "About the same worst drop";
+  if (f >= 0.55) return `A ${Math.round((1 - f) * 100)}% smaller worst drop`;
+  if (f >= 0.48) return "Half the worst drop";
+  if (f >= 0.36) return "Less than half the worst drop";
+  if (f >= 0.3) return "About a third of the worst drop";
+  if (f >= 0.2) return "Less than a third of the worst drop";
+  return `A ${n(1 / f, 0)}× smaller worst drop`;
 }
 
 const signed = (v?: number) => (v === undefined ? "—" : `${v > 0 ? "+" : v < 0 ? "−" : ""}${n(Math.abs(v), 1, 1)}%`);

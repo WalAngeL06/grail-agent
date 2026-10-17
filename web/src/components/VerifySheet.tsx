@@ -147,7 +147,13 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
               mark={phase === "computing" || !usable ? undefined : matchStated}
               note={usable ? (fromChain ? "input read from the reveal transaction on Fuji" : "input taken from state.json") : undefined}
             />
-            <CheckRow title="Fingerprint the agent reported" tech={cycle.fromChain ? "DecisionCommitted event · commitHash" : "state.json · commit_hash"} value={cycle.commit_hash ?? "—"} />
+            <CheckRow
+              title="Fingerprint the agent reported"
+              tech={cycle.fromChain ? "DecisionCommitted event · commitHash" : "state.json · commit_hash"}
+              value={cycle.commit_hash ?? "—"}
+              mark={phase === "done" && usable && !!cycle.commit_hash ? (onchainHash ? cycle.commit_hash.toLowerCase() === onchainHash.toLowerCase() : matchStated) : undefined}
+              note={phase === "done" && usable && cycle.commit_hash ? (onchainHash ? "compared with the seal on Avalanche" : "compared with your browser's fingerprint") : undefined}
+            />
             <CheckRow
               title="Seal on Avalanche"
               tech={`GrailLedger.decisions(${agentId ?? "?"}, ${cycleNo ?? "?"})`}

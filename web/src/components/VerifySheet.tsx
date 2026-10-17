@@ -179,7 +179,7 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
             />
             <CheckRow
               title="It is the right cycle"
-              tech="payload.cycle_id == cycleId (R-003-4)"
+              tech="payload.cycle_id == cycleId"
               value={parsed ? `payload says cycle ${String(parsed.cycle_id)}${agentName ? `, agent ${String(parsed.agent)}` : ""}` : "—"}
               mark={phase === "done" && cycleOk !== undefined ? cycleOk && agentOk !== false : undefined}
             />

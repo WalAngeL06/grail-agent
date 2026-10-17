@@ -136,7 +136,7 @@ function CycleCard({
           <span className="ord">{isTrade(d) ? <OrderStatus d={d} failed={!c.commit_tx} /> : null}</span>
         </div>
       ))}
-      {onlyTrades && hidden > 0 && <div className="drow-note">{rows.length ? `+ ${hidden} hold hidden` : "All hold — nothing to trade this check-in."}</div>}
+      {onlyTrades && hidden > 0 && <div className="drow-note">{rows.length ? `+ ${hidden} ${hidden === 1 ? "hold" : "holds"} hidden` : "All hold — nothing to trade this check-in."}</div>}
 
       <div className="cycle-foot">
         <span>
@@ -205,7 +205,7 @@ function Stepper({ c }: { c: Cycle }) {
   type St = { label: string; cls: string; sub: string };
   const steps: St[] = [
     { label: "Decided", cls: c.decided_at_ms !== undefined ? "done" : "pending", sub: t(c.decided_at_ms) || "pending" },
-    { label: "Sealed", cls: c.commit_tx ? "done proof" : "fail", sub: c.commit_tx ? "on Avalanche" : "failed" },
+    { label: "Sealed", cls: c.commit_tx ? "done proof" : "fail", sub: c.commit_tx ? "on-chain" : "failed" },
     c.commit_tx
       ? ordered.length === 0
         ? { label: "Order", cls: "skip", sub: "no order" }

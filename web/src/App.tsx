@@ -163,7 +163,7 @@ function Intro() {
         </li>
         <li>
           <b>3 · You can check it yourself</b>
-          <span>Press "Verify" on any decision: your browser re-checks the seal against the blockchain.</span>
+          <span>Press "Verify yourself" on any decision: your browser re-checks the seal against the blockchain.</span>
         </li>
       </ol>
       <div className="intro-actions">
@@ -197,7 +197,7 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
       <span className="agent" title={`agent status: ${s.agent.status ?? "unknown"}`}>
         <span className={`dot ${running ? "on" : ""}`} />
         {s.agent.name ?? "agent"}
-        <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>
+        <span className="muted tb-opt" style={{ fontWeight: 400, fontSize: 12 }}>
           {running ? "running" : (s.agent.status ?? "status unknown")}
         </span>
       </span>
@@ -229,7 +229,7 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
       )}
       <span className="sep" />
       {(c.commits !== undefined || c.reveals !== undefined) && (
-        <a className="mini" href="#/ledger" title="Decisions sealed on Avalanche / opened / still sealed">
+        <a className="mini tb-opt" href="#/ledger" title="Decisions sealed on Avalanche / opened / still sealed">
           <b>{c.commits ?? "—"}</b> sealed <b>{c.reveals ?? "—"}</b> opened{" "}
           <b className={(c.unrevealed ?? 0) > 0 ? "open" : ""}>{c.unrevealed ?? "—"}</b>
           <span className={(c.unrevealed ?? 0) > 0 ? "open" : ""}>still sealed</span>
@@ -240,7 +240,9 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
       </a>
       <span className="grow" />
       {feed.source !== "snapshot" && (
-        <span title={s.generated_at_ms ? new Date(s.generated_at_ms).toISOString() : ""}>updated {ago(s.generated_at_ms, now)}</span>
+        <span className="tb-opt" title={s.generated_at_ms ? new Date(s.generated_at_ms).toISOString() : ""}>
+          updated {ago(s.generated_at_ms, now)}
+        </span>
       )}
     </header>
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { n as fmt } from "../format";
 
 // docs/ui-brief.md §2 — n_eff(N, ρ) = N / (1 + (N−1)ρ), SR_p = SR₁ · √n_eff  (engine/src/grail_engine/stats.py ile aynı)
@@ -8,15 +8,30 @@ export const nEff = (N: number, rho: number) => {
 };
 const srP = (sr1: number, N: number, rho: number) => sr1 * Math.sqrt(nEff(N, rho));
 
-const W = 720;
-const H = 320;
-const M = { l: 44, r: 64, t: 16, b: 36 };
+// Wide cards use the full geometry; under 520 px a smaller viewBox keeps chart text ~10 px instead of ~5 px (UI-QA P1).
+const FULL = { W: 720, H: 320, M: { l: 44, r: 64, t: 16, b: 36 }, fs: 11 };
+const COMPACT = { W: 400, H: 280, M: { l: 34, r: 44, t: 14, b: 34 }, fs: 13 };
 const X_MAX = 20;
 const REFS = [0, 0.2, 0.4, 0.8];
 
 type Props = { nAssets?: number; rho?: number; srSingle?: number; srNow?: number; nEffNow?: number; curve: { n: number; sr: number }[] };
 
+function useCompact() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(([e]) => setCompact(e.contentRect.width < 520));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, compact] as const;
+}
+
 export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curve }: Props) {
+  const [boxRef, compact] = useCompact();
+  const { W, H, M, fs } = compact ? COMPACT : FULL;
   const live = rho !== undefined ? clamp(round2(rho), 0, 0.95) : undefined;
   const [what, setWhat] = useState<number | null>(null);
   const [hover, setHover] = useState<number | null>(null);
@@ -70,7 +85,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
         </span>
       </div>
 
-      <div className="chart-box">
+      <div className="chart-box" ref={boxRef}>
         <svg
           viewBox={`0 0 ${W} ${H}`}
           width="100%"
@@ -88,21 +103,21 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
           {yTicks.map((t) => (
             <g key={t}>
               <line x1={M.l} x2={W - M.r} y1={y(t)} y2={y(t)} stroke="var(--border)" />
-              <text x={M.l - 8} y={y(t) + 4} textAnchor="end" fontSize="11" fill="var(--dim)">
+              <text x={M.l - 8} y={y(t) + 4} textAnchor="end" fontSize={fs} fill="var(--dim)">
                 {t.toFixed(1)}
               </text>
             </g>
           ))}
           {[1, 5, 10, 15, 20].map((t) => (
-            <text key={t} x={x(t)} y={H - M.b + 18} textAnchor="middle" fontSize="11" fill="var(--dim)">
+            <text key={t} x={x(t)} y={H - M.b + 18} textAnchor="middle" fontSize={fs} fill="var(--dim)">
               {t}
             </text>
           ))}
-          <text x={(M.l + W - M.r) / 2} y={H - 4} textAnchor="middle" fontSize="11" fill="var(--muted)">
+          <text x={(M.l + W - M.r) / 2} y={H - 4} textAnchor="middle" fontSize={fs} fill="var(--muted)">
             number of coins
           </text>
-          <text x={12} y={(M.t + H - M.b) / 2} fontSize="11" fill="var(--muted)" textAnchor="middle" transform={`rotate(-90 12 ${(M.t + H - M.b) / 2})`}>
-            return per unit of risk, if one coin = {fmt(sr1, 1)} (assumed)
+          <text x={12} y={(M.t + H - M.b) / 2} fontSize={fs} fill="var(--muted)" textAnchor="middle" transform={`rotate(-90 12 ${(M.t + H - M.b) / 2})`}>
+            {compact ? "return / risk (illustr.)" : <>return per unit of risk, if one coin = {fmt(sr1, 1)} (assumed)</>}
           </text>
 
           <g clipPath="url(#hg-plot)">
@@ -112,7 +127,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
             {ceiling !== undefined && ceiling < yMax && (
               <g>
                 <line x1={M.l} x2={W - M.r} y1={y(ceiling)} y2={y(ceiling)} stroke="var(--muted)" strokeDasharray="4 4" />
-                <text x={M.l + 6} y={y(ceiling) - 6} fontSize="11" fill="var(--muted)">
+                <text x={M.l + 6} y={y(ceiling) - 6} fontSize={fs} fill="var(--muted)">
                   ceiling {fmt(ceiling, 2)}
                 </text>
               </g>
@@ -128,7 +143,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
           </g>
 
           {REFS.map((rr) => (
-            <text key={rr} x={W - M.r + 6} y={y(srP(sr1, X_MAX, rr)) + 4} fontSize="11" fill="var(--dim)">
+            <text key={rr} x={W - M.r + 6} y={y(srP(sr1, X_MAX, rr)) + 4} fontSize={fs} fill="var(--dim)">
               ρ {rr}
             </text>
           ))}
@@ -139,7 +154,7 @@ export default function HolyGrail({ nAssets, rho, srSingle, srNow, nEffNow, curv
             <g>
               <circle className="pulse" cx={x(N)} cy={y(nowSr)} r="7" fill="none" stroke="var(--grail)" strokeWidth="2" />
               <circle cx={x(N)} cy={y(nowSr)} r="6" fill="var(--grail)" stroke="var(--bg)" strokeWidth="2" />
-              <text x={x(N) + 12} y={y(nowSr) - 12} fontSize="12" fontWeight="600" fill="var(--text)">
+              <text x={x(N) + 12} y={y(nowSr) - 12} fontSize={fs + 1} fontWeight="600" fill="var(--text)">
                 You are here: {N} coins ≈ {fmt(nowBets, 1, 1)} bets
               </text>
             </g>

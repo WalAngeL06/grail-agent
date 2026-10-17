@@ -77,7 +77,7 @@ export default function Settings({ s }: ScreenProps) {
             <span>
               {s.dry_run ? "Orders are simulated, but every decision is really sealed on Avalanche." : s.dry_run === false ? "Orders go to OKX TR with real money." : ""}
               <span className="tech">
-                dry_run: {String(s.dry_run)} · account: {s.mode === "live" ? "OKX TR live account" : (s.mode ?? "?")} · switching is a config change, not a UI button
+                dry_run: {String(s.dry_run)} · {s.dry_run === false ? "OKX TR live account" : "OKX TR · prices & balance only, orders simulated"} · switching is a config change, not a UI button
               </span>
             </span>
           </div>

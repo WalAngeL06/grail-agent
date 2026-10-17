@@ -233,3 +233,22 @@ details.math[open] summary { margin-bottom: 8px; }
   .slider { grid-template-columns: 1fr; gap: 6px; }
   .slider .val { text-align: left; min-width: 0; }
 }
+
+@media (max-width: 760px) {
+  /* P1: top bar = one horizontally scrollable row; secondary items hidden */
+  .topbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; min-height: 48px; padding: 6px 12px; column-gap: 10px; }
+  .topbar::-webkit-scrollbar { display: none; }
+  .topbar .tb-opt, .topbar .sep { display: none; }
+  /* P1: ledger rows become cards, Verify full width at the bottom */
+  .ledger-table thead { display: none; }
+  .ledger-table, .ledger-table tbody { display: block; }
+  .ledger-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .ledger-table td { display: block; padding: 0; border: none; }
+  .ledger-table td[data-label]::before { content: attr(data-label); display: block; font-size: 11px; color: var(--dim); }
+  .ledger-table td.verify-cell { grid-column: 1 / -1; text-align: left; }
+  .ledger-table td.verify-cell .btn { width: 100%; height: 36px; }
+  .ledger-table tbody tr:hover td { background: none; }
+}
+
+/* P2: stepper labels never wrap */
+.stepper .step-l, .stepper .step-s { white-space: nowrap; }

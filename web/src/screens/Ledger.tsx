@@ -131,7 +131,7 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
             </Empty>
           ) : (
             <div className="scroll-x">
-              <table className="table">
+              <table className="table ledger-table">
                 <thead>
                   <tr>
                     <th>Check-in</th>
@@ -147,7 +147,7 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
                 <tbody>
                   {cycles.map((x) => (
                     <tr key={x.id}>
-                      <td style={{ fontWeight: 600 }}>
+                      <td data-label="Check-in" style={{ fontWeight: 600 }}>
                         #{x.id}
                         {x.fromChain && (
                           <div className="tech" title="Not in this agent's state file; read from GrailLedger events on Avalanche.">
@@ -155,18 +155,18 @@ export default function Ledger({ s, chain, now, demo }: ScreenProps) {
                           </div>
                         )}
                       </td>
-                      <td className="mono muted">{dayClock(x.decided_at_ms)}</td>
-                      <td>{x.commit_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.commit_tx} /> : <span style={{ color: "var(--danger)" }}>failed · no trade</span>}</td>
-                      <td>{x.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.reveal_tx} /> : x.commit_tx ? <span className="tag open" title="Sealed but not opened yet. It stays visible on chain.">OPEN</span> : "—"}</td>
-                      <td>
+                      <td data-label="Time" className="mono muted">{dayClock(x.decided_at_ms)}</td>
+                      <td data-label="Sealed">{x.commit_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.commit_tx} /> : <span style={{ color: "var(--danger)" }}>failed · no trade</span>}</td>
+                      <td data-label="Opened">{x.reveal_tx ? <ExplorerLink explorer={explorer} kind="tx" value={x.reveal_tx} /> : x.commit_tx ? <span className="tag open" title="Sealed but not opened yet. It stays visible on chain.">OPEN</span> : "—"}</td>
+                      <td data-label="Mode">
                         <ModeTag dry={x.dry_run} />
                       </td>
-                      <td>{summary(x.decisions.map((d) => d.action)) || <span className="dim">not opened yet</span>}</td>
-                      <td>{x.verified === true ? <span className="mark ok">✓</span> : x.verified === false ? <span className="mark bad">✕</span> : <span className="dim">—</span>}</td>
-                      <td className="r">
+                      <td data-label="Decisions">{summary(x.decisions.map((d) => d.action)) || <span className="dim">not opened yet</span>}</td>
+                      <td data-label="Checked">{x.verified === true ? <span className="mark ok">✓</span> : x.verified === false ? <span className="mark bad">✕</span> : <span className="dim">—</span>}</td>
+                      <td className="r verify-cell">
                         {x.commit_tx && (
                           <button className="btn sm proofbtn" onClick={() => setVerify(x)}>
-                            Verify
+                            Verify yourself
                           </button>
                         )}
                       </td>

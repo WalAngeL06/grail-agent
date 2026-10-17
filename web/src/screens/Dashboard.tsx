@@ -128,8 +128,8 @@ function FlowStrip({ c, s, now }: { c?: Cycle; s: GrailState; now: number }) {
   const next = countdown(s.agent.next_cycle_at_ms, now);
   const mk = s.market.find((x) => x.at_ms)?.at_ms;
   const steps: { n: number; title: string; sub: string; href: string; state: "done" | "pending" | "skip" | "fail" }[] = [
-    { n: 1, title: "Market", sub: s.market.length ? `${s.market.length} prices from OKX${mk ? ` · ${ago(mk, now)}` : ""}` : "waiting for prices", href: "#/dashboard/positions", state: s.market.length ? "done" : "pending" },
-    { n: 2, title: "Decision", sub: c ? `${c.trades} trade${c.trades === 1 ? "" : "s"}, ${c.decisions.length - c.trades} hold` : "next check-in soon", href: "#/decisions", state: c ? "done" : "pending" },
+    { n: 1, title: "Market", sub: s.market.length ? `${s.market.length} ${s.market.length === 1 ? "price" : "prices"} from OKX${mk ? ` · ${ago(mk, now)}` : ""}` : "waiting for prices", href: "#/dashboard/positions", state: s.market.length ? "done" : "pending" },
+    { n: 2, title: "Decision", sub: c ? `${c.trades} trade${c.trades === 1 ? "" : "s"}, ${c.decisions.length - c.trades} ${c.decisions.length - c.trades === 1 ? "hold" : "holds"}` : "next check-in soon", href: "#/decisions", state: c ? "done" : "pending" },
     { n: 3, title: "Sealed", sub: !c ? "—" : c.commit_tx ? "fingerprint on Avalanche" : "couldn't seal → no order", href: "#/ledger", state: !c ? "pending" : c.commit_tx ? "done" : "fail" },
     {
       n: 4,

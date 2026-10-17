@@ -1,72 +1,58 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Revizyon: r49 · 2026-10-17 17:52 Europe/Istanbul. Önceki ayrıntı: coord/archive/STATE-r40-20261017.md (daha eski r26/r17 arşivleri korunur).
-- İlk CANLI:15:37 cycle2 BUY BTC2USDT filled, OKX4017748393474314240. Sürekli döngü dry_run=true; gerçek Fuji commit/reveal. Integrator runner/emir/tx başlatmaz.
-- Sözleşme: VERSION0.6.2; yalnız opsiyonel/hash dışı metrics.signals[inst].ou eklendi. Config/payload/state contract_version0.6,chain deploy0.5/ABI/hash aynı. sleeve kullanıcının kesinleştirdiği momentum|mean_reversion|none metin enumudur; %25 tavan engine kodunda/testte, ek bütçe alanı yok.
-- Bu teslim TAMAM: web95d9eda→mainab6e2d5,review1feb9ed→maind35d1c7,engine88f00f3→main2abc8c2 ayrıpush/clean/uzak eşitliği doğrulandı. T-017 AÇIK17:51'de pushlandı,18:10kapısı sağlandı; main210engine/157agents/ikiwebbuild PASS. Üçhedef ancestor/exact ağaç PASS; başlangıçfd0d200. Son koordinasyon commit'i bu kanıtı kaydeder.
-- Verify R-010 GO yalnız webc1c2361/chain23a81aa. **R-011 KAPANDI, audit jüriye GO**: kullanıcı/planner public RPC48/48 MATCH,Unopened0,Mismatch0,LIVE1,exit0; integrator54 test/typecheck PASS. Kendi audit tekrarı61→62 yeni cycle nedeniyle INCOMPLETE/exit1; beklenen fail-closed, tam rapor yazılmadı. Bunlar ayrı snapshot/kanıtlardır.
-- **T-017 kullanıcı kararıyla AÇIK merge GO:** R-012/review1feb9ed tam88f00f3 için APPROVE koşullu,18:10merge+AÇIK GO. R-012-1 kabul edilen bilinen davranış: ranging+anlamlı coinde MR çıkışı momentumdan gelen pozisyonu da satabilir (risk azaltıcı); R-012-2 MINOR tutma bandı düşüş SELL'ini bastırabilir. İnceleyen kullanıcı/planner kararıyla role/review oldu (chain meşgul); aynı model ailesinde bağımsız oturum sınırı raporda açık. Merge sonrası restart agents sahibinde.
-- Public kapısı: R-005 GO yalnız taranmış main9acec55/ref kümesi; son yayın SHA fark taraması hâlâ açık. Public ayarı/yayın/form/slides/video yüklemesi yapılmadı.
+- Revizyon r50 · 2026-10-17 18:02 Europe/Istanbul. Önceki ayrıntılar coord/archive/STATE-r49-20261017.md,r40/r26/r17 arşivlerinde.
+- Sözleşme VERSION0.6.2; config/payload/state0.6,chain deploy0.5/ABI/hash aynı. ou opsiyonel/hash dışı; sleeve momentum|mean_reversion|none. İlk CANLI15:37cycle2BTC2USDTfilled korunur; yeni canlı yetki yok.
+- Bu istek: chainfaf65cb→docs67d1ee3→web785d260 ayrı merge/push. Başlangıçmainf9beb7e temiz/origin ile aynı; üç exact hedef uzak dallardan erişilebilir. Chain bu adımda,docs/web sonraki iki merge; daha yeni uçlar otomatik alınmaz.
+- R-011 GO: yeni audit başlangıçtaki sabit döngü kümesini doğrular; sonradan gelen döngüler açıkça hariç. Büyüme tek başına hata değil; seçili kayıt değişimi/sayaç gerilemesi/reorg/eksik-çift log/RPC hata olarak kalır. --max-cycleK seçilen ID<=K kapsamını açık etiketler.
+- Bu tur chain60test(5s)/typecheck PASS. Integrator publicRPC18:01:24snapshot59605190:Total89/Revealed89/Unopened0/MATCH89/Mismatch0/LIVE1,exit0,before=after89/89. Kullanıcı/planner ayrı80→81büyüme sırasında80/80MATCH/exit0 bildirdi; sayılar farklı snapshot'lardır. Runner'a dokunulmadı.
+- T-017 main88f00f3 AÇIK;17:51merge/push kapısı sağlandı. R-012-1bilinen davranış: MR çıkışı ranging+anlamlı coinde momentum pozisyonunu da satabilir; R-012-2MINOR tutma bandı düşüş SELL'ini bastırabilir. Restart/yeniOUruntime kanıtı agents sahibinde hâlâ açık.
+- PublicR-005GO yalnız tarananmain9acec55/ref kümesi; son yayınSHA fark taraması,linkler/video/rootREADME/prova/form açık. Bu tur yayın/görünürlük/form/slides yükleme yok.
 
 ## Zaman kapıları
-| Saat | Kapı | Durum/ölçüt |
+| Saat | Kapı | Durum |
 |---|---|---|
-| 13:30 | Fuji deploy | GEÇ:14:36 dört deploy+kimlik doğrulandı |
-| 15:00 | Uçtan uca dry_run | GEÇTİ14:50; gerçek ATK+Fuji,5simulatedBUY |
-| 16:50 | T-014 merge üst sınırı | GEÇTİ16:29 main6729fbb; önceki167/157/build ve merge sonrası157 |
-| 17:00 | Feature freeze | yalnız T-017 kullanıcı istisnası; diğerleri hata düzeltme+UI |
-| 17:50 | T-017 engine push | GEÇTİ;88f00f3 kullanıcı/uzak ref ile doğrulandı;210test integrator PASS |
-| 18:00 | Yedek demo videosu | kayıt hazır olmalı; kanıt/link açık |
-| 18:10 | T-017 merge üst sınırı | GEÇTİ17:51;R-012reviewGO+kullanıcıAÇIK;main2abc8c2push/210+157+build |
-| 18:45 | Teslim formu | GitHub/sunum/BuilderHub e-postası ve gönderim kanıtı |
+| 13:30 | Fuji deploy | GEÇ14:36dört deploy+kimlik |
+| 15:00 | Uçtan uca dry_run | GEÇTİ14:50 gerçekATK+Fuji,simulatedBUY |
+| 17:00 | Feature freeze | yalnız T-017 kullanıcı istisnası; diğerleri hata+UI |
+| 18:00 | Yedek demo videosu | link/kanıt açık;5slayt final67d1ee3 sırada |
+| 18:10 | T-017 merge sınırı | GEÇTİ17:51main2abc8c2,AÇIK;210/157+build |
+| 18:45 | Teslim formu | GitHub/sunum/BuilderHub e-posta+gönderim kanıtı |
 | 19:00 | Teslim kapanır | |
 
 ## Görev panosu
 | Görev | Başlık | Sahip | Durum | Kanıt/bağımlılık |
 |---|---|---|---|---|
-| T-001 | Quant engine+golden testler | engine | INTEGRATED | önceki sözleşme/test kanıtı r40 arşivi |
-| T-002 | ATK veri+guarded emir | agents | INTEGRATED | R-002/R-004b kapıları işlendi |
-| T-003 | ERC-8004+GrailLedger+Fuji deploy | chain | INTEGRATED | deploy0.5/ABI/hash aynı |
+| T-001 | Quant engine | engine | INTEGRATED | önceki golden/test kanıtı arşivde |
+| T-002 | ATK veri+guarded emir | agents | INTEGRATED | R-002/R-004b işlendi |
+| T-003 | ERC-8004+GrailLedger+Fuji | chain | INTEGRATED | deploy0.5/ABI/hash aynı |
 | T-004 | UI brifi | docs | INTEGRATED | docs/ui-brief.md |
-| T-005 | TR/EN UI+Motto+Rehber+Verify | web/QA | INTEGRATED95d9eda; Verify GO | integrator22test/build/public PASS; varsayılanTR,EN/TRkalıcı seçim |
-| T-006 | Agent döngüsü+ilk canlı | agents | INTEGRATED | ilk canlıcycle2; sürekli çalışma dry_run |
-| T-007 | LLM BUY azaltma analisti | analyst/agents | INTEGRATED; Gemini3.7 kanıtı alındı | agentsaf4106d cycle45/46ETHapproved; PID48008 salt okunur kontrolle çalışıyor |
-| T-008 | README/form taslakları | docs | INTEGRATED9a0fb7f | link/team/ilk canlı cycle yönlendirmesi ve yeni R-011GO son hazırlık |
-| T-009 | Engine İngilizce reason | engine | INTEGRATED | b7e294b |
-| T-010 | Explorer kaynak+tek cycle doğrulama | chain | INTEGRATED; R-006 GO | dört verified/önceki gerçek MATCH |
-| T-011 | Türkçe11 slayt | docs | INTEGRATED9a0fb7f |11slayt/11not; yalnız6/10değişti,PowerPoint render/görsel PASS |
-| T-012 |30gün replay | engine | INTEGRATED; T-017 snapshot | +1.63%,düşüş4.54%,295simulated,ücret1.4874; al-tut+8.81%/14.51% |
-| T-013 | Sade UI metinleri | docs/web | INTEGRATED | R-007 ile eşleşti |
-| T-014 | Hurst+entry gate | engine/agents | INTEGRATED; restart/sonuç kanıtı alındı |4a83bd8 rapor+af4106d cycle34/35/45/46; aynı barlarda5→1BUY/19.02→2.64USDT |
-| T-015 | Sicil audit | chain | INTEGRATED; R-011 GO |6f19510;54test/typecheck; kullanıcı bağımsız48MATCH |
-| T-016 | Türkçe FAQ+3dk runbook | docs | INTEGRATED9a0fb7f |12+1 soru; yeni R-011GO/video/link/prova son hazırlık |
-| T-017 | O-U ortalamaya dönüş kolu | engine; R-012role/review | INTEGRATED / AÇIK; restart agents'ta |88f00f3;integrator210/157+webbuild/public PASS;R-012-1bilinen/-2MINOR |
-| R-002/R-003 | İlk adapter/chain incelemeleri | bağımsız reviewer | DONE; koşullar işlendi | r40 arşivi/kararlar |
-| R-004/R-004b | Döngü/canlı kapı | bağımsız reviewer | DONE / APPROVE | ac96902; gerçek ilk canlı kullanıcı yaptı |
-| R-005 | Public sır taraması | reviewer | GO (taranan kapsam) | son yayın SHA tekrar taraması açık |
-| R-006 | T-010 inceleme | docs/reviewer | DONE / APPROVE | e77eaed; MINOR/INFO korunur |
-| R-007 | UI matematik | engine/reviewer | DONE / INTEGRATED | c2a731b |
-| R-009 | T-014 inceleme | reviewerClaudeMax | DONE / GO koşullu |8ef0449+87539f8 kullanıcıGO; Hurst tahmin sınırı korunur |
-| R-010 | Web Verify | chain/reviewer | DONE / GO | c1c2361/23a81aa |
-| R-011 | Audit RPC düzeltmesi | chain | DONE / GO; INTEGRATED |6f19510→main81356a1 push; planner48MATCH,integrator54test; moving-ledger fail-closed |
-| R-012 | T-017 bağımsız inceleme | reviewer/ClaudeOpus, ayrı oturum | INTEGRATED / APPROVE koşullu / GO |1feb9ed;88f00f3;R-012-1STATE'e bilinen davranış işlendi,-2MINOR; kullanıcı AÇIK |
+| T-005 | TR/EN+motto+Rehber+OU | web/QA | INTEGRATED95d9eda;785d260 sırada | OUçipi+Smartentry;VerifyGO korunur |
+| T-006 | Döngü+ilk canlı | agents | INTEGRATED | cycle2BTC2filled;dry-run döngü |
+| T-007 | LLM BUY azaltma | analyst/agents | INTEGRATED | Gemini3.7cycle45/46approved tarihli kanıt |
+| T-008 | README/form taslakları | docs | INTEGRATED9a0fb7f;67d1ee3 sırada | link/team/Grinold kaynak raporu açık |
+| T-009 | İngilizce reason | engine | INTEGRATED | b7e294b |
+| T-010 | Kaynak+tekcycle doğrulama | chain | INTEGRATED;R-006GO | verified kaynaklar/öncekiMATCH |
+| T-011 |3dk final5slayt+11yedek | docs |67d1ee3 sırada | preflight5/5+11/11notes;10değişen slayt PowerPoint/görselPASS |
+| T-012 |30gün replay | engine | INTEGRATED88f00f3 | +1.63%/düşüş4.54%/295simulated/ücret1.4874 |
+| T-013 | UI metinleri | docs/web | INTEGRATED | TR/EN+Rehber main'de |
+| T-014 | Hurst+entry gate | engine/agents | INTEGRATED |4a83bd8 geçmiş rapor;T-017öncesi snapshot |
+| T-015 | Çalışan sicilde audit | chain | INTEGRATED;faf65cb bu adım |60test/typecheck;integrator89MATCHexit0;planner80→81 |
+| T-016 |3dk runbook+2dkQ&A | docs |67d1ee3 sırada | audit önceden,6kısa cevap,TUTORIALTR/EN |
+| T-017 | O-U kolu | engine | INTEGRATED/AÇIK;restart agents'ta |88f00f3;önceki210/157+webbuild;R-012-1bilinen/-2MINOR |
+| R-002/R-003/R-004b | Adapter/chain/canlı kapı | reviewer | DONE;koşullar işlendi | arşiv/kararlar |
+| R-005 | Public sır taraması | reviewer | GO(taranan kapsam) | sonSHA fark taraması açık |
+| R-006 | Tekcycle inceleme | docs/reviewer | DONE/APPROVE | e77eaed;MINOR/INFOkorunur |
+| R-007/R-009 | UI matematik/T-014 | reviewer | DONE/INTEGRATED | arşiv;Hurst tahmin sınırı |
+| R-010 | Verify | chain/reviewer | DONE/GO |c1c2361/23a81aa |
+| R-011 | Audit RPC+büyüyen sicil | chain | DONE/GO;faf65cb bu adım | seçili sabit küme;sonraki büyüme hariç,89MATCH |
+| R-012 | T-017 inceleme | role/review | INTEGRATED/APPROVEkoşulluGO |1feb9ed;R-012-1kabul/-2MINOR;AÇIK |
 
 ## Bu tur kanıtları
-- Chain birleşik ağacı6f19510 ile birebir; staged fark yalnız chain/+kendi handoff'u.54test(6s)/typecheck PASS; diff --check temiz; diğer ürünler başlangıç1f57076 ile aynı. Yeni audit latest state ve fresh before/after sayaç kontrolüyle çalışır; canonical scan-head/event/hash/receipt kontrolleri korunur.
-- Audit RPC seçimi CLI>GRAIL_AUDIT_RPC_URL>FUJI_RPC_URL>PublicNode; .env/signer yüklenmez. Canlı rapor chain/runtime/audit-latest.md(ignore); tracked deployments raporu16:06/16cycle örnektir. okxOrderId hash dışı ve fill kanıtı olmadığı açık.
-- Kullanıcı bağımsız planner48/48MATCH/0açık/0mismatch/1LIVE/exit0 bildirdi. Integrator gerçek tekrarında before61/61→after62/62,scanned61/61; INCOMPLETE/exit1 ve rapor yok. Çalışan agent'ın yeni cycle'ı beklenen tamlık reddini tetikler; GO için başarılı snapshot ile karıştırılmaz.
-- Önceki R-010 gerçekcycle1/2/3 ve38history inceleyen kanıtıdır; web helper CLI canonical blockHash/event-data kapsamının tamamını taşımaz. Son web22test/iki build önceki turdadır. Bu tur tarayıcı/sır taraması yok.
-- Docs9a0fb7f actual merge farkı yalnız docs/+kendi handoff7dosya; çoklu merge-base nedeniyle üç-nokta diff'teki eski main kayıtları yeni yabancı yazım değil. Exact docs ağaç/diff--check PASS; diğer ürünlerchain81356a1 ile aynı. PPTX11slayt11not;8103126'ya göre yalnızslide6/10XML değişmiş; ikisi PowerPoint'te1280x720 render/görsel PASS.
-- Engine4a83bd8 actual farkı engine/out/live-gates-today.md+.json ve kendi handoff'u; ürün kaynakları/test/ayarlar aynı. JSON/cohort/tutar/toplam kontrolleri PASS:22eski/17yeni aynıbar döngüsü,110/17BUY,418.44/44.88USDT. Cycle3–50 toplam48commit+48reveal/240karar sahibin dosya kanıtıdır; yeni bağımsız RPC kanıtı değil. PID48008python17:22 salt okunur süreç kontrolünde çalışıyor.
-- Agentsaf4106d actual farkı3kanıtJSON+kendi handoff; kaynak/test/ayarlar değişmedi. ÜçJSON parse ve Gemini45/46koşul kontrolleri PASS; ikisinde4HOLD+1ETHsimulatedBUY/approved/errors0,modelgemini-3.7-flash,fallbackfalse. Anahtar okunmadı. Main'de uv run --frozen pytest -q --tb=short→157passed(15.45s). Receipt/hash doğrulaması sahip kanıtıdır, integrator RPC/fill tekrarı yapmadı.
-- Bu tur web95d9eda birleşik ağacı exact/sınır/diff--check PASS; npm test22/22,normal/public build56modül708/754ms PASS. Yalnız web/+handoff değişti; diğer ürünlerfd0d200 ile aynı. DefaultTR/EN|TR/localStorage/motto/guide kaynakta doğrulandı; verifyLogic/verify/chain çekirdeği aynı. Tarayıcı/görsel QA sahip kanıtıdır; integrator bu tur tekrarlamadı.
-- Review1feb9ed actual farkı T-017/T-015 incelemeleri+reviewer handoff; exact/diff--check temiz,ürünlerwebab6e2d5 ile aynı. T-015 eskiR-011NO-GO tarihsel,güncelR-011GO aynı. R-012400senaryo0ihlal inceleyen kanıtı; integrator kendi210/157test/build'ini yaptı,400fuzz tekrarı yok.
-- Engine88f00f3 actual merge8dosya yalnız engine/+handoff; çoklu merge-base üçnokta diff gürültüsü ürüne taşınmadı. Exact engine ağacı/sınır/diff PASS; contracts/agents/analyst/chain/docs başlangıçfd0d200 ile aynı,web95d9eda/review1feb9ed korunur. Main uv run --frozen pytest -q --tb=short:engine210(10.35s),agents157(17.86s) PASS; agents import main/engine/src/grail_engine/decision.py. Yeni replay ile web56modül build1.08s/public757ms PASS.
-- T-017 motor kolu bu exact kodda AÇIK,sabitiMR_BUDGET_FRAC0.25; yeni config anahtarı/toggle eklenmedi. Replay JSON+1.63%/4.54%,149BUY+146SELL=295simulated,ücret1.4874,kill0/errors0. Engine handoff'u eski0.6.1 okumasını bildiriyor; integrator0.6.2 metrik/payload0.6/deploy0.5 uyumunu mevcut test ve değişmeyen contracts ile doğruladı.
+- Chain actualfark6dosya yalnız chain/+handoff; exact/sınır/diff temiz,diğer ürünlerf9beb7e ile aynı. npmrun typecheck+60test PASS. Fullaudit89/89MATCHexit0,head59605190/hash0xb6c115a2951d0ce2b4eb4e4d2dbca8577a00c5b7b1db7714b15cbeeba870d14e;raporchain/runtime/audit-latest.md ignored. Sonradan gelen kayıtlar “new cycles not included” diye açık kapsam dışı;sample16cycle rapor aynı.
+- Doküman preflight67d1ee3:5finalslayt5not ve11yedek11not ZIP/XML; final5+değişen yedek1/5/6/10/11 PowerPoint1280x720render/tek tek görselPASS. Kalan6yedek slayt öncekiylebirebir. Bunlar gitshowexactbinary'den repo dışıQA; merge sonrası exact hash/ağaç kontrolü yapılacak.
+- Yeni docs80/80 sayacı kullanıcı/planner snapshot'ı; integrator89/89 farklıtarihli snapshot. Docs engine/out/grinold-30d.md referansı main'de YOK(aa77641 kullanıcı merge talimatı yok); bu rapor/IC ölçümü integrator tarafından doğrulanmadı/otomatik alınmaz.
+- Önceki engine210/agents157/web22 ve iki build kanıtı r49arşivinde; ürün engine/agents değişmediği için bu tur tekrar koşulmadı. Son web785d260 test/build kontrolleri üçüncü merge'de.
 
 ## Bekleyenler / sınırlar
-- Docs9a0fb7f R-011 NO-GO zamanındaki archive-RPC metnini içerir; exact hedef alınır, R-011 kapandıktan sonra README/FAQ/form/runbook metni docs sahibince güncellenmeli. İlk canlıcycle2; verify:cycle:1 simülasyoncycle1. Kök README D-012/link/doğrulama kapısında.
-- Engine4a83bd8 ve agentsaf4106d rapor/kanıt teslimleri alındı; yeni ürün kodu veya yeni canlı fill yok. Yeni modelde cycle48timeout raporlanmıştır;45/46başarılı kanıt tüm çağrılar başarılı demek değildir. Tarihli dosya kanıtı ile mevcut PID durumu ayrılır.
-- T-017 AÇIK alındı; R-012-1bilinen davranış veR-012-2MINOR korunur,opsiyonelfix eklenmedi. Agents merge sonrası aynıdry-run runtime'ı yeni main ile kendi rolünde yeniden başlatıp signals.ou/kol/limit/cycle/pending/errors/commit-reveal kanıtını raporlayacak. Integrator bu tur PID/state/runner'a dokunmadı; yeni canlı yetki yok.
-- Web/docs/pitch yeni+1.63%/düşüş4.54%/295işlem ve MR davranışıyla eşlenmeli; eski+ranging her zaman alımı durdurur/düşüşte her zaman nakit anlatımı geçersiz. Web95d9eda dil/rehber teslimidir; MR gösterimi/anlatımı ayrı sahip son hazırlığı. Engine/out/live-gates-today eskiT-014snapshot, yeniOUruntime kanıtı değil.
-- Runtime/journal/pending/.env/anahtarlar ve worker korunur; integrator yeni runner başlatmaz/durdurmaz, OKX/tx göndermez. R-004/R-002 MINOR/NIT ve R-006 INFO'lar korunur.
+- Docs67d1ee3 ve web785d260 sıradaki ayrımerge/push. Main'e alınmayan Grinold kaynak raporu için exact kullanıcı talimatı veya docs referans düzeltmesi gerekir; link/team/video/slides/rootREADME/prova açık. Yedek sunumdaki eski test sayaçları final öncesi docs'ta yenilenmeli.
+- T-017restart kanıtı agents'tan beklenir; integrator PID/state/.env/runner/config/runtime/journal/pending değiştirmez,yeniemir/tx yok. R-012-1kabul/-2MINOR sürer; AÇIK motor kararı canlı yetki değildir.

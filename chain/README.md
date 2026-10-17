@@ -7,8 +7,8 @@ cd chain
 npm run audit
 ```
 
-This reads every agent #1 commit/reveal from the ledger deployment block through
-one fixed Fuji block, using the public
+This selects agent #1's starting ledger and reads its commit/reveal events from
+the deployment block through one fixed Fuji block, using the public
 [PublicNode Fuji RPC](https://avalanche.publicnode.com/?fuji). It prints terminal
 tables and saves `runtime/audit-latest.md` in a git-ignored directory.
 The tracked [`deployments/audit-latest.md`](deployments/audit-latest.md) is a
@@ -22,12 +22,24 @@ between windows. Rate limits (including HTTP 429) have four retries with
 500/1,000/2,000/4,000 ms backoff. The deployment block comes from the verified
 deployment receipt. Logs have a fixed upper block, but `commitCount`,
 `revealCount` and `decisions` are read at **latest**, since public RPCs may not
-support historical `eth_call`. Both counters are read freshly before the scan
-and again after all cycle checks, without caching state calls. Both pairs must
-be identical and exactly match the scanned event counts. Missing/duplicate
-events, a changed ledger, or RPC failures stop the audit. A changed ledger is
-reported as **INCOMPLETE**; retry to include the new records. The scan head's
-block hash is also checked again at the end.
+support historical `eth_call`. Fresh counter pairs bracket selection of the
+starting head, so commits arriving at that boundary are included consistently.
+Starting event counts must exactly match those counters. Verification covers
+only this starting cohort; later commits are excluded. All selected `decisions`
+records and both counters are read again without caching at the end. Append-only
+growth succeeds with `Audited N cycles; ledger grew to M during the scan (new
+cycles not included)`. A decreased counter or changed selected record fails as
+**INCOMPLETE**; a pending selected cycle becoming revealed also requires a
+rerun. Missing/duplicate events, hash mismatches and RPC failures remain errors.
+The scan head's block hash is also checked again at the end.
+
+For the fast demo, run `npm run audit -- --max-cycle 3`. Only cycle IDs at most
+3 are verified and counted in the summary; the report states the cap and the
+size of the starting ledger. This does not claim to audit the excluded cycles.
+The log scan still checks the complete starting event counts, but receipt,
+calldata, hash and storage verification runs only for the selected cycles.
+`--max-cycle K` accepts a decimal uint256 (including 0 for an empty selection),
+without JavaScript number rounding; `--max-cycle=K` also works.
 
 Choose another RPC with `npm run audit -- --rpc URL`. Precedence is `--rpc`,
 then `GRAIL_AUDIT_RPC_URL`, then `FUJI_RPC_URL`, then PublicNode. These are shell
@@ -49,7 +61,7 @@ preimage cannot be known yet. LIVE order IDs count only MATCH rows with
 agent's reported order IDs; it does not prove exchange execution or fills.
 **okxOrderId is revealed alongside the payload but is not part of the committed hash; it is not proof of exchange execution.**
 
-Exit 0 means a complete scan with no mismatches; valid pending commitments are
+Exit 0 means the stated starting scope was audited with no mismatches; valid pending commitments are
 allowed. Mismatches are reported per row and exit 1. RPC/completeness failures
 exit 1 and leave the last completed report unchanged. The output is replaced
 only after the scan and its checks complete.

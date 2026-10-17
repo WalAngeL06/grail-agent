@@ -1,0 +1,3 @@
+deployments/hardhat.json
+deployments/chain-local.json
+deployments/*.tmp

@@ -29,7 +29,9 @@ const config: HardhatUserConfig = {
     fuji: {
       url: process.env.FUJI_RPC_URL || "https://api.avax-test.network/ext/bc/C/rpc",
       chainId: 43113,
-      accounts: process.env.AGENT_PRIVATE_KEY ? [process.env.AGENT_PRIVATE_KEY] : [],
+      // Deployment creates an ethers Wallet after validating the env in memory.
+      // Keeping accounts empty prevents Hardhat config errors from echoing a key.
+      accounts: [],
       timeout: 60_000,
     },
   },

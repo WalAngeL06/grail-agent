@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import type { Contract, Signer } from "ethers";
+import { testVector } from "../config/agent";
 
 describe("GrailLedger", function () {
   let registry: Contract, ledger: Contract;
@@ -97,5 +98,22 @@ describe("GrailLedger", function () {
     await registry.transferFrom(await owner.getAddress(), await stranger.getAddress(), agentId);
     await expect(ledger.revealDecision(agentId, cycleId, payload, salt, "")).to.be.revertedWithCustomError(ledger, "Unauthorized");
     await as(ledger, stranger).revealDecision(agentId, cycleId, payload, salt, "");
+  });
+
+  it("reveals the published canonical v0.5 HOLD vector with a fixed golden hash", async function () {
+    const vector = testVector();
+    const bytes = ethers.toUtf8Bytes(vector.payloadUtf8);
+    const goldenHash = "0x6828363cc1b98703c227c13258bdaa654db4e1f6e870b27f2795a866cfe98776";
+    expect(ethers.keccak256(ethers.concat([bytes, vector.saltHex]))).to.equal(goldenHash);
+    expect(vector.payloadUtf8).to.contain("\\u00fc");
+    await ledger.commitDecision(agentId, 12, goldenHash);
+    await expect(ledger.revealDecision(agentId, 12, bytes, vector.saltHex, ""))
+      .to.emit(ledger, "DecisionRevealed").withArgs(agentId, 12, ethers.hexlify(bytes), "");
+  });
+
+  it("rejects deployment with an absent identity registry", async function () {
+    const factory = await ethers.getContractFactory("GrailLedger");
+    await expect(factory.deploy(ethers.ZeroAddress)).to.be.revertedWithCustomError(factory, "InvalidRegistry");
+    await expect(factory.deploy(await stranger.getAddress())).to.be.revertedWithCustomError(factory, "InvalidRegistry");
   });
 });

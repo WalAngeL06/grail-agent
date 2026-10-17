@@ -38,6 +38,12 @@ bir coinin kapısı boşalttığı pay başka coine geçmez). Sabitler kodda (`d
 | retest | 1.0 | `...; breakout + retest confirmed` |
 
 `metrics.signals[inst] = {hurst, regime, setup}` bütün config coinleri için; geçersiz veri → `0.5/unclear/none`.
+**Ortalamaya dönüş kolu (T-017)** — sadece `regime == ranging` VE anlamlı O-U olan coinde kararı bu kol verir; trending/unclear → momentum (T-014 aynen).
+O-U: lookback log kapanışlarında `Δx = a + b·x₋₁ + e`; θ=−b, yarı ömür ln2/θ (saat), μ=−a/b, σ_eq=sd(e)/√(2θ), z=(x_son−μ)/σ_eq.
+Anlamlı = `t(b) ≤ −2.5` ve `1 ≤ yarı ömür ≤ 12 sa` (rastgele yürüyüşte ~%15 yanlış pozitif → Hurst ikinci kanıt).
+Giriş `z ≤ −1.5` → hedef = min(momentum coin tavanının yarısı, tek varlık vol hedefi); kol toplamı ≤ %25 × deploy tabanı (mevcut MR coin pozisyonları dahil).
+Elde pozisyon: `z ≥ −0.25` → çıkış (hedef 0), arası → tut. Spot, açığa satış yok; max_order / max_total / nakit / kill switch aynen.
+`signals[inst].ou = {half_life_h, z, significant, sleeve: momentum|mean_reversion|none}` (2 ondalık; karar aynı sayıdan).
 **Replay (T-012)** — son 30 günün OKX mumlarıyla kararları geriye oynatır, eşit ağırlıklı al-tut ile karşılaştırır. Emir/tx yok.
 ```
 uv run python scripts/replay_okx.py --fetch   # `okx market candles` (salt okunur) → data/okx-candles-1H.json, sonra oynat

@@ -1,7 +1,11 @@
 # Handoff — engine / analyst (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~17:15 (canlı kapı raporu bitişi)
-- Aktif görev / durum: "Bugün canlıda kapılar ne yaptı?" salt okuma raporu (planner, freeze sonrası) / READY_FOR_REVIEW. T-014 + R-009 main'de (6729fbb), INTEGRATED.
+- Güncelleme zamanı: 2026-10-17 ~17:20 (T-017 bitişi)
+- Aktif görev / durum: T-017 (O-U ortalamaya dönüş kolu; kullanıcı freeze'i bu iş için deldi, kart integrator'da) / READY_FOR_REVIEW. Son push 17:50, merge 18:10'a yetişmezse dışarıda kalır.
+  - Kod: `stats.ou_fit`; `decision._ou_signal`, `decision._mr_target` (ayrı fonksiyonlar), sabitler `OU_*`/`MR_*` (decision.py başı). Ranging+anlamlı coinde MR kolu karar verir; momentum yolu değişmedi (T-014/R-009 testleri geçiyor). `signals[inst].ou` eklendi (sözleşme v0.6.2 integrator'da).
+  - Testler: `tests/test_ou.py` (bilinen θ, rastgele yürüyüş, look-ahead, giriş/çıkış/tut/anlamsız/trend, %25 tavanı, kill switch, "MR alımı sadece 3 koşulda" 24 parametre). `test_gates.py` signals testi `ou` alanıyla güncellendi.
+  - Replay (T-012 verisi): T-014 → T-017: getiri +2.03% → +1.63%, düşüş 4.33% → 4.54%, işlem 220 → 295, ücret 1.10 → 1.49 USDT. MR: 8 alış, 43 "mean-reversion exit" satışı (momentum pozisyonlarını da kapsıyor), MR'ın kendi P&L'i −0.05 USDT (pro-rata). Varyant (çıkış sadece MR boyutlu pozisyonda) daha iyi değil: +1.51%. Ölçüm betikleri scratchpad'de (`mr_replay.py`, `mr_variant.py`), repoda değil.
+- Önceki iş: "Bugün canlıda kapılar ne yaptı?" salt okuma raporu (4a83bd8). T-014 + R-009 main'de (6729fbb), INTEGRATED.
   - Çıktı: `engine/out/live-gates-today.md` + `.json`. Kaynak: agents dry-run `state.json`, `fuji-transactions.json`, `restart-*-cycle-*.json` + `runtime/live/state.json`; scratchpad'e salt okuma kopyası alındı (14:00 UTC), cycle 50'de donduruldu. Üretici betik scratchpad'de (`live_gates_report.py`), repoya eklenmedi (yol kısıtı: sadece engine/out + handoff).
   - Bulgular: aynı 48 bar (cycle 12–33 eski motor vs 34–50 yeni, hepsi 13:00–13:59 UTC) → döngü başına BUY 5 → 1, simüle alım 19.02 → 2.64 USDT (−%86). AVAX/BTC/OKB/SOL ranging (H 0.42/0.32/0.39/0.42) → HOLD; ETH H 0.64 trending, setup none → yarım (5.29 → 2.64). AI analist: 24–44 provider_error (39 timeout), 45+ 5 approved / 1 timeout; reduced/vetoed 0. Hata 0; 48 commit + 48 reveal confirmed (3–50).
 - Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`); origin/main@d449da4+ merge edildi (contracts 0.6.1).
@@ -15,7 +19,7 @@
   - Madde 4: `decision.py` hata mesajları İngilizce: "Config invalid: ...", "Market snapshot is not an object", "Account value missing or invalid; all coins HOLD".
   - Replay yeniden üretildi: +2.03%, düşüş 4.33%, işlem 220 (112/108), ücret 1.10 USDT, kill switch 0 bar (eski motor: +1.83%, 7.48%, 382, 2.07).
 - Commit edilmemiş / izlenmeyen dosyalar: yok
-- Çalıştırılan kontroller: `uv run pytest -q` (engine/) → 167 passed. `uv run python scripts/replay_okx.py` (kayıtlı mumlar, ağsız).
+- Çalıştırılan kontroller: `uv run pytest -q` (engine/) → 210 passed; `cd agents && uv run pytest -q` (editable ../engine) → 157 passed; `uv run python scripts/replay_okx.py` (kayıtlı mumlar, ağsız).
 - Çalıştırılmayan kontroller ve nedeni: agents pytest bu turda koşulmadı (reviewer 6e8abad'de 157 passed; bu turda payload yapısı değişmedi, sadece hata mesajı metinleri). `config.py` doğrulama mesajları (e['message']) Türkçe kaldı — kapsam dışıydı.
 - Devam eden süreçler / portlar: yok
 - Dış eylemler (emir id, tx hash): yok.

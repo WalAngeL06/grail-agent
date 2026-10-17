@@ -91,6 +91,48 @@ describe("Full read-only ledger audit", function () {
     expect(audit.summary).to.deep.equal({ total: 0, revealed: 0, unopened: 0, matches: 0, mismatches: 0, liveOrders: 0 });
   });
 
+  it("works without historical eth_call and freshly reads both counters before and after verification", async function () {
+    await cycle(7n, true, "");
+    const selectors: string[] = [];
+    const latestOnly = override("call", async tx => {
+      if (tx.blockTag !== "latest") throw new Error("historical eth_call unavailable");
+      selectors.push(tx.data.slice(0, 10));
+      return provider.call(tx);
+    });
+    const audit = await auditLedger(latestOnly, deployment, noWait);
+    expect(audit.summary.matches).to.equal(1);
+    for (const name of ["commitCount", "revealCount"]) {
+      expect(selectors.filter(selector => selector === ledger.interface.getFunction(name)!.selector)).to.have.length(2);
+    }
+    expect(selectors).to.include(ledger.interface.getFunction("decisions")!.selector);
+  });
+
+  it("rejects a ledger that gains a cycle during the scan instead of returning a complete summary", async function () {
+    await cycle(7n, true, "");
+    let appended = false;
+    const moving = override("getLogs", async filter => {
+      const logs = await provider.getLogs(filter);
+      if (!appended) { appended = true; await cycle(8n, true, ""); }
+      return logs;
+    });
+    await rejects(() => auditLedger(moving, deployment, noWait), "INCOMPLETE");
+  });
+
+  it("rejects a reveal arriving after the fixed log head even when the commit count is unchanged", async function () {
+    await cycle(7n, true, "", false);
+    let opened = false;
+    const moving = override("getLogs", async filter => {
+      const logs = await provider.getLogs(filter);
+      if (!opened) {
+        opened = true;
+        const payload = ethers.toUtf8Bytes('{"agent":"GRAIL-01","cycle_id":7,"decisions":[{"inst_id":"BTC-USDT","action":"BUY"},{"inst_id":"ETH-USDT","action":"SELL"}],"dry_run":true}');
+        await (await ledger.revealDecision(1, 7, payload, salt, "")).wait();
+      }
+      return logs;
+    });
+    await rejects(() => auditLedger(moving, deployment, noWait), "INCOMPLETE");
+  });
+
   it("covers deployBlock through the fixed head without gaps or scanning other agents", async function () {
     await cycle(7n, true, "");
     await provider.send("hardhat_mine", ["0x69"]);
@@ -176,6 +218,8 @@ describe("Full read-only ledger audit", function () {
     expect(markdown).to.contain(audit.rows[0].commitHash!).and.contain(audit.rows[0].computedHash!);
     expect(markdown).to.contain('{"BTC-USDT":"123"}');
     expect(markdown).to.contain("not proof of exchange execution");
+    expect(markdown).to.contain("okxOrderId is revealed alongside the payload but is not part of the committed hash; it is not proof of exchange execution");
+    expect(markdown).to.contain("latest").and.contain("before").and.contain("after");
     expect(renderAuditTable(audit)).to.contain("LIVE").and.contain("123").and.contain(audit.rows[0].commitTx!);
   });
 });

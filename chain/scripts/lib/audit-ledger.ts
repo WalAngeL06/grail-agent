@@ -18,6 +18,8 @@ export type LedgerAudit = {
   deployBlock: number;
   snapshotBlock: number;
   snapshotHash: string;
+  stateReadMode: "latest";
+  counterCheck: { beforeCommits: string; beforeReveals: string; afterCommits: string; afterReveals: string };
   auditedAt: string;
   rows: AuditRow[];
   summary: { total: number; revealed: number; unopened: number; matches: number; mismatches: number; liveOrders: number };
@@ -59,13 +61,15 @@ export async function auditLedger(provider: Provider, deployment: CycleDeploymen
     }
   }
 
-  // Only public reads are memoized; the head is pinned for every per-cycle check.
+  // Immutable transaction/block reads may be cached. Latest state calls must
+  // reach the RPC again, including the final counter check (R-011).
   let snapshot: number | undefined;
   const cache = new Map<string, Promise<unknown>>();
-  const cachedMethods = new Set(["getNetwork", "getBlockNumber", "getBlock", "getTransactionReceipt", "getTransaction", "call"]);
+  const cachedMethods = new Set(["getNetwork", "getBlockNumber", "getBlock", "getTransactionReceipt", "getTransaction"]);
   const reader = new Proxy(provider, {
     get(target, prop) {
       if (prop === "getBlockNumber" && snapshot !== undefined) return async () => snapshot!;
+      if (prop === "call") return (...args: unknown[]) => read("call", () => (target.call as any)(...args));
       if (cachedMethods.has(String(prop))) return (...args: unknown[]) => {
         const key = `${String(prop)}:${JSON.stringify(args, (_key, value) => typeof value === "bigint" ? value.toString() : value)}`;
         if (!cache.has(key)) {
@@ -92,8 +96,10 @@ export async function auditLedger(provider: Provider, deployment: CycleDeploymen
   if (snapshot < deploy.blockNumber) throw new Error("RPC head is before ledger deployment");
   const headBlock = await reader.getBlock(snapshot);
   if (!headBlock?.hash) throw new Error("Snapshot block missing");
-  const expectedCommits: bigint = await ledger.commitCount(agentId, { blockTag: snapshot });
-  const expectedReveals: bigint = await ledger.revealCount(agentId, { blockTag: snapshot });
+  // PublicNode does not reliably serve historical eth_call. Logs still have a
+  // fixed upper block; live state is accepted only if counters remain stable.
+  const expectedCommits: bigint = await ledger.commitCount(agentId, { blockTag: "latest" });
+  const expectedReveals: bigint = await ledger.revealCount(agentId, { blockTag: "latest" });
   const groups = new Map<string, { commits: Log[]; reveals: Log[] }>();
   const topics = [iface.getEvent("DecisionCommitted")!.topicHash, iface.getEvent("DecisionRevealed")!.topicHash];
 
@@ -122,7 +128,7 @@ export async function auditLedger(provider: Provider, deployment: CycleDeploymen
   const reveals = [...groups.values()].reduce((sum, group) => sum + group.reveals.length, 0);
   if (BigInt(commits) !== expectedCommits || BigInt(reveals) !== expectedReveals
     || [...groups.values()].some(group => group.commits.length !== 1 || group.reveals.length > 1)) {
-    throw new Error(`Incomplete ledger scan: events ${commits}/${reveals}, storage counters ${expectedCommits}/${expectedReveals}; missing or duplicate events`);
+    throw new Error(`INCOMPLETE: Incomplete ledger scan: events ${commits}/${reveals}, latest counters ${expectedCommits}/${expectedReveals}; missing/duplicate events or ledger changed; retry`);
   }
 
   const rows: AuditRow[] = [];
@@ -140,7 +146,9 @@ export async function auditLedger(provider: Provider, deployment: CycleDeploymen
       elapsedSeconds: revealBlock ? revealBlock.timestamp - commitBlock!.timestamp : undefined,
     };
     try {
-      const result = await verifyCycle(reader, deployment, BigInt(id), { commitTx: commit.transactionHash, revealTx: reveal?.transactionHash });
+      const result = await verifyCycle(reader, deployment, BigInt(id), {
+        commitTx: commit.transactionHash, revealTx: reveal?.transactionHash, stateBlockTag: "latest",
+      });
       Object.assign(row, result);
       if (reveal) {
         const tx = await reader.getTransaction(reveal.transactionHash);
@@ -156,10 +164,21 @@ export async function auditLedger(provider: Provider, deployment: CycleDeploymen
   }
   const canonicalHead = await read("getBlock", () => provider.getBlock(snapshot!));
   if (canonicalHead?.hash !== headBlock.hash) throw new Error("Snapshot block changed during audit; rerun against a canonical snapshot");
+  const afterCommits: bigint = await ledger.commitCount(agentId, { blockTag: "latest" });
+  const afterReveals: bigint = await ledger.revealCount(agentId, { blockTag: "latest" });
+  if (afterCommits !== expectedCommits || afterReveals !== expectedReveals
+    || afterCommits !== BigInt(commits) || afterReveals !== BigInt(reveals)) {
+    throw new Error(`INCOMPLETE: ledger changed during audit; before ${expectedCommits}/${expectedReveals}, after ${afterCommits}/${afterReveals}, scanned ${commits}/${reveals}; retry`);
+  }
 
   return {
     agentId: agentId.toString(), chainId: deployment.chainId, ledger: entry.address,
     deployBlock: deploy.blockNumber, snapshotBlock: snapshot, snapshotHash: headBlock.hash,
+    stateReadMode: "latest",
+    counterCheck: {
+      beforeCommits: expectedCommits.toString(), beforeReveals: expectedReveals.toString(),
+      afterCommits: afterCommits.toString(), afterReveals: afterReveals.toString(),
+    },
     auditedAt: new Date().toISOString(), rows,
     summary: {
       total: rows.length, revealed: reveals, unopened: commits - reveals,
@@ -179,7 +198,7 @@ function cell(value: unknown): string {
 
 export function renderAuditTable(audit: LedgerAudit): string {
   const lines = [
-    "| Cycle | Commit tx | Commit time (UTC) | Reveal tx | Reveal time (UTC) | Seconds | Mode | Hash | okxOrderId |",
+    "| Cycle | Commit tx | Commit time (UTC) | Reveal tx | Reveal time (UTC) | Seconds | Mode | Hash | okxOrderId (not hashed) |",
     "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
   ];
   for (const row of audit.rows) lines.push(`| ${[
@@ -196,7 +215,8 @@ export function renderAuditMarkdown(audit: LedgerAudit): string {
     "# GRAIL ledger audit", "",
     `Audited at: ${audit.auditedAt}. Agent #${audit.agentId}, chain ${audit.chainId}.`,
     `Ledger: ${audit.ledger}. Blocks: ${audit.deployBlock}–${audit.snapshotBlock} (inclusive).`,
-    `Snapshot block hash: ${audit.snapshotHash}.`, "",
+    `Scan head block hash: ${audit.snapshotHash}.`,
+    `State reads: ${audit.stateReadMode}; fresh counters before ${audit.counterCheck.beforeCommits}/${audit.counterCheck.beforeReveals}, after ${audit.counterCheck.afterCommits}/${audit.counterCheck.afterReveals} (commits/reveals).`, "",
     `Total: ${s.total} | Revealed: ${s.revealed} | Unopened: ${s.unopened} | MATCH: ${s.matches} | Mismatch: ${s.mismatches} | LIVE order IDs: ${s.liveOrders}`, "",
     renderAuditTable(audit), "",
     "| Cycle | On-chain commitHash | keccak(payload‖salt) | Validation error |",
@@ -205,6 +225,7 @@ export function renderAuditMarkdown(audit: LedgerAudit): string {
     "Salt and payload are decoded from reveal transaction calldata; no local state or private key is used.",
     "Unopened commitments have no public payload/salt, mode or order result; their hash is not yet verifiable.",
     "LIVE order IDs count verified dry_run=false results excluding simulated/unknown; this is not proof of exchange execution or fills.",
-    "No transaction or OKX request is sent. Completeness is checked against commitCount/revealCount at the fixed snapshot block.", "",
+    "okxOrderId is revealed alongside the payload but is not part of the committed hash; it is not proof of exchange execution.",
+    "No transaction or OKX request is sent. Completeness requires scanned event counts to equal fresh latest commitCount/revealCount reads before and after verification; a changing ledger fails as INCOMPLETE.", "",
   ].join("\n");
 }

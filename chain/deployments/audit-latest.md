@@ -1,3 +1,7 @@
+> **Sample snapshot — 2026-10-17 16:06 Europe/Istanbul, 16 cycles. This tracked example is not a live audit.**
+> Run `cd chain; npm run audit` for current data in the git-ignored `chain/runtime/audit-latest.md`.
+> okxOrderId is revealed alongside the payload but is not part of the committed hash; it is not proof of exchange execution.
+
 RPC: https://avalanche-fuji-c-chain-rpc.publicnode.com
 
 # GRAIL ledger audit

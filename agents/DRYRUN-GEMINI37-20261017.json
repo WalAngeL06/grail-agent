@@ -1,0 +1,248 @@
+{
+  "task": "T-014 Gemini 3.7 model reload",
+  "verified_at_utc": "2026-10-17T13:53:30.602137+00:00",
+  "contracts_version_read": "0.6.1",
+  "runtime_contract_version": "0.6",
+  "source_commit": "5769030d5e3d90cb34f3a1292e9642fedfdeb8b9",
+  "merged_origin_main": "b6d6b61",
+  "runtime": "C:\\Users\\Serdar Arif\\Desktop\\Agentic Hack-wt\\agents\\agents\\runtime\\dryrun-5coin-20261017-1545",
+  "state_path": "C:\\Users\\Serdar Arif\\Desktop\\Agentic Hack-wt\\agents\\agents\\runtime\\dryrun-5coin-20261017-1545\\state.json",
+  "launcher_pid": 36484,
+  "worker_pid": 48008,
+  "llm_model": "gemini-3.7-flash",
+  "fallback_used": false,
+  "fallback_model_if_429": "gemini-flash-lite-latest",
+  "continuous": true,
+  "cycle_seconds": 90,
+  "dry_run": true,
+  "chain_simulated": false,
+  "chain_id": 43113,
+  "stop": {
+    "old_worker_pid": 33616,
+    "old_launcher_pid": 22108,
+    "stopped_at_cycle": 44,
+    "pending_count": 0,
+    "journal_all_confirmed": true
+  },
+  "prelaunch_chain_next_cycle_id": 45,
+  "original_journal_records_preserved": 84,
+  "historical_decision_rows_preserved": 210,
+  "protected_live_files_unchanged": true,
+  "protected_file_count": 8,
+  "stderr_bytes": 0,
+  "cycles": [
+    {
+      "cycle_id": 45,
+      "errors": 0,
+      "signals": {
+        "AVAX-USDT": {
+          "hurst": 0.42,
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "BTC-USDT": {
+          "hurst": 0.32,
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "ETH-USDT": {
+          "hurst": 0.64,
+          "regime": "trending",
+          "setup": "none"
+        },
+        "OKB-USDT": {
+          "hurst": 0.39,
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "SOL-USDT": {
+          "hurst": 0.42,
+          "regime": "ranging",
+          "setup": "none"
+        }
+      },
+      "decisions": [
+        {
+          "inst_id": "AVAX-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.42), momentum buys paused",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        },
+        {
+          "inst_id": "BTC-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.32), momentum buys paused",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        },
+        {
+          "inst_id": "ETH-USDT",
+          "action": "BUY",
+          "size_usdt": "2.64",
+          "reason": "Price trending up (+3.3%), target 5.3% of funds (1.2 independent bets); size cut to keep risk near 20% (was 48%); no breakout yet, half size",
+          "order_status": "simulated",
+          "llm_flag": "approved",
+          "llm_note": "Approved. Mild upward trend with conservative sizing already applied; no adverse event risk detected."
+        },
+        {
+          "inst_id": "OKB-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.39), momentum buys paused",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        },
+        {
+          "inst_id": "SOL-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.42), momentum buys paused",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        }
+      ],
+      "actions": {
+        "HOLD": 4,
+        "BUY": 1
+      },
+      "commit_tx": "0x4c207b226c6ab3d01a314402c6da878ddbc471ec0d31d744d09d71bd6e8d87d7",
+      "reveal_tx": "0x9e5e77fbaea7eae06128c6bb4603a24059262b9666605cf06b841fed8dc97ffe",
+      "commit_block": 59601860,
+      "reveal_block": 59601864,
+      "receipt_statuses": [
+        1,
+        1
+      ],
+      "payload_salt_hash_and_events_verified": true,
+      "historical_decisions_unchanged": true,
+      "signals_outside_payload": true,
+      "buy_reviews": [
+        {
+          "inst_id": "ETH-USDT",
+          "action": "BUY",
+          "llm_flag": "approved",
+          "llm_note": "Approved. Mild upward trend with conservative sizing already applied; no adverse event risk detected."
+        }
+      ],
+      "buy_reviews_skipped": 0
+    },
+    {
+      "cycle_id": 46,
+      "errors": 0,
+      "signals": {
+        "AVAX-USDT": {
+          "hurst": 0.42,
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "BTC-USDT": {
+          "hurst": 0.32,
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "ETH-USDT": {
+          "hurst": 0.64,
+          "regime": "trending",
+          "setup": "none"
+        },
+        "OKB-USDT": {
+          "hurst": 0.39,
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "SOL-USDT": {
+          "hurst": 0.42,
+          "regime": "ranging",
+          "setup": "none"
+        }
+      },
+      "decisions": [
+        {
+          "inst_id": "AVAX-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.42), momentum buys paused",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        },
+        {
+          "inst_id": "BTC-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.32), momentum buys paused",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        },
+        {
+          "inst_id": "ETH-USDT",
+          "action": "BUY",
+          "size_usdt": "2.64",
+          "reason": "Price trending up (+3.3%), target 5.3% of funds (1.2 independent bets); size cut to keep risk near 20% (was 48%); no breakout yet, half size",
+          "order_status": "simulated",
+          "llm_flag": "approved",
+          "llm_note": "Approved. Trend is positive, size is conservative, and no adverse market conditions or news detected."
+        },
+        {
+          "inst_id": "OKB-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.39), momentum buys paused",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        },
+        {
+          "inst_id": "SOL-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.42), momentum buys paused",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        }
+      ],
+      "actions": {
+        "HOLD": 4,
+        "BUY": 1
+      },
+      "commit_tx": "0x3d7c0e9675a0a86642123cc35f7995d3a273d6194e8ff87f1272756127e8258e",
+      "reveal_tx": "0x80ab70f64ed30a92a132d2610a9a263f71a22ee8c9a172386459ed5e3ab64d9d",
+      "commit_block": 59601940,
+      "reveal_block": 59601944,
+      "receipt_statuses": [
+        1,
+        1
+      ],
+      "payload_salt_hash_and_events_verified": true,
+      "historical_decisions_unchanged": true,
+      "signals_outside_payload": true,
+      "buy_reviews": [
+        {
+          "inst_id": "ETH-USDT",
+          "action": "BUY",
+          "llm_flag": "approved",
+          "llm_note": "Approved. Trend is positive, size is conservative, and no adverse market conditions or news detected."
+        }
+      ],
+      "buy_reviews_skipped": 0
+    }
+  ],
+  "tests": [
+    {
+      "command": "cd agents; uv run pytest -q",
+      "passed": 157,
+      "seconds": 15.25
+    }
+  ],
+  "receipt_rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+  "verification_block": 59601958
+}

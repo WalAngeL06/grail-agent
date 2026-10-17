@@ -1,9 +1,9 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Revizyon: r48 · 2026-10-17 17:50 Europe/Istanbul. Önceki ayrıntı: coord/archive/STATE-r40-20261017.md (daha eski r26/r17 arşivleri korunur).
+- Revizyon: r49 · 2026-10-17 17:52 Europe/Istanbul. Önceki ayrıntı: coord/archive/STATE-r40-20261017.md (daha eski r26/r17 arşivleri korunur).
 - İlk CANLI:15:37 cycle2 BUY BTC2USDT filled, OKX4017748393474314240. Sürekli döngü dry_run=true; gerçek Fuji commit/reveal. Integrator runner/emir/tx başlatmaz.
 - Sözleşme: VERSION0.6.2; yalnız opsiyonel/hash dışı metrics.signals[inst].ou eklendi. Config/payload/state contract_version0.6,chain deploy0.5/ABI/hash aynı. sleeve kullanıcının kesinleştirdiği momentum|mean_reversion|none metin enumudur; %25 tavan engine kodunda/testte, ek bütçe alanı yok.
-- Bu teslim: web95d9eda→mainab6e2d5 ve review1feb9ed→maind35d1c7 ayrı push/clean/uzak eşitliği tamam. Engine88f00f3 bu üçüncü merge'de,main210engine/157agents/ikiwebbuild PASS. Başlangıçmainfd0d200 temiz/origin ile aynı; exact hedefler alındı. Önceki kanıt D-022'de.
+- Bu teslim TAMAM: web95d9eda→mainab6e2d5,review1feb9ed→maind35d1c7,engine88f00f3→main2abc8c2 ayrıpush/clean/uzak eşitliği doğrulandı. T-017 AÇIK17:51'de pushlandı,18:10kapısı sağlandı; main210engine/157agents/ikiwebbuild PASS. Üçhedef ancestor/exact ağaç PASS; başlangıçfd0d200. Son koordinasyon commit'i bu kanıtı kaydeder.
 - Verify R-010 GO yalnız webc1c2361/chain23a81aa. **R-011 KAPANDI, audit jüriye GO**: kullanıcı/planner public RPC48/48 MATCH,Unopened0,Mismatch0,LIVE1,exit0; integrator54 test/typecheck PASS. Kendi audit tekrarı61→62 yeni cycle nedeniyle INCOMPLETE/exit1; beklenen fail-closed, tam rapor yazılmadı. Bunlar ayrı snapshot/kanıtlardır.
 - **T-017 kullanıcı kararıyla AÇIK merge GO:** R-012/review1feb9ed tam88f00f3 için APPROVE koşullu,18:10merge+AÇIK GO. R-012-1 kabul edilen bilinen davranış: ranging+anlamlı coinde MR çıkışı momentumdan gelen pozisyonu da satabilir (risk azaltıcı); R-012-2 MINOR tutma bandı düşüş SELL'ini bastırabilir. İnceleyen kullanıcı/planner kararıyla role/review oldu (chain meşgul); aynı model ailesinde bağımsız oturum sınırı raporda açık. Merge sonrası restart agents sahibinde.
 - Public kapısı: R-005 GO yalnız taranmış main9acec55/ref kümesi; son yayın SHA fark taraması hâlâ açık. Public ayarı/yayın/form/slides/video yüklemesi yapılmadı.
@@ -17,7 +17,7 @@
 | 17:00 | Feature freeze | yalnız T-017 kullanıcı istisnası; diğerleri hata düzeltme+UI |
 | 17:50 | T-017 engine push | GEÇTİ;88f00f3 kullanıcı/uzak ref ile doğrulandı;210test integrator PASS |
 | 18:00 | Yedek demo videosu | kayıt hazır olmalı; kanıt/link açık |
-| 18:10 | T-017 merge üst sınırı | chain bağımsız GO+integrator kontrolleri; yetişmezse dışarıda |
+| 18:10 | T-017 merge üst sınırı | GEÇTİ17:51;R-012reviewGO+kullanıcıAÇIK;main2abc8c2push/210+157+build |
 | 18:45 | Teslim formu | GitHub/sunum/BuilderHub e-postası ve gönderim kanıtı |
 | 19:00 | Teslim kapanır | |
 
@@ -60,7 +60,7 @@
 - Engine4a83bd8 actual farkı engine/out/live-gates-today.md+.json ve kendi handoff'u; ürün kaynakları/test/ayarlar aynı. JSON/cohort/tutar/toplam kontrolleri PASS:22eski/17yeni aynıbar döngüsü,110/17BUY,418.44/44.88USDT. Cycle3–50 toplam48commit+48reveal/240karar sahibin dosya kanıtıdır; yeni bağımsız RPC kanıtı değil. PID48008python17:22 salt okunur süreç kontrolünde çalışıyor.
 - Agentsaf4106d actual farkı3kanıtJSON+kendi handoff; kaynak/test/ayarlar değişmedi. ÜçJSON parse ve Gemini45/46koşul kontrolleri PASS; ikisinde4HOLD+1ETHsimulatedBUY/approved/errors0,modelgemini-3.7-flash,fallbackfalse. Anahtar okunmadı. Main'de uv run --frozen pytest -q --tb=short→157passed(15.45s). Receipt/hash doğrulaması sahip kanıtıdır, integrator RPC/fill tekrarı yapmadı.
 - Bu tur web95d9eda birleşik ağacı exact/sınır/diff--check PASS; npm test22/22,normal/public build56modül708/754ms PASS. Yalnız web/+handoff değişti; diğer ürünlerfd0d200 ile aynı. DefaultTR/EN|TR/localStorage/motto/guide kaynakta doğrulandı; verifyLogic/verify/chain çekirdeği aynı. Tarayıcı/görsel QA sahip kanıtıdır; integrator bu tur tekrarlamadı.
-- Review1feb9ed actual farkı T-017/T-015 incelemeleri+reviewer handoff; exact/diff--check temiz,ürünlerwebab6e2d5 ile aynı. T-015 raporu eskiR-011NO-GO tarihsel incelemesidir; güncel R-011GO aynen geçerli. R-012210/157test+400senaryo0ihlal bağımsız oturum kanıtı; integrator engine kontrolleri sonraki adım.
+- Review1feb9ed actual farkı T-017/T-015 incelemeleri+reviewer handoff; exact/diff--check temiz,ürünlerwebab6e2d5 ile aynı. T-015 eskiR-011NO-GO tarihsel,güncelR-011GO aynı. R-012400senaryo0ihlal inceleyen kanıtı; integrator kendi210/157test/build'ini yaptı,400fuzz tekrarı yok.
 - Engine88f00f3 actual merge8dosya yalnız engine/+handoff; çoklu merge-base üçnokta diff gürültüsü ürüne taşınmadı. Exact engine ağacı/sınır/diff PASS; contracts/agents/analyst/chain/docs başlangıçfd0d200 ile aynı,web95d9eda/review1feb9ed korunur. Main uv run --frozen pytest -q --tb=short:engine210(10.35s),agents157(17.86s) PASS; agents import main/engine/src/grail_engine/decision.py. Yeni replay ile web56modül build1.08s/public757ms PASS.
 - T-017 motor kolu bu exact kodda AÇIK,sabitiMR_BUDGET_FRAC0.25; yeni config anahtarı/toggle eklenmedi. Replay JSON+1.63%/4.54%,149BUY+146SELL=295simulated,ücret1.4874,kill0/errors0. Engine handoff'u eski0.6.1 okumasını bildiriyor; integrator0.6.2 metrik/payload0.6/deploy0.5 uyumunu mevcut test ve değişmeyen contracts ile doğruladı.
 

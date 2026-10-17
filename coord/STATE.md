@@ -1,13 +1,13 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r8 · 2026-10-17 14:08 (Europe/Istanbul)
+- Durum revizyonu: r9 · 2026-10-17 14:10 (Europe/Istanbul)
 - Ürün: `coord/BRIEF.md` (kesinleşti). Fuji test cüzdanı `.env` içinde hazır (`AGENT_ADDRESS`); 13:05 organizatörden 1 test AVAX kullanıcının MetaMask'ına (0x3b8b2…3C537, Fuji) GELDİ → kullanıcı ~0.9 AVAX agent adresine aktaracak (gas için ~0.1 MetaMask'ta kalır).
 - OKX: `grail` profili bağlı (gerçek para; `dry_run` açık).
-- Entegrasyon: T-001 (`e06987b`), T-004 (`a630cb6`), T-007 (`3181848`), T-005 v1 (`67a5e4a`); T-002 (`role/agents@1e36e99`, bu kayıtla aynı merge commit'i).
+- Entegrasyon: T-001 (`e06987b`), T-004 (`a630cb6`), T-007 (`3181848`), T-005 v1 (`67a5e4a`), T-002 (`main@04c5c3d`); R-002 (`role/review@bad30c3`, bu kayıtla aynı merge commit'i).
 - Son doğrulanmış parçalar: agents dalda 78 test (0.19s), main + contracts 0.5 ile 78 test (0.38s, 14:08); önceki engine/analyst 84 test + web build (13:56). Uçtan uca döngü / gerçek state / Fuji UI henüz doğrulanmadı.
 - Aktif sözleşme: `contracts/VERSION` = 0.5 (D-011: LLM alanları hash'e, SELL exempt, state limit/kimlik alanları; ledger[] RED; dry_run açık)
 - Kaynak: Avalanche workshop slaytı (ERC-8004 boilerplate) ve ATK yapılandırması → D-006
-- Sıradaki öncelik: R-002 raporunu main'e al; T-003 deploy → T-006 (analist + R-002 koşulları) → UI gerçek state/Fuji. R-002-1 düzeltilmeden canlıya geçilmez. Roller temiz worktree'de `git merge main` ile 0.5'i almalı.
+- Sıradaki öncelik: T-003 deploy → T-006 (analist + R-002 koşulları) → UI gerçek state/Fuji. R-002-1 düzeltilmeden canlıya geçilmez. Roller temiz worktree'de `git merge main` ile 0.5'i almalı.
 
 ## Zaman kapıları
 | Saat | Kapı | Ölçüt |
@@ -45,9 +45,10 @@
 - v0.5 son kontrol: `cd engine && uv run pytest -q` → 84 passed (1.99s); `cd web && npm run build` → geçti (45 modül, 612ms). VERSION/config/state, üç limit, null kimlik, ledger yok; gerçek engine payload'ında analist skip/veto + SELL exempt + kanonik LLM alanları doğrulandı (ağsız).
 - T-002: `1e36e99` uzak dalda; sınır sadece agents/ + kendi handoff'u. `cd agents; uv run pytest -q` dalda 78 passed (0.19s), main + v0.5 ile 78 passed (0.38s). ATK/smoke/canlı emir çalıştırılmadı.
 - R-002: Claude Max `bad30c3` → APPROVE koşullu, BLOCKER yok; reviewer test çalıştırmadı (kod incelemesi), integrator yukarıdaki 78 testi bağımsız çalıştırdı. R-002-1 MAJOR ve R-002-2 T-006 kabulüne işlendi; ürün kodunda henüz düzeltilmedi.
+- R-002 merge sınırı: yalnız coord/reviews/T-002.md + coord/handoffs/reviewer.md; `git diff --check` ve rapor/kart/STATE koşul tutarlılığı doğrulandı. Agents kaynakları 78 testin geçtiği ağaçla aynı.
 
 ## Bekleyen merge'ler
-- R-002 `role/review@bad30c3`: kullanıcı merge istedi; yalnız coord/reviews/T-002.md + reviewer handoff'u.
+- (yok)
 
 ## Engeller
 - Fuji deploy gecikti (13:30 kapısı kaçtı; chain 13:48'de başladı, 14:05 push yok). Gerçek state/Fuji UI kontrolü T-003/T-006 çıktısını bekliyor.

@@ -28,7 +28,7 @@ Built for the OKX ATK × Avalanche Agentic Hackathon (Ankara, 17 Oct 2026).
   config.json --> agents/  autonomous loop ------------------------------------------------+
                     |   (2) engine/  decide()          trend filter + HRP + vol target + caps
                     |   (3) analyst/ review_payload()  LLM may only shrink / veto BUYs
-                    |                                                                       
+                    |
                     |   salt + payload saved to runtime/pending/ BEFORE commit (crash-safe)
                     |
                     |   (4) commitDecision(agentId, cycleId, keccak256(payload || salt))   <-- before the order

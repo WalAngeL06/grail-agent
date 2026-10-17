@@ -1,5 +1,7 @@
 # R-013 · Kill switch düzeltmesi incelemesi (engine `role/engine@d240923`)
 
+> **İPTAL EDİLDİ (18:30, kullanıcı kararı): d240923 merge edilmeyecek; engine geri alıyor. Aşağıdaki "18:45 merge: GO" kararı GEÇERSİZ.** Canlı kill switch main'deki haliyle kalıyor: tüm zamanların zirvesi; tetiklenince agents her emri engelliyor. Rapor yalnız kayıt için tutuluyor.
+
 - İnceleyen: reviewer · Claude Code (Opus 5.5) · `role/review`, planner ataması ve kullanıcı onayıyla. Not: engine de Claude ailesinden.
 - Hedef: `d240923` ("kill switch on rolling 168h peak; stop blocks buys only, sells allowed"). Main: 6dc9b03.
 - `git merge-tree origin/main origin/role/engine` temiz. Sonuç sadece `engine/` (+ engine handoff) değiştiriyor: `src/grail_engine/{peak.py (yeni), decision.py, replay.py}`, `tests/test_decide.py`, `scripts/{kill_switch_168.py, backtest_long.py}`, `out/*`.

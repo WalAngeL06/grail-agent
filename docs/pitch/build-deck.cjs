@@ -10,7 +10,7 @@ const OUT = path.join(__dirname, "GRAIL-pitch.pptx");
 // engine/out/replay.json (role/engine@87539f8, T-014 sonrası), Fuji commitCount/revealCount(1) = 31/31 @ 16:29.
 const V = {
   bets: "1,36",              // 30 günlük ortalama bağımsız bahis (replay)
-  cyclesOnChain: "25+",      // Fuji: 31 commit / 31 reveal @16:29, açık 0; npm run audit
+  cyclesOnChain: "40+",      // Fuji commitCount = revealCount = 42 @16:47, açık 0 (alt sınır olarak 40+)
   liveOrder: { when: "17 Ekim 15:37", what: "BTC 2 USDT alım", okx: "4017748393474314240", commit: "0x16f2…9569", reveal: "0xae65…41f7" },
   replay: {
     ddGrail: "%4,3", ddHold: "%14,5", ddOld: "%7,5", retGrail: "+%2,0", retHold: "+%8,8",
@@ -273,7 +273,7 @@ function badge(s, x, y, label, color, d) {
   s.addNotes(
     "Puanın %35'i bu slaytta: otonomi. Döngü her " + V.cycleSeconds + " saniyede, kimse bir şeye tıklamadan çalışıyor. " +
     "4. ve 6. adımları göster: karar, emir daha ortada yokken Avalanche'a mühürleniyor; ajan piyasa cevap vermeden bağlanıyor. " +
-    "Beklemek de bir karar ve o da mühürleniyor. Zincirde " + V.cyclesOnChain + " döngü var, hepsi açılmış ve npm run audit ile hepsi eşleşiyor. " +
+    "Beklemek de bir karar ve o da mühürleniyor. Zincirde " + V.cyclesOnChain + " döngü var, hepsi açılmış; her biri tarayıcıda \"Verify yourself\" ile ya da npm run verify:cycle ile kontrol edilebiliyor. " +
     "İnsanın işi kuralları (ayarları) koymak, işlemleri onaylamak değil."
   );
 }
@@ -400,8 +400,8 @@ function badge(s, x, y, label, color, d) {
   ], { x: 0.75, y: 3.3, w: 8.5, h: 1.15, fontFace: BODY, fontSize: 14, valign: "middle", margin: 0 });
   s.addText([
     { text: "Terminalden: ", options: { color: C.muted } },
-    { text: "cd chain && npm run audit", options: { color: C.proof, fontFace: MONO } },
-    { text: "  →  her döngü MATCH", options: { color: C.green, bold: true } },
+    { text: "cd chain && npm run verify:cycle:1", options: { color: C.proof, fontFace: MONO } },
+    { text: "  →  MATCH", options: { color: C.green, bold: true } },
   ], { x: 0.5, y: 4.62, w: 9, h: 0.3, fontFace: BODY, fontSize: 12, margin: 0 });
   s.addText("Yedek video: " + V.backupVideo, { x: 0.5, y: 4.98, w: 9, h: 0.3, fontFace: BODY, fontSize: 12, color: C.dim, margin: 0 });
   s.addNotes(

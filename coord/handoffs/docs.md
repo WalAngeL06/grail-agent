@@ -1,18 +1,19 @@
 # Handoff — docs (sadece bu rol yazar)
 
-- Güncelleme zamanı: 17.10 17:20
-- Aktif görev / durum: teslim hazırlığı — form cevapları + kök README son hâli / READY_FOR_REVIEW (18:30'da integrator köke taşır)
+- Güncelleme zamanı: 17.10 16:55 (UTC+3)
+- Aktif görev / durum: teslim hazırlığı güncellemesi (R-010 GO, R-011 audit NO-GO) / READY_FOR_REVIEW — 18:30'da integrator README'yi köke taşır
 - Oturum: Claude Code · Max (Opus 5.5), durdu
-- Worktree / branch / son commit: `Agentic Hack-wt/docs` / `role/docs` / bu handoff'u içeren commit; origin/main (r34) merge edildi
+- Worktree / branch / son commit: `Agentic Hack-wt/docs` / `role/docs` / bu handoff'u içeren commit; origin/main merge edildi (792ce8c)
 - contracts okunan sürüm: v0.6.1
 - Tamamlanan:
-  - `docs/submission-form-answers.md`: SUBMISSION.md'deki 7 alan (+ video) için kopyala-yapıştır kutuları; ek sorular için teknolojiler,
-    Avalanche kullanımı, OKX ATK kullanımı, agent kimliği. Açıklama = submission-description.md birebir. E-posta yazılmadı (kullanıcı yazar).
-  - `docs/README-draft.md` kök README'ye hazır (EN): en üstte 3 link yer tutucusu; "Verify it yourself in 60 seconds"
-    (verify:cycle:1, audit, web Verify); ilk canlı emir kanıt tablosu (cycle 2, tam tx linkleri + yeniden kontrol komutu); entry gates;
-    sonuç tablosu (replay main'deki out/replay.json: 4.33/14.51, +2.03/+8.81, 220 vs 382, kill switch 0); testler 167/157/48; Honest limitations (9 madde).
-- Yer tutucular (18:30'dan önce doldurulacak): `<PAGES_URL>`, `<VIDEO_URL>`, `<SLIDES_URL>` (README + form), `<AUDIT_TOTAL>` (R-011 audit sonucu),
-  `<R-010 status>` (web Verify düzeltmesi GO aldıysa "the browser check passed review R-010" gibi; almadıysa "the in-browser check is still under review (R-010)"), Team `<TBD>`.
-- Kontroller: sayılar main'deki replay.json, chain.json, audit-latest.md, STATE r34 ile eşleşti; komutlar chain/package.json, agents/engine/web README'lerle eşleşti; git diff --check.
-- Çalıştırılmayan: README komutlarını temiz bir klonda uçtan uca denemedim (verify:cycle:1 ve audit .env olmadan R-006/T-015'te çalışmıştı).
-- SIRADAKİ İLK ADIM: R-011 audit sayısı + R-010 durumu + 3 link gelince yer tutucuları doldur, commit + push; integrator köke taşır.
+  - README-draft: "Verify it yourself in 60 seconds" → 1) tarayıcı "Verify yourself" (birincil, "passed independent review R-010"),
+    2) `npm run verify:cycle:1` (birincil), 3) `npm run audit` ikincil + "requires an archive-capable RPC". `<AUDIT_TOTAL>` ve `<R-010 status>` kaldırıldı;
+    yerine zincir sayacı: commitCount = revealCount = 42 (salt okunur eth_call, 17.10 16:47 UTC+3). Sonuçlar ve sınırlar bölümü buna göre güncellendi.
+  - submission-form-answers: Avalanche cevabında birincil yol web Verify + verify:cycle:1; audit ikincil (archive RPC); 42/42 @16:47.
+  - Tutarlılık için (aynı olgu): deck slayt 10 terminal satırı `npm run verify:cycle:1 → MATCH`, zincir sayısı "40+" (slayt 6 + not);
+    jury-faq #1/#9/#11/#12 audit ikincil + 42/42; runbook "audit sahnede çalıştırılmaz (R-011)". Deck yeniden üretildi, validate PASSED, slayt 6/10 render temiz.
+- Yer tutucular: `<PAGES_URL>`, `<VIDEO_URL>`, `<SLIDES_URL>` (README + form), Team `<TBD>`, deck yedek video `<TBD>`.
+- Final öncesi: commitCount(1)/revealCount(1) tekrar oku → README "Verify" ve "Results" satırları + form Avalanche cevabındaki 42'yi güncelle.
+  Okuma: GrailLedger 0x1B5f…8851, `commitCount(1)`, `revealCount(1)` (Snowtrace Read Contract ya da eth_call).
+- Çalıştırılmayan: README komutlarını temiz klonda uçtan uca denemedim; web Verify'ı tarayıcıda tıklamadım (R-010 GO kullanıcı/chain bildirimi).
+- SIRADAKİ İLK ADIM: 3 link + takım bilgisi gelince doldur; sayaçları yeniden oku; commit + push.

@@ -3,7 +3,7 @@
 // Zincir tx hash'leri uydurmadır; UI bu kaynağı "demo" olarak etiketler.
 import { keccak_256 } from "@noble/hashes/sha3.js";
 import { bytesToHex, hexToBytes, utf8ToBytes } from "@noble/hashes/utils.js";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 
 let seed = 7;
 const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
@@ -78,8 +78,27 @@ for (const cycle_id of cycles) {
       fill_price: traded && revealed ? d.ref_price : null,
       reveal_tx, verified: revealed ? true : null,
       ...(revealed ? { payload_utf8, salt_hex } : {}),
+      demo_synthetic: true, // uydurma tx: UI bu döngüleri Fuji'de aramaz
     });
   }
+}
+
+// Gerçek Fuji döngüsü (agentId 1, cycle 1): reveal tx calldata'sından çözüldü → UI zincirden uçtan uca doğrular.
+const real = JSON.parse(readFileSync(new URL("../fixtures/fuji-cycle-1.json", import.meta.url), "utf8"));
+const realPayload = JSON.parse(real.payload_utf8);
+const realOrders = JSON.parse(real.okx_order_id_map || "{}");
+for (const d of realPayload.decisions) {
+  const traded = d.action !== "HOLD";
+  decisions.push({
+    cycle_id: real.cycle_id, inst_id: d.inst_id, action: d.action, size_usdt: d.size_usdt, ref_price: d.ref_price,
+    target_weight_pct: d.target_weight_pct, reason: d.reason, llm_note: d.llm_note, llm_flag: d.llm_flag,
+    decided_at_ms: realPayload.decided_at_ms, mode: realPayload.mode, dry_run: realPayload.dry_run,
+    commit_tx: real.commit_tx, commit_hash: real.commit_hash,
+    okx_order_id: traded ? (realOrders[d.inst_id] === "simulated" ? `sim-${real.cycle_id}-${d.inst_id}` : realOrders[d.inst_id] ?? null) : null,
+    order_status: traded ? (realOrders[d.inst_id] === "simulated" ? "simulated" : "unknown") : "none",
+    fill_price: traded ? d.ref_price : null,
+    reveal_tx: real.reveal_tx, verified: true, payload_utf8: real.payload_utf8, salt_hex: real.salt_hex,
+  });
 }
 
 const corrLabels = ["BTC-USDT", "ETH-USDT", "SOL-USDT", "AVAX-USDT", "OKB-USDT"];
@@ -95,7 +114,7 @@ const sr1 = 0.5;
 const neff = (n) => 1 / (1 / n + (1 - 1 / n) * rho);
 
 const state = {
-  contract_version: "0.5",
+  contract_version: "0.6",
   generated_at_ms: T0 + 1500,
   mode: "live",
   dry_run: true,
@@ -123,9 +142,9 @@ const state = {
   },
   decisions: decisions.reverse(),
   chain: {
-    network: "fuji", chain_id: 43113, address: "0x7a3E1b1f0cC4D2e9b6f1A4C8d3B5e2F9a1C0d4E7", explorer: "https://testnet.snowtrace.io",
-    agent_id: "7", identity_registry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
-    commits: 4, reveals: 3, unrevealed: 1,
+    network: "fuji", chain_id: 43113, address: "0x1B5fcf6DeFf2F9375338A2C35932224522118851", explorer: "https://testnet.snowtrace.io",
+    agent_id: "1", identity_registry: "0x120A4E53A24ddd09991633b4Cb88c3feA6166721",
+    commits: 5, reveals: 4, unrevealed: 1,
   },
   errors: [
     { code: "ATK_TIMEOUT", message: "ticker timeout, döngü atlandı", at_ms: T0 - 400_000, where: "agents.market", context: {} },

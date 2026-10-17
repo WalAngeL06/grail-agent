@@ -1,18 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useGrailFeed, type Feed, type GrailState } from "./state";
-import { Boundary } from "./components/Bits";
+import { readChainJson, type ChainInfo } from "./chain";
+import { Boundary, Toaster } from "./components/Bits";
 import { ago, countdown } from "./format";
 import Dashboard from "./screens/Dashboard";
 import Decisions from "./screens/Decisions";
 import Ledger from "./screens/Ledger";
 import Settings from "./screens/Settings";
+import HowItWorks from "./screens/HowItWorks";
 
-export type Route = "dashboard" | "decisions" | "ledger" | "settings";
-const ROUTES: { id: Route; label: string; icon: JSX.Element }[] = [
-  { id: "dashboard", label: "Dashboard", icon: <IconGrid /> },
-  { id: "decisions", label: "Decisions", icon: <IconList /> },
-  { id: "ledger", label: "On-chain Ledger", icon: <IconSeal /> },
-  { id: "settings", label: "Settings", icon: <IconShield /> },
+export type Route = "dashboard" | "decisions" | "ledger" | "settings" | "how";
+const ROUTES: { id: Route; label: string; short: string; icon: JSX.Element }[] = [
+  { id: "dashboard", label: "Dashboard", short: "Home", icon: <IconGrid /> },
+  { id: "decisions", label: "Decisions", short: "Decisions", icon: <IconList /> },
+  { id: "ledger", label: "On-chain Ledger", short: "Ledger", icon: <IconSeal /> },
+  { id: "settings", label: "Safety limits", short: "Limits", icon: <IconShield /> },
+  { id: "how", label: "How it works", short: "How", icon: <IconHelp /> },
 ];
 
 const readRoute = (): Route => {
@@ -20,10 +23,13 @@ const readRoute = (): Route => {
   return ROUTES.some((r) => r.id === h) ? h : "dashboard";
 };
 
+export type ScreenProps = { s: GrailState; chain: ChainInfo; now: number; demo: boolean };
+
 export default function App() {
   const feed = useGrailFeed();
   const [route, setRoute] = useState<Route>(readRoute);
   const now = useNow(1000);
+  const chain = useMemo(() => readChainJson(feed.chainJson), [feed.chainJson]);
 
   useEffect(() => {
     const on = () => setRoute(readRoute());
@@ -32,27 +38,29 @@ export default function App() {
   }, []);
   useEffect(() => {
     const anchor = window.location.hash.split("/")[2];
-    if (anchor) document.getElementById(anchor)?.scrollIntoView();
+    if (anchor) window.setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth" }), 50);
     else window.scrollTo(0, 0);
   }, [route]);
 
   const s = feed.state;
   const open = s?.chain.unrevealed;
+  const props = s ? { s, chain, now, demo: feed.source === "demo" } : null;
 
   return (
     <div className="shell">
       <aside className="side">
         <a className="brand" href="#/dashboard" aria-label="GRAIL dashboard">
-          <IconGrail />
+          <i className="diamond" aria-hidden="true" />
           <b>GRAIL</b>
         </a>
         <nav className="nav" aria-label="Screens">
           {ROUTES.map((r) => (
             <a key={r.id} href={`#/${r.id}`} aria-current={route === r.id ? "page" : undefined}>
               {r.icon}
-              <span>{r.label}</span>
+              <span className="nav-label">{r.label}</span>
+              <span className="nav-short">{r.short}</span>
               {r.id === "ledger" && open !== undefined && open > 0 && (
-                <span className="badge" title={`${open} open (unrevealed) commit${open === 1 ? "" : "s"}`}>
+                <span className="badge" title={`${open} decision${open === 1 ? "" : "s"} still sealed (not opened yet)`}>
                   {open}
                 </span>
               )}
@@ -60,8 +68,10 @@ export default function App() {
           ))}
         </nav>
         <div className="side-foot">
-          <i aria-hidden="true" />
-          Avalanche Fuji · OKX TR
+          <div>
+            <i aria-hidden="true" /> Avalanche Fuji · OKX TR
+          </div>
+          <div>Read-only · no wallet, no orders</div>
         </div>
       </aside>
 
@@ -69,27 +79,78 @@ export default function App() {
         <TopBar feed={feed} now={now} />
         <main className="content">
           <Strips feed={feed} now={now} />
-          {!s ? (
+          {route !== "how" && <Intro />}
+          {route === "how" ? (
+            <HowItWorks s={s} />
+          ) : !props ? (
             <div className="stack" aria-busy="true" aria-label="Loading">
+              <p className="muted">Connecting to the agent… the first reading usually takes a second.</p>
               <div className="skeleton" style={{ height: 180 }} />
               <div className="cols four">
                 {[0, 1, 2, 3].map((i) => (
                   <div key={i} className="skeleton" style={{ height: 90 }} />
                 ))}
               </div>
-              <div className="skeleton" style={{ height: 320 }} />
             </div>
           ) : (
             <Boundary key={route} name={ROUTES.find((r) => r.id === route)!.label}>
-              {route === "dashboard" && <Dashboard s={s} />}
-              {route === "decisions" && <Decisions s={s} chainJson={feed.chainJson} now={now} demo={feed.source === "demo"} />}
-              {route === "ledger" && <Ledger s={s} chainJson={feed.chainJson} now={now} demo={feed.source === "demo"} />}
-              {route === "settings" && <Settings s={s} />}
+              {route === "dashboard" && <Dashboard {...props} />}
+              {route === "decisions" && <Decisions {...props} />}
+              {route === "ledger" && <Ledger {...props} />}
+              {route === "settings" && <Settings {...props} />}
             </Boundary>
           )}
         </main>
       </div>
+      <Toaster />
     </div>
+  );
+}
+
+// ---------- first-visit intro (dismissible, remembered per browser) ----------
+const INTRO_KEY = "grail.intro.dismissed";
+function Intro() {
+  const [show, setShow] = useState(() => {
+    try {
+      return window.localStorage.getItem(INTRO_KEY) !== "1";
+    } catch {
+      return true;
+    }
+  });
+  if (!show) return null;
+  const close = () => {
+    setShow(false);
+    try {
+      window.localStorage.setItem(INTRO_KEY, "1");
+    } catch {
+      /* private mode: just hide for this visit */
+    }
+  };
+  return (
+    <section className="intro" aria-label="Quick tour">
+      <ol>
+        <li>
+          <b>1 · An AI trades for you</b>
+          <span>GRAIL picks coins on OKX and sizes them by how independent they really are.</span>
+        </li>
+        <li>
+          <b>2 · Every decision is sealed first</b>
+          <span>Before any trade, the decision is locked on Avalanche. Nobody can change it later.</span>
+        </li>
+        <li>
+          <b>3 · You can check it yourself</b>
+          <span>Press "Verify" on any decision: your browser re-checks the seal against the blockchain.</span>
+        </li>
+      </ol>
+      <div className="intro-actions">
+        <a className="btn sm" href="#/how" onClick={close}>
+          How it works
+        </a>
+        <button className="btn sm" onClick={close} aria-label="Close the tour">
+          Got it ✕
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -109,40 +170,39 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
   const errs = s.errors.length;
   return (
     <header className="topbar" role="status" aria-live="off">
-      <span className="agent" title={`status: ${s.agent.status ?? "unknown"}`}>
+      <span className="agent" title={`agent status: ${s.agent.status ?? "unknown"}`}>
         <span className={`dot ${running ? "on" : ""}`} />
         {s.agent.name ?? "agent"}
-        {!running && <span className="muted" style={{ fontWeight: 400 }}>{s.agent.status ?? "status unknown"}</span>}
+        <span className="muted" style={{ fontWeight: 400, fontSize: 12 }}>
+          {running ? "running" : (s.agent.status ?? "status unknown")}
+        </span>
       </span>
       <ModeChip state={s} />
       {(feed.source === "mock" || feed.source === "bundled") && (
-        <span className="chip mock" title={feed.source === "bundled" ? "No state server; bundled example state" : "runtime/state.json not found; contracts/state.example.json"}>
-          MOCK DATA
+        <span className="chip mock" title="The agent hasn't written live data yet; this is the example file (contracts/state.example.json).">
+          EXAMPLE DATA
         </span>
       )}
       {feed.source === "demo" && (
-        <span className="chip mock" title="web/fixtures/demo-state.json — real hashes, made-up tx ids">
+        <span className="chip mock" title="web/fixtures/demo-state.json — one real Fuji cycle plus made-up demo cycles">
           DEMO DATA
         </span>
       )}
       <span className="sep" />
       <span>
-        Cycle <b>#{s.agent.cycle_id ?? "—"}</b>
+        Round <b>#{s.agent.cycle_id ?? "—"}</b>
       </span>
-      {next && (
-        <span>
-          next in <b>{next}</b>
-        </span>
-      )}
+      <span>{!running ? "paused" : next ? <>next in <b className="mono">{next}</b></> : "next round overdue"}</span>
       <span className="sep" />
-      {c.commits !== undefined || c.reveals !== undefined ? (
-        <a className="mini" href="#/ledger" style={{ textDecoration: "none" }} title="commits / reveals / unrevealed">
-          <span>chain</span>
-          <b>{c.commits ?? "—"}</b>/<b>{c.reveals ?? "—"}</b>/<b className={(c.unrevealed ?? 0) > 0 ? "open" : ""}>{c.unrevealed ?? "—"}</b>
+      {(c.commits !== undefined || c.reveals !== undefined) && (
+        <a className="mini" href="#/ledger" title="Decisions sealed on Avalanche / opened / still sealed">
+          <b>{c.commits ?? "—"}</b> sealed <b>{c.reveals ?? "—"}</b> opened{" "}
+          <b className={(c.unrevealed ?? 0) > 0 ? "open" : ""}>{c.unrevealed ?? "—"}</b>
+          <span className={(c.unrevealed ?? 0) > 0 ? "open" : ""}>still sealed</span>
         </a>
-      ) : null}
-      <a className={`chip ${errs > 0 ? "danger" : ""}`} href="#/settings/system" title="Agent errors (Settings › System)">
-        {errs} {errs === 1 ? "error" : "errors"}
+      )}
+      <a className={`chip ${errs > 0 ? "danger" : ""}`} href="#/settings/system" title="Problems the agent reported (it skips the round and keeps running)">
+        {errs} {errs === 1 ? "problem" : "problems"}
       </a>
       <span className="grow" />
       <span title={s.generated_at_ms ? new Date(s.generated_at_ms).toISOString() : ""}>updated {ago(s.generated_at_ms, now)}</span>
@@ -151,8 +211,18 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
 }
 
 function ModeChip({ state }: { state: GrailState }) {
-  if (state.dry_run === false) return <span className="chip danger">LIVE · real funds</span>;
-  if (state.dry_run === true) return <span className="chip warn">DRY RUN · simulated orders</span>;
+  if (state.dry_run === false)
+    return (
+      <span className="chip danger" title="Real money on OKX TR">
+        LIVE · real funds
+      </span>
+    );
+  if (state.dry_run === true)
+    return (
+      <span className="chip warn" title="Practice mode (dry run): orders are simulated, but every decision is really sealed on Avalanche.">
+        PRACTICE MODE · orders simulated
+      </span>
+    );
   return <span className="chip">mode unknown</span>;
 }
 
@@ -161,22 +231,27 @@ function Strips({ feed, now }: { feed: Feed; now: number }) {
   const cyc = Number(s?.config.cycle_seconds);
   const age = s?.generated_at_ms !== undefined ? now - s.generated_at_ms : undefined;
   const stale = feed.source === "live" && age !== undefined && Number.isFinite(cyc) && cyc > 0 && age > 3 * cyc * 1000;
+  const stopped = s && s.agent.status && s.agent.status !== "running";
   return (
     <>
       {feed.error && (
         <div className="strip-msg danger" role="alert">
-          Can't read state.json (retrying) — {feed.error}. {s ? "Last good state shown." : ""}
+          Can't read the agent's data right now (retrying every 3 s). {s ? "You are seeing the last good reading." : ""}
+          <span className="tech">{feed.error}</span>
         </div>
       )}
       {feed.missingPath && (
         <div className="strip-msg mock">
-          GRAIL_STATE_PATH points to <span className="mono">{feed.missingPath}</span>, which doesn't exist yet. Showing mock data.
+          The agent hasn't written live data yet, so example data is shown. <span className="tech">missing: {feed.missingPath}</span>
         </div>
       )}
       {stale && (
         <div className="strip-msg warn" role="alert">
           Agent silent for {Math.max(1, Math.round(age! / 60000))}m — last state shown.
         </div>
+      )}
+      {stopped && (
+        <div className="strip-msg warn">Agent stopped — no new decisions until it is restarted. Everything already sealed stays checkable.</div>
       )}
     </>
   );
@@ -191,14 +266,6 @@ function useNow(ms: number) {
   return now;
 }
 
-function IconGrail() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true">
-      <path d="M9 6h14c0 6.5-3 10.5-7 10.5S9 12.5 9 6Z" fill="none" stroke="var(--grail)" strokeWidth="2.2" strokeLinejoin="round" />
-      <path d="M16 16.5V23m-5.5 2.5h11" stroke="var(--grail)" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
-  );
-}
 function IconGrid() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -231,6 +298,14 @@ function IconShield() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
       <path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.3 7.5 9.5 4.4-1.2 7.5-4.9 7.5-9.5V6L12 3Z" />
       <path d="M12 8v5M12 16v.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconHelp() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4M12 16.8v.2" strokeLinecap="round" />
     </svg>
   );
 }

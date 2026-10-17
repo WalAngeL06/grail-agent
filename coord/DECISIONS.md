@@ -98,3 +98,10 @@ OKX TR katılımcılara gerçek bakiye verdi; emirler canlı hesapta. Erişim: `
 - Eski canlı giriş yasağı bu talimatla sınırlı olarak güncellenir: varsayılan dry_run=true korunur. İlk canlı koşuyu kullanıcı KENDİ terminalinden, R-004b koşullarıyla yapacak: BTC-USDT tek coin, min_order_usdt=max_order_usdt=2, max_total_deploy_usdt=10, kill_switch_drawdown_pct=5, cycles=1, Fuji ve incelenen canlı CLI onayı. Trend HOLD ise emir zorlanmaz. Yeni genel/sürekli canlı çalışma yetkisi yok.
 - Integrator bu chat runtime/live-config oluşturmadı, config'i false yapmadı; ATK hesabı/emir, smoke/run veya Fuji tx çalıştırmadı. İlk canlı yapıldı/başardı diye yazılmaz. Gerçek ordId/tx sonrası ayrıca kanıt doğrulanır; belirsizlikte kimliği sorgulamadan tekrar gönderim veya yeni runtime ile atlatma yok.
 - R-004b'nin hesap/sermaye/gaz önkoşulları kullanıcı tarafından kontrol edilir; burada doğrulanmış sayılmaz. orders.sqlite3, fuji-transactions.json ve pending korunur. R-004-4/5/6/7 ve R-002-3/4 MINOR/NIT açık; R-005 public ve R-006 chain incelemesi ayrı, canlı onayıyla kapanmaz. Contracts 0.6 değişmedi.
+
+
+## D-016 · İlk canlı emir kanıtı ve LLM anahtar bildirimi (2026-10-17 15:46)
+- Kullanıcı 15:37 ilk CANLI koşunun başarılı olduğunu bildirdi: cycle2, BUY BTC-USDT 2 USDT, OKX 4017748393474314240 filled. Yerel agents/runtime/live/state.json bu alanlar ve dry_run=false ile eşleşiyor.
+- Commit 0x16f2d1294cda0181cf94dd50f7cfccf90b449e2a7534b5eccb6aa5a1a96e9569 → reveal 0xae6537e9acc9e66accfe5d0fe61b2f9a858460d7c42cf3d25f0acafa378541f7; planner Fuji doğrulamasını kullanıcı bildirdi. Integrator bu tur bağımsız RPC/receipt veya OKX sorgusu yapmadı; yeni emir/tx/runner başlatmadı.
+- D-015 tek coin/2 USDT/tek döngü kapısı gerçekleşti; yeni/sürekli koşu yetkisi yok. Gerçek runtime/live/journal/pending korunur. Eski hazırlık handoff’undaki boş runtime bilgisi artık tarihsel kabul edilir.
+- Kullanıcı LLM_API_KEY eklendi dedi. Anahtar okunmaz/raporlanmaz; provider çalışması veya geçmiş cycle2 LLM onayı kanıtlanmış sayılmaz. Örnek config dry_run=true, contracts 0.6 korunur; R-005 public kapısı ayrı.

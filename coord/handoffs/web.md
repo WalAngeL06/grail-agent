@@ -1,11 +1,19 @@
 # Handoff — web (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~16:20
-- Aktif görev / durum: public demo build + küçük düzeltmeler + T-014 doğrulama / READY_FOR_REVIEW (planner "Orkestra Şefi - 2")
+- Güncelleme zamanı: 2026-10-17 ~16:35
+- Aktif görev / durum: UI-QA bulguları (planner "Orkestra Şefi - 2", Antigravity raporu, güncel kodla süzülmüş) / READY_FOR_REVIEW
 - Oturum: Claude Code · Max (Opus 5.5), durdu
 - Worktree / branch / son commit: `Agentic Hack-wt/web` / `role/web` / bu dosyayı içeren son commit (`git log -1`)
-- contracts okunan sürüm: v0.6 (origin/main@d449da4 henüz merge edilmedi; web/ değişikliği yok)
+- contracts okunan sürüm: v0.6
 - Bu tur:
+  - P0: ≤600 px'te what-if slider tek sütun (input tam genişlik). Anchor: hash değişince + aynı linke tekrar tıklanınca `scrollToAnchor` (anlık kaydırma; smooth testte güvenilmezdi), `scroll-margin-top`.
+  - P1: Verify'dan "(R-003-4)" kalktı; Settings dry_run → "OKX TR · prices & balance only, orders simulated"; ≤760 px üst bar tek satır yatay kaydırma, ikincil öğeler (`.tb-opt`, `.sep`) gizli (48 px);
+    Holy Grail <520 px kart genişliğinde kompakt viewBox 400×280 + 13 px yazı (375 px'te ~9.8 px, önce 4.6), ilk ölçüm mount'ta senkron; Ledger ≤760 px kart düzeni + tam genişlik buton.
+  - P2: tekil/çoğul (price/prices, hold/holds); buton adı her yerde "Verify yourself" (ui-copy); stepper "on-chain" + nowrap.
+- Kontroller: build + build:public geçti; public preview 375 px: üst bar 48 px, slider 301 px, grafik yazısı 9.8 px, 5 ekranda yatay taşma yok, Ledger Verify butonu 37–338 px (görünür), stepper satırları 17 px (tek satır); anchor'lar positions top=72, system sayfa sonuna.
+  Not: Claude tarayıcı panelindeki emülasyon görüntüleri sağdan kırpık çıkıyor (panel ölçekleme artefaktı; DOM ölçümleri temiz). Görüntüler web/docs/screenshots/v5-*.
+
+- Önceki tur:
   1. "Last 30 days" başlığı replay.json oranından üretiliyor (`drawdownHeadline`): 7.48/14.51 → "Half the worst drop", T-014 sonrası 4.34/14.51 → "Less than a third of the worst drop". replay.json import edildiği için main'e T-014 girince sayılar kendiliğinden güncellenir (yeniden build).
      Verify'da "Fingerprint the agent reported" satırına ✓/✕ (zincirdeki mühürle, yoksa tarayıcı hash'iyle karşılaştırma).
   2. Public demo: `npm run build:public` → `web/dist-public/` (gitignore), base `/grail-agent/` (GRAIL_BASE ile değişir). State = `web/fixtures/public-snapshot.json`

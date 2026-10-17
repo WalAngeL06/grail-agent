@@ -21,7 +21,9 @@ function useCompact() {
   const [compact, setCompact] = useState(false);
   useEffect(() => {
     const el = ref.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
+    if (!el) return;
+    setCompact(el.getBoundingClientRect().width < 520); // measure now; ResizeObserver only fires on rendered frames
+    if (typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(([e]) => setCompact(e.contentRect.width < 520));
     ro.observe(el);
     return () => ro.disconnect();

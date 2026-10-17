@@ -1,0 +1,503 @@
+{
+  "task": "T-017 user decision: weekly lookback 168 and MR disabled runtime restart",
+  "verified_at_utc": "2026-10-17T15:23:42.406793+00:00",
+  "contracts_version_read": "0.6.2",
+  "runtime_contract_version": "0.6",
+  "source_commit": "23b54463089f4d59ffe72d6a4491a1a696f05f60",
+  "merged_origin_main": "6dc9b032152ca5aff0644286662cdece4d09448a",
+  "engine_commit": "253c04645e04a91192adedaf095759e04a38a14c",
+  "mr_enabled": false,
+  "runtime": "C:\\Users\\Serdar Arif\\Desktop\\Agentic Hack-wt\\agents\\agents\\runtime\\dryrun-5coin-20261017-1545",
+  "state_path": "C:\\Users\\Serdar Arif\\Desktop\\Agentic Hack-wt\\agents\\agents\\runtime\\dryrun-5coin-20261017-1545\\state.json",
+  "launcher_pid": 34988,
+  "worker_pid": 47440,
+  "llm_model": "gemini-flash-lite-latest",
+  "continuous": true,
+  "cycle_seconds": 90,
+  "lookback_bars": 168,
+  "dry_run": true,
+  "chain_simulated": false,
+  "chain_id": 43113,
+  "stop": {
+    "stopped_at_utc": "2026-10-17T15:17:40.103403+00:00",
+    "stopped_pids": [
+      46308,
+      43144
+    ],
+    "cycle_id": 99,
+    "pending_count": 0,
+    "errors": 2,
+    "baseline_errors": [
+      {
+        "at_ms": 1792245914608,
+        "code": "CHAIN_RPC",
+        "context": {
+          "cycle_id": 54
+        },
+        "message": "CHAIN_RPC: info failed (Web3RPCError)",
+        "where": "agents.chain.info"
+      },
+      {
+        "at_ms": 1792247597664,
+        "code": "CHAIN_RPC",
+        "context": {
+          "cycle_id": 72
+        },
+        "message": "CHAIN_RPC: next_cycle_id failed (BlockNotFound)",
+        "where": "agents.cycle"
+      }
+    ],
+    "commits": 99,
+    "reveals": 99,
+    "journal_records": 194,
+    "journal_all_confirmed": true,
+    "preserved_sha256": {
+      "config.json": "403a5b3ba14b7958a073deb1f2ed10cff95af1f08d6b83cd61a40e087ce1fbdb",
+      "control.json": "8bf778333981391932faef69c72eccc3bae1bb44eab7ef3e9f4187e98c000579",
+      "state.json": "9a18c6db9c5e1a0f6d469052484e63b20e4976bca2d0b7f3c8e3bb0550e45677",
+      "fuji-events.json": "942fe46d9e6a4b41d6cf5698b89c40699842dd7c2d8503ea5da9fc71cf0455f2",
+      "fuji-transactions.json": "819ebc1354b0cd013b9a065f8e3c51c00b8f46f0c573882ff69c13e0a45d560f",
+      "launch.json": "73b6fd81fac83d5c1b0171a4717c1b8aa4abb0cee8559ec5366a6165880a88cd"
+    },
+    "runtime_path": "C:\\Users\\Serdar Arif\\Desktop\\Agentic Hack-wt\\agents\\agents\\runtime\\dryrun-5coin-20261017-1545"
+  },
+  "prelaunch": {
+    "checked_at_utc": "2026-10-17T15:20:00.349827+00:00",
+    "previous_cycle_id": 99,
+    "chain_next_cycle_id": 100,
+    "commits": 99,
+    "reveals": 99,
+    "checkpoint_hashes_unchanged": true,
+    "protected_live_file_count": 8,
+    "engine_path": "C:\\Users\\Serdar Arif\\Desktop\\Agentic Hack-wt\\agents\\engine\\src\\grail_engine\\decision.py",
+    "mr_enabled": false,
+    "lookback_bars": 168,
+    "llm_model": "gemini-flash-lite-latest"
+  },
+  "original_journal_records_preserved": 194,
+  "historical_decision_rows_preserved": 485,
+  "protected_live_files_unchanged": true,
+  "protected_file_count": 8,
+  "stderr_bytes": 0,
+  "initial_candle_check": {
+    "checked_at_utc": "2026-10-17T15:15:44.435086+00:00",
+    "lookback_bars": 168,
+    "candle_bar": "1H",
+    "endpoint_limit": 300,
+    "coins": {
+      "BTC-USDT": {
+        "calls": 1,
+        "requested_limit": 170,
+        "raw_bars": 170,
+        "raw_confirmed": 169,
+        "selected_confirmed": 169,
+        "first_ms": 1791640800000,
+        "last_ms": 1792245600000,
+        "span_hours": 168,
+        "contiguous_1h": true
+      },
+      "ETH-USDT": {
+        "calls": 1,
+        "requested_limit": 170,
+        "raw_bars": 170,
+        "raw_confirmed": 169,
+        "selected_confirmed": 169,
+        "first_ms": 1791640800000,
+        "last_ms": 1792245600000,
+        "span_hours": 168,
+        "contiguous_1h": true
+      },
+      "SOL-USDT": {
+        "calls": 1,
+        "requested_limit": 170,
+        "raw_bars": 170,
+        "raw_confirmed": 169,
+        "selected_confirmed": 169,
+        "first_ms": 1791640800000,
+        "last_ms": 1792245600000,
+        "span_hours": 168,
+        "contiguous_1h": true
+      },
+      "AVAX-USDT": {
+        "calls": 1,
+        "requested_limit": 170,
+        "raw_bars": 170,
+        "raw_confirmed": 169,
+        "selected_confirmed": 169,
+        "first_ms": 1791640800000,
+        "last_ms": 1792245600000,
+        "span_hours": 168,
+        "contiguous_1h": true
+      },
+      "OKB-USDT": {
+        "calls": 1,
+        "requested_limit": 170,
+        "raw_bars": 170,
+        "raw_confirmed": 169,
+        "selected_confirmed": 169,
+        "first_ms": 1791640800000,
+        "last_ms": 1792245600000,
+        "span_hours": 168,
+        "contiguous_1h": true
+      }
+    },
+    "protected_file_count": 8,
+    "only_config_change": "lookback_bars:48->168"
+  },
+  "weekly_candles_and_trends": {
+    "BTC-USDT": {
+      "calls": 1,
+      "requested_limit": 170,
+      "raw_bars": 170,
+      "raw_closed_bars": 169,
+      "selected_closed_bars": 169,
+      "first_ms": 1791640800000,
+      "last_ms": 1792245600000,
+      "first_close": "82993.1",
+      "last_close": "81586",
+      "span_hours": 168.0,
+      "trend_pct": -1.7,
+      "reason_percent": "-1.7%"
+    },
+    "ETH-USDT": {
+      "calls": 1,
+      "requested_limit": 170,
+      "raw_bars": 170,
+      "raw_closed_bars": 169,
+      "selected_closed_bars": 169,
+      "first_ms": 1791640800000,
+      "last_ms": 1792245600000,
+      "first_close": "2508.96",
+      "last_close": "2428.02",
+      "span_hours": 168.0,
+      "trend_pct": -3.23,
+      "reason_percent": "-3.2%"
+    },
+    "SOL-USDT": {
+      "calls": 1,
+      "requested_limit": 170,
+      "raw_bars": 170,
+      "raw_closed_bars": 169,
+      "selected_closed_bars": 169,
+      "first_ms": 1791640800000,
+      "last_ms": 1792245600000,
+      "first_close": "110.51",
+      "last_close": "104.35",
+      "span_hours": 168.0,
+      "trend_pct": -5.57,
+      "reason_percent": "-5.6%"
+    },
+    "AVAX-USDT": {
+      "calls": 1,
+      "requested_limit": 170,
+      "raw_bars": 170,
+      "raw_closed_bars": 169,
+      "selected_closed_bars": 169,
+      "first_ms": 1791640800000,
+      "last_ms": 1792245600000,
+      "first_close": "10.543",
+      "last_close": "9.897",
+      "span_hours": 168.0,
+      "trend_pct": -6.13,
+      "reason_percent": "-6.1%"
+    },
+    "OKB-USDT": {
+      "calls": 1,
+      "requested_limit": 170,
+      "raw_bars": 170,
+      "raw_closed_bars": 169,
+      "selected_closed_bars": 169,
+      "first_ms": 1791640800000,
+      "last_ms": 1792245600000,
+      "first_close": "126.01",
+      "last_close": "116.73",
+      "span_hours": 168.0,
+      "trend_pct": -7.36,
+      "reason_percent": "-7.4%"
+    }
+  },
+  "cycles": [
+    {
+      "cycle_id": 100,
+      "window_bars": 168,
+      "new_errors": 0,
+      "historical_errors": 2,
+      "trend_pct": {
+        "AVAX-USDT": -6.13,
+        "BTC-USDT": -1.7,
+        "ETH-USDT": -3.23,
+        "OKB-USDT": -7.36,
+        "SOL-USDT": -5.57
+      },
+      "weekly_trends_and_reason_percent_verified": true,
+      "signals": {
+        "AVAX-USDT": {
+          "hurst": 0.57,
+          "ou": {
+            "half_life_h": 27.88,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -0.55
+          },
+          "regime": "trending",
+          "setup": "none"
+        },
+        "BTC-USDT": {
+          "hurst": 0.45,
+          "ou": {
+            "half_life_h": 13.19,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -0.94
+          },
+          "regime": "unclear",
+          "setup": "none"
+        },
+        "ETH-USDT": {
+          "hurst": 0.57,
+          "ou": {
+            "half_life_h": 26.11,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -0.55
+          },
+          "regime": "trending",
+          "setup": "none"
+        },
+        "OKB-USDT": {
+          "hurst": 0.48,
+          "ou": {
+            "half_life_h": 29.49,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -0.75
+          },
+          "regime": "unclear",
+          "setup": "none"
+        },
+        "SOL-USDT": {
+          "hurst": 0.47,
+          "ou": {
+            "half_life_h": 21.02,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -0.61
+          },
+          "regime": "unclear",
+          "setup": "none"
+        }
+      },
+      "decisions": [
+        {
+          "inst_id": "AVAX-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-6.1%), staying in cash",
+          "order_status": "hold",
+          "llm_flag": "skipped"
+        },
+        {
+          "inst_id": "BTC-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-1.7%), moving to cash; change too small to trade (1.99 < 2 USDT minimum)",
+          "order_status": "hold",
+          "llm_flag": "skipped"
+        },
+        {
+          "inst_id": "ETH-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-3.2%), staying in cash",
+          "order_status": "hold",
+          "llm_flag": "skipped"
+        },
+        {
+          "inst_id": "OKB-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-7.4%), staying in cash",
+          "order_status": "hold",
+          "llm_flag": "skipped"
+        },
+        {
+          "inst_id": "SOL-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-5.6%), staying in cash",
+          "order_status": "hold",
+          "llm_flag": "skipped"
+        }
+      ],
+      "actions": {
+        "HOLD": 5
+      },
+      "commit_tx": "0x7c39513cd1f14461269e6ed034dc99b59b24aa1b9a93766c675a49e9b92df795",
+      "reveal_tx": "0x829579e2bd4b0b1edb79baafc915baa827046ce46239c0dfc556db7d74b85fc5",
+      "commit_block": 59606164,
+      "reveal_block": 59606168,
+      "receipt_statuses": [
+        1,
+        1
+      ],
+      "payload_salt_hash_and_events_verified": true,
+      "historical_decisions_unchanged": true
+    },
+    {
+      "cycle_id": 101,
+      "window_bars": 168,
+      "new_errors": 0,
+      "historical_errors": 2,
+      "trend_pct": {
+        "AVAX-USDT": -6.13,
+        "BTC-USDT": -1.7,
+        "ETH-USDT": -3.23,
+        "OKB-USDT": -7.36,
+        "SOL-USDT": -5.57
+      },
+      "weekly_trends_and_reason_percent_verified": true,
+      "signals": {
+        "AVAX-USDT": {
+          "hurst": 0.57,
+          "ou": {
+            "half_life_h": 27.88,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -0.55
+          },
+          "regime": "trending",
+          "setup": "none"
+        },
+        "BTC-USDT": {
+          "hurst": 0.45,
+          "ou": {
+            "half_life_h": 13.19,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -0.94
+          },
+          "regime": "unclear",
+          "setup": "none"
+        },
+        "ETH-USDT": {
+          "hurst": 0.57,
+          "ou": {
+            "half_life_h": 26.11,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -0.55
+          },
+          "regime": "trending",
+          "setup": "none"
+        },
+        "OKB-USDT": {
+          "hurst": 0.48,
+          "ou": {
+            "half_life_h": 29.49,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -0.75
+          },
+          "regime": "unclear",
+          "setup": "none"
+        },
+        "SOL-USDT": {
+          "hurst": 0.47,
+          "ou": {
+            "half_life_h": 21.02,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -0.61
+          },
+          "regime": "unclear",
+          "setup": "none"
+        }
+      },
+      "decisions": [
+        {
+          "inst_id": "AVAX-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-6.1%), staying in cash",
+          "order_status": "hold",
+          "llm_flag": "skipped"
+        },
+        {
+          "inst_id": "BTC-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-1.7%), moving to cash; change too small to trade (1.99 < 2 USDT minimum)",
+          "order_status": "hold",
+          "llm_flag": "skipped"
+        },
+        {
+          "inst_id": "ETH-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-3.2%), staying in cash",
+          "order_status": "hold",
+          "llm_flag": "skipped"
+        },
+        {
+          "inst_id": "OKB-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-7.4%), staying in cash",
+          "order_status": "hold",
+          "llm_flag": "skipped"
+        },
+        {
+          "inst_id": "SOL-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-5.6%), staying in cash",
+          "order_status": "hold",
+          "llm_flag": "skipped"
+        }
+      ],
+      "actions": {
+        "HOLD": 5
+      },
+      "commit_tx": "0xbbc4bb787b81d526e5ea6121ac936da4376518873c2188bb21d283e6712b32ac",
+      "reveal_tx": "0xf3158a7c0a7592da7288383b389f3269490106f4eb8a8c8296ea5de3338e959c",
+      "commit_block": 59606224,
+      "reveal_block": 59606225,
+      "receipt_statuses": [
+        1,
+        1
+      ],
+      "payload_salt_hash_and_events_verified": true,
+      "historical_decisions_unchanged": true
+    }
+  ],
+  "historical_chain_rpc_errors": [
+    {
+      "at_ms": 1792245914608,
+      "code": "CHAIN_RPC",
+      "context": {
+        "cycle_id": 54
+      },
+      "message": "CHAIN_RPC: info failed (Web3RPCError)",
+      "where": "agents.chain.info"
+    },
+    {
+      "at_ms": 1792247597664,
+      "code": "CHAIN_RPC",
+      "context": {
+        "cycle_id": 72
+      },
+      "message": "CHAIN_RPC: next_cycle_id failed (BlockNotFound)",
+      "where": "agents.cycle"
+    }
+  ],
+  "new_chain_rpc_errors": 0,
+  "tests": [
+    {
+      "command": "cd agents; uv run pytest -q",
+      "seconds": 20.36,
+      "passed": 157
+    }
+  ],
+  "receipt_rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+  "verification_block": 59606248
+}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Cycle } from "../state";
 import { computeCommit, isHex32, payloadMatchesRows } from "../verify";
 import { parseOrderIds, readDecision, readReveal, type ChainInfo, type OnChainDecision, type RevealCall } from "../chain";
@@ -21,6 +21,8 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
   const [tamper, setTamper] = useState<{ payload: string; diff: string } | null>(null);
 
   const skipChain = demo && cycle.synthetic;
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   const cycleNo = cycle.cycle_id;
 
   useEffect(() => {
@@ -48,13 +50,13 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
       await new Promise((r) => setTimeout(r, Math.max(0, 700 - (Date.now() - t0))));
       if (alive) setPhase("done");
     })();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeRef.current();
     window.addEventListener("keydown", onKey);
     return () => {
       alive = false;
       window.removeEventListener("keydown", onKey);
     };
-  }, [chain, agentId, cycleNo, cycle.reveal_tx, skipChain, onClose]);
+  }, [chain, agentId, cycleNo, cycle.reveal_tx, skipChain]);
 
   // Inputs: the reveal tx on Fuji wins over state.json (trustless); state.json is the fallback.
   const fromChain = !!reveal;
@@ -103,7 +105,7 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
       let diff: string;
       if (i >= 0) {
         const old = p.decisions[i].size_usdt;
-        p.decisions[i].size_usdt = String(Number(old) * 10);
+        p.decisions[i].size_usdt = (Number(old) * 10).toFixed(2);
         diff = `decisions[${i}].size_usdt "${old}" → "${p.decisions[i].size_usdt}" (${coin(p.decisions[i].inst_id)})`;
       } else {
         p.decisions[0].action = "BUY";
@@ -124,7 +126,7 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
         <header className="sheet-head">
           <div>
             <b>Open the sealed envelope yourself</b>
-            <span className="muted"> · cycle #{cycle.id}</span>
+            <span className="muted"> · round #{cycle.id}</span>
           </div>
           <button className="btn sm" onClick={onClose} aria-label="Close">
             ✕
@@ -192,7 +194,7 @@ export default function VerifySheet({ cycle, chain, agentId, agentName, explorer
                 </b>
                 <p>
                   {verdict === "ok"
-                    ? `All ${cycle.decisions.length} decisions in cycle #${cycle.id}, HOLDs included, are exactly what was sealed${onchain?.committed ? ` on Avalanche at ${clock(onchain.committedAt * 1000)}` : ""}, before any order was sent.${!onchain ? " (Avalanche could not be read, so this compares with state.json only.)" : ""}`
+                    ? `All ${cycle.decisions.length} decisions in round #${cycle.id}${cycle.decisions.some((d) => d.action === "HOLD") ? ", holds included," : ""} are exactly what was sealed${onchain?.committed ? ` on Avalanche at ${clock(onchain.committedAt * 1000)}` : ""}, before any order was sent.${!onchain ? " (Avalanche could not be read, so this compares with state.json only.)" : ""}`
                     : verdict === "bad"
                       ? tamper
                         ? "The edited decision no longer matches the sealed fingerprint. One changed digit breaks the seal."

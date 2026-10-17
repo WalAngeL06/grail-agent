@@ -190,11 +190,9 @@ function TopBar({ feed, now }: { feed: Feed; now: number }) {
       )}
       <span className="sep" />
       <span>
-        Cycle <b>#{s.agent.cycle_id ?? "—"}</b>
+        Round <b>#{s.agent.cycle_id ?? "—"}</b>
       </span>
-      <span>
-        next in <b className="mono">{running ? (next ?? "overdue") : "paused"}</b>
-      </span>
+      <span>{!running ? "paused" : next ? <>next in <b className="mono">{next}</b></> : "next round overdue"}</span>
       <span className="sep" />
       {(c.commits !== undefined || c.reveals !== undefined) && (
         <a className="mini" href="#/ledger" title="Decisions sealed on Avalanche / opened / still sealed">

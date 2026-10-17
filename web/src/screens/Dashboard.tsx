@@ -84,7 +84,7 @@ export default function Dashboard({ s, now }: ScreenProps) {
 function liveSummary(s: GrailState, sealed: Cycle | undefined, now: number) {
   const held = s.portfolio.positions.filter((p) => p.inst_id).length;
   const hold = held === 0 ? "GRAIL is fully in cash" : `GRAIL holds ${held} coin${held === 1 ? "" : "s"}`;
-  const seal = sealed ? `Last decision sealed on Avalanche ${ago(sealed.decided_at_ms, now)} (cycle #${sealed.id}).` : "No decision sealed yet.";
+  const seal = sealed ? `Last decision sealed on Avalanche ${ago(sealed.decided_at_ms, now)} (round #${sealed.id}).` : "No decision sealed yet.";
   const mode = s.dry_run ? " Practice mode: trades are simulated." : s.dry_run === false ? " Live mode: real funds." : "";
   return `${hold}. ${seal}${mode}`;
 }

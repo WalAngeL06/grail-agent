@@ -195,3 +195,13 @@ details.math[open] summary { margin-bottom: 8px; }
   .glossary { grid-template-columns: 1fr; }
   .hint-pop { left: auto; right: -8px; }
 }
+
+/* grid children must be allowed to shrink (flow strip / tables scroll inside) */
+.stack > *, .cols > *, .hero-row > * { min-width: 0; }
+.flow { min-width: 0; }
+.flow ol { overflow-x: auto; }
+
+/* top bar: wrap to a second row instead of scrolling (design: two rows on narrower screens) */
+.topbar { flex-wrap: wrap; height: auto; min-height: 56px; padding: 10px 24px; row-gap: 6px; column-gap: 14px; overflow: visible; white-space: normal; }
+.topbar > * { white-space: nowrap; }
+@media (max-width: 760px) { .topbar { padding: 8px 16px; } }

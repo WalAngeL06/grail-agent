@@ -138,7 +138,7 @@ export function ExplorerLink(props: { explorer?: string; kind: "tx" | "address";
       </span>
     );
   return (
-    <span style={{ whiteSpace: "nowrap" }}>
+    <span style={props.full ? { wordBreak: "break-all" } : { whiteSpace: "nowrap" }}>
       <a className="proof" href={`${explorer.replace(/\/$/, "")}/${kind}/${value}`} target="_blank" rel="noreferrer" title={value}>
         {text} ↗
       </a>

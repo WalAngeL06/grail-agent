@@ -42,7 +42,7 @@ export default function Settings({ s }: ScreenProps) {
   keys.sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
   const errors = [...s.errors].sort((a, b) => (b.at_ms ?? 0) - (a.at_ms ?? 0));
   const lim = (k: string) => (cfg[k] === undefined || cfg[k] === null || cfg[k] === "" ? null : KNOWN[k].fmt(cfg[k]));
-  const caps = [lim("max_order_usdt") && `at most ${lim("max_order_usdt")} per trade`, lim("max_total_deploy_usdt") && `${lim("max_total_deploy_usdt")} in total`]
+  const caps = [lim("max_order_usdt") && `${lim("max_order_usdt")} per trade`, lim("max_total_deploy_usdt") && `${lim("max_total_deploy_usdt")} in total`]
     .filter(Boolean)
     .join(" and ");
   const summary = [

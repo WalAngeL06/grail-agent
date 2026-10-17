@@ -1,12 +1,15 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Revizyon r53 · 2026-10-17 18:09 Europe/Istanbul. Önceki ayrıntılar coord/archive/STATE-r49-20261017.md,r40/r26/r17 arşivlerinde.
+- Revizyon r54 · 2026-10-17 18:17 Europe/Istanbul. Önceki ayrıntılar coord/archive/STATE-r49-20261017.md,r40/r26/r17 arşivlerinde.
 - Sözleşme VERSION0.6.2; config/payload/state0.6,chain deploy0.5/ABI/hash aynı. ou opsiyonel/hash dışı; sleeve momentum|mean_reversion|none. İlk CANLI15:37cycle2BTC2USDTfilled korunur; yeni canlı yetki yok.
 - Bu istek TAMAM: chainfaf65cb→main94344f9,docs67d1ee3→maincfc704b,web785d260→main8cdf0fc sırayla ayrıpush/clean/uzak eşitliği doğrulandı. Üçhedef ancestor/exactağaç PASS;başlangıçf9beb7e'ye göre contracts/engine/agents/analyst/kökREADME aynı,diff temiz. Son koordinasyon commit'i bu kanıtı kaydeder.
 - R-011 GO: yeni audit başlangıçtaki sabit döngü kümesini doğrular; sonradan gelen döngüler açıkça hariç. Büyüme tek başına hata değil; seçili kayıt değişimi/sayaç gerilemesi/reorg/eksik-çift log/RPC hata olarak kalır. --max-cycleK seçilen ID<=K kapsamını açık etiketler.
 - Bu tur chain60test(5s)/typecheck PASS. Integrator publicRPC18:01:24snapshot59605190:Total89/Revealed89/Unopened0/MATCH89/Mismatch0/LIVE1,exit0,before=after89/89. Kullanıcı/planner ayrı80→81büyüme sırasında80/80MATCH/exit0 bildirdi; sayılar farklı snapshot'lardır. Runner'a dokunulmadı.
 - T-017 main88f00f3 AÇIK;17:51merge/push kapısı sağlandı. R-012-1bilinen davranış: MR çıkışı ranging+anlamlı coinde momentum pozisyonunu da satabilir; R-012-2MINOR tutma bandı düşüş SELL'ini bastırabilir. Restart/yeniOUruntime kanıtı agents sahibinde hâlâ açık.
 - PublicR-005GO yalnız tarananmain9acec55/ref kümesi; son yayınSHA fark taraması,linkler/video/rootREADME/prova/form açık. Bu tur yayın/görünürlük/form/slides yükleme yok.
+
+## Güncel entegrasyon · 18:17
+- Kullanıcı exact engine253c046 alınıyor: T-017 kodda mevcut, MR_ENABLED=False varsayılan KAPALI; önceki AÇIK kayıtlarının yerini bu karar alır. O-U metrikleri sürer, karar yolu T-014. Birleşik engine212/agents157 ve web22test+iki build PASS. Sıradaki exact webc9657b2, sonra örnek config168/VERSION0.6.3; çalışan runtime değişmedi.
 
 ## Zaman kapıları
 | Saat | Kapı | Durum |

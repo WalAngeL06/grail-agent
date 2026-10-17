@@ -23,6 +23,9 @@ RETEST_TOL_SD = 0.5
 SETUP_SIZE = {"retest": 1.0, "none": 0.5, "breakout": 0.0}  # hedefin çarpanı; kapılar sadece azaltır
 SIGNAL_FALLBACK = {"hurst": 0.5, "regime": "unclear", "setup": "none"}  # veri yetersiz/geçersiz (contracts 0.6.1)
 # T-017 ortalamaya dönüş (O-U) kolu: sadece ranging + anlamlı O-U. Spot, açığa satış yok.
+# Kapalıyken O-U yine hesaplanır ve signals'ta raporlanır (sleeve "none"), kararı T-014 verir.
+# Varsayılan kapalı: 180 günlük backtest'te lookback 168'de T-017, T-014'ten kötü (engine/out/lookback-168.md).
+MR_ENABLED = False
 OU_T_MAX = -2.5  # b'nin t istatistiği en fazla bu (Hurst'ten bağımsız ikinci kanıt)
 OU_HL_MIN_H, OU_HL_MAX_H = 1.0, 12.0  # anlamlı yarı ömür aralığı (saat)
 MR_ENTRY_Z, MR_EXIT_Z = -1.5, -0.25  # giriş z ≤ −1.5; elde pozisyon varken z ≥ −0.25 → çıkış; arası tut
@@ -118,7 +121,7 @@ def _ou_signal(win, bar_hours: float, regime: str) -> dict:
     hl = round(f["half_life_h"], 2) if f["half_life_h"] is not None and math.isfinite(f["half_life_h"]) else None
     z = round(f["z"], 2) if f["z"] is not None and math.isfinite(f["z"]) else None
     sig = bool(hl is not None and z is not None and f["t"] <= OU_T_MAX and OU_HL_MIN_H <= hl <= OU_HL_MAX_H)
-    sleeve = "momentum" if regime != "ranging" else "mean_reversion" if sig else "none"
+    sleeve = "momentum" if regime != "ranging" else "mean_reversion" if sig and MR_ENABLED else "none"
     return {"half_life_h": hl, "z": z, "significant": sig, "sleeve": sleeve}
 
 

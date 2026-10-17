@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import replay from "../../../engine/out/replay.json";
 import { n } from "../format";
+import { T } from "../i18n";
 
 // engine/out/replay.json (T-012): 30-day simulation on real OKX hourly prices, no real orders.
 type Point = { t_ms: number; grail_usdt: number; buy_hold_usdt: number };
@@ -32,7 +33,7 @@ export default function ReplayChart() {
     const step = Math.max(1, Math.floor(s.length / 240));
     return s.filter((_, i) => i % step === 0 || i === s.length - 1);
   }, []);
-  if (pts.length < 2) return <p className="muted">Replay data is not available in this build.</p>;
+  if (pts.length < 2) return <p className="muted">{T("Replay data is not available in this build.", "Bu sürümde replay verisi yok.")}</p>;
 
   const t0 = pts[0].t_ms;
   const t1 = pts[pts.length - 1].t_ms;
@@ -46,7 +47,7 @@ export default function ReplayChart() {
   const stepY = hi - lo > 8 ? 2 : 1;
   for (let v = Math.ceil(lo / stepY) * stepY; v <= hi; v += stepY) ticks.push(v);
   const last = pts[pts.length - 1];
-  const fmtDay = (t: number) => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  const fmtDay = (t: number) => new Date(t).toLocaleDateString(T("en-GB", "tr-TR"), { day: "numeric", month: "short" });
   const hp = hover !== null ? pts[hover] : null;
 
   // keep the two end labels at least 14 px apart
@@ -94,7 +95,7 @@ export default function ReplayChart() {
           GRAIL {n(last.grail_usdt, 2, 2)}
         </text>
         <text x={W - M.r + 8} y={yb + 4} fontSize="11" fill="var(--muted)">
-          Buy & hold {n(last.buy_hold_usdt, 2, 2)}
+          {T("Buy & hold", "Al-tut")} {n(last.buy_hold_usdt, 2, 2)}
         </text>
         {hp && (
           <g>
@@ -106,19 +107,21 @@ export default function ReplayChart() {
       </svg>
       {hp && (
         <div className="tooltip" style={{ left: `${(x(hp.t_ms) / W) * 100}%`, top: 4 }}>
-          <b>{new Date(hp.t_ms).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</b>
+          <b>{new Date(hp.t_ms).toLocaleString(T("en-GB", "tr-TR"), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</b>
           <div>GRAIL {n(hp.grail_usdt, 2, 2)} USDT</div>
-          <div className="muted">Buy & hold {n(hp.buy_hold_usdt, 2, 2)} USDT</div>
+          <div className="muted">
+            {T("Buy & hold", "Al-tut")} {n(hp.buy_hold_usdt, 2, 2)} USDT
+          </div>
         </div>
       )}
       <div className="chart-legend" style={{ marginTop: 6 }}>
         <span>
           <i style={{ borderColor: GOLD, borderTopWidth: 3 }} />
-          GRAIL (simulated, same rules as live)
+          GRAIL {T("(simulated, same rules as live)", "(simülasyon, canlıyla aynı kurallar)")}
         </span>
         <span>
           <i style={{ borderColor: BH }} />
-          Buy & hold all 5 coins equally
+          {T("Buy & hold all 5 coins equally", "5 coinin hepsini eşit al-tut")}
         </span>
       </div>
     </div>

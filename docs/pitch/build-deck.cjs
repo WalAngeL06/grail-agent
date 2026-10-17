@@ -8,19 +8,20 @@ const OUT = path.join(__dirname, "GRAIL-pitch.pptx");
 
 // Real, verified values (coord/STATE.md r14, contracts/chain.json, contracts/config.example.json)
 const V = {
-  liveBets: "<TBD>",
-  liveCorr: "<TBD>",
-  cyclesToday: "<TBD>",
+  liveBets: "1.36",          // 30-day replay average (engine/out/replay.json)
+  cyclesOnChain: "2",        // Fuji ledger: 2 committed, 2 revealed, 0 open
+  liveOrder: { when: "17 Oct, 15:37", what: "BUY 2 USDT of BTC", okx: "4017748393474314240", commit: "0x16f2…9569", reveal: "0xae65…41f7" },
+  replay: { ddGrail: "7.5%", ddHold: "14.5%", retGrail: "+1.8%", retHold: "+8.8%" },
   cycleSeconds: "90",
   maxOrder: "$10",
   maxTotal: "$50",
   killPct: "5%",
   agentId: "1",
   ledger: "0x1B5fcf6DeFf2F9375338A2C35932224522118851",
-  testsEngine: "84",
-  testsAgents: "78",
-  testsChain: "25",
-  testsAt: "17 Oct, 14:43",
+  testsEngine: "104",
+  testsAgents: "157",
+  testsChain: "38",
+  testsAt: "17 Oct",
   backupVideo: "<TBD>",
   repo: "github.com/WalAngeL06/grail-agent",
 };
@@ -72,7 +73,7 @@ function badge(s, x, y, label, color, d) {
   s.addText("A trading agent whose record you can check.", { x: 0.5, y: 2.0, w: 4.6, h: 0.9, fontFace: BODY, fontSize: 22, color: C.muted, margin: 0, valign: "top" });
   s.addText([
     { text: "You hold 5 coins. ", options: { color: C.text } },
-    { text: "Because they move together, they count as " + V.liveBets + " independent bets.", options: { color: C.muted } },
+    { text: "Because they move together, they counted as " + V.liveBets + " independent bets on average over the last 30 days.", options: { color: C.muted } },
   ], { x: 0.5, y: 3.15, w: 4.6, h: 0.8, fontFace: BODY, fontSize: 15, margin: 0, valign: "top" });
   s.addText("Agentic Trading Hackathon · Ankara · 17 Oct 2026", { x: 0.5, y: 4.85, w: 5, h: 0.3, fontFace: BODY, fontSize: 11, color: C.dim, margin: 0 });
 
@@ -90,10 +91,10 @@ function badge(s, x, y, label, color, d) {
   s.addText("≈", { x: 7.45, y: 2.2, w: 0.45, h: 0.6, align: "center", fontFace: BODY, fontSize: 32, color: C.muted, margin: 0 });
   s.addShape(pres.shapes.OVAL, { x: 7.95, y: 1.75, w: 1.6, h: 1.6, fill: { color: C.bg }, line: { color: C.gold, width: 2.5 } });
   s.addText(V.liveBets, { x: 7.95, y: 1.75, w: 1.6, h: 1.6, align: "center", valign: "middle", fontFace: HEAD, fontSize: 26, bold: true, color: C.gold, margin: 0 });
-  s.addText("independent bets", { x: 7.65, y: 3.6, w: 2.2, h: 0.3, align: "center", fontFace: BODY, fontSize: 12, color: C.gold, margin: 0 });
+  s.addText("independent bets · 30-day avg", { x: 7.6, y: 3.6, w: 2.3, h: 0.3, align: "center", fontFace: BODY, fontSize: 11, color: C.gold, margin: 0 });
   s.addNotes(
     "Open with the live number from the dashboard, not with the team. " +
-    "\"You bought five coins. Because they rise and fall together, you really hold " + V.liveBets + " independent bets. " +
+    "\"You bought five coins. Because they rise and fall together, over the last 30 days they behaved like " + V.liveBets + " independent bets. " +
     "And if an AI agent traded them for you, you could not check its record either. GRAIL fixes both.\""
   );
 }
@@ -156,9 +157,9 @@ function badge(s, x, y, label, color, d) {
     plotArea: { fill: { color: C.surface } }, chartArea: { fill: { color: C.surface }, roundedCorners: false },
   });
   card(s, 6.4, 1.4, 3.1, 1.55, C.surface2);
-  s.addText("Live today", { x: 6.6, y: 1.5, w: 2.7, h: 0.3, fontFace: BODY, fontSize: 11, bold: true, color: C.gold, charSpacing: 2, margin: 0 });
+  s.addText("Last 30 days", { x: 6.6, y: 1.5, w: 2.7, h: 0.3, fontFace: BODY, fontSize: 11, bold: true, color: C.gold, charSpacing: 2, margin: 0 });
   s.addText(V.liveBets, { x: 6.6, y: 1.8, w: 2.7, h: 0.6, fontFace: HEAD, fontSize: 30, bold: true, color: C.gold, margin: 0 });
-  s.addText("independent bets from 5 coins (togetherness " + V.liveCorr + ")", { x: 6.6, y: 2.4, w: 2.7, h: 0.5, fontFace: BODY, fontSize: 11, color: C.muted, margin: 0, valign: "top" });
+  s.addText("independent bets from 5 coins, on average (replay on real OKX prices)", { x: 6.6, y: 2.4, w: 2.7, h: 0.5, fontFace: BODY, fontSize: 11, color: C.muted, margin: 0, valign: "top" });
   s.addText([
     { text: "Coins that move together count as one bet.", options: { bullet: true, breakLine: true } },
     { text: "Adding more of the same kind adds almost nothing.", options: { bullet: true, breakLine: true } },
@@ -206,8 +207,8 @@ function badge(s, x, y, label, color, d) {
   card(s, 0.5, 1.5, 3.3, 3.55, C.surface2);
   s.addText(V.cycleSeconds + " s", { x: 0.75, y: 1.65, w: 2.9, h: 0.95, fontFace: HEAD, fontSize: 48, bold: true, color: C.gold, margin: 0 });
   s.addText("one full cycle, no human click", { x: 0.75, y: 2.6, w: 2.9, h: 0.35, fontFace: BODY, fontSize: 13, color: C.muted, margin: 0 });
-  s.addText(V.cyclesToday, { x: 0.75, y: 3.15, w: 2.9, h: 0.6, fontFace: HEAD, fontSize: 28, bold: true, color: C.text, margin: 0 });
-  s.addText("cycles run today, each one sealed", { x: 0.75, y: 3.75, w: 2.9, h: 0.35, fontFace: BODY, fontSize: 13, color: C.muted, margin: 0 });
+  s.addText(V.cyclesOnChain, { x: 0.75, y: 3.15, w: 2.9, h: 0.6, fontFace: HEAD, fontSize: 28, bold: true, color: C.text, margin: 0 });
+  s.addText("cycles sealed on Avalanche so far", { x: 0.75, y: 3.75, w: 2.9, h: 0.35, fontFace: BODY, fontSize: 13, color: C.muted, margin: 0 });
   s.addText("You set the rules once. There is no \"approve\" button per trade.", { x: 0.75, y: 4.2, w: 2.9, h: 0.7, fontFace: BODY, fontSize: 12, italic: true, color: C.text, margin: 0, valign: "top" });
 
   const flow = [
@@ -259,7 +260,7 @@ function badge(s, x, y, label, color, d) {
   ], { x: 5.3, y: 3.75, w: 4.0, h: 0.85, fontFace: BODY, fontSize: 13, color: C.text, margin: 0, valign: "top", paraSpaceAfter: 2 });
   s.addText([
     { text: "Practice mode is on by default. ", options: { bold: true, color: C.warn } },
-    { text: "Decisions are still sealed, orders are only simulated. Going live is a human decision.", options: { color: C.text } },
+    { text: "Going live is a human decision: the first live order (" + V.liveOrder.what + ", " + V.liveOrder.when + ") needed an explicit switch.", options: { color: C.text } },
   ], { x: 0.5, y: 4.8, w: 9, h: 0.45, fontFace: BODY, fontSize: 13, margin: 0 });
   s.addNotes(
     "Answers the jury's 'what is it allowed to do' question. Narrow the permissions, cap the spending, keep the trail, keep a human in charge of going live. " +
@@ -318,7 +319,9 @@ function badge(s, x, y, label, color, d) {
   card(s, 5.1, 3.4, 4.35, 1.2, C.surface2);
   s.addText("An ID card on chain", { x: 5.3, y: 3.5, w: 4, h: 0.35, fontFace: BODY, fontSize: 14, bold: true, color: C.gold, margin: 0 });
   s.addText("GRAIL is registered as agent #" + V.agentId + " on Avalanche Fuji (ERC‑8004 standard). Only it can write to its record.", { x: 5.3, y: 3.85, w: 4, h: 0.7, fontFace: BODY, fontSize: 12, color: C.text, margin: 0, valign: "top" });
-  s.addText("Record contract (Fuji): " + V.ledger, { x: 0.5, y: 4.8, w: 9, h: 0.3, fontFace: MONO, fontSize: 10, color: C.proof, margin: 0 });
+  s.addText("Record contract (Fuji): " + V.ledger, { x: 0.5, y: 4.75, w: 9, h: 0.28, fontFace: MONO, fontSize: 10, color: C.proof, margin: 0 });
+  s.addText("First live order: " + V.liveOrder.what + " · OKX " + V.liveOrder.okx + " · sealed " + V.liveOrder.commit + " → opened " + V.liveOrder.reveal,
+    { x: 0.5, y: 5.05, w: 9, h: 0.28, fontFace: MONO, fontSize: 10, color: C.muted, margin: 0 });
   s.addNotes(
     "This is why Avalanche is the core, not a bonus box. Other teams write results to the chain after the fact. " +
     "GRAIL writes its intent BEFORE the trade, like a sealed envelope. Technically: commit a hash of the decision plus a random salt, then reveal both. " +
@@ -349,7 +352,12 @@ function badge(s, x, y, label, color, d) {
     { text: "The \"check it yourself\" moment: ", options: { bold: true, color: C.gold } },
     { text: "your browser rebuilds the fingerprint from the opened envelope and compares it with the seal on Avalanche. Same fingerprint = the decision was never changed.", options: { color: C.text } },
   ], { x: 0.75, y: 3.3, w: 8.5, h: 1.15, fontFace: BODY, fontSize: 14, valign: "middle", margin: 0 });
-  s.addText("Backup video: " + V.backupVideo, { x: 0.5, y: 4.7, w: 9, h: 0.3, fontFace: BODY, fontSize: 12, color: C.dim, margin: 0 });
+  s.addText([
+    { text: "From a terminal: ", options: { color: C.muted } },
+    { text: "cd chain && npm run verify:cycle:1", options: { color: C.proof, fontFace: MONO } },
+    { text: "  →  MATCH", options: { color: C.green, bold: true } },
+  ], { x: 0.5, y: 4.62, w: 9, h: 0.3, fontFace: BODY, fontSize: 12, margin: 0 });
+  s.addText("Backup video: " + V.backupVideo, { x: 0.5, y: 4.98, w: 9, h: 0.3, fontFace: BODY, fontSize: 12, color: C.dim, margin: 0 });
   s.addNotes(
     "Switch to the live app. Order: Dashboard, On-chain Ledger, Decisions (follow one cycle: sealed, ordered, opened), press 'Verify yourself', then Settings. " +
     "Let a judge press 'Verify yourself' if they want. Line: 'Don't trust us - your browser just checked it.' " +
@@ -362,21 +370,24 @@ function badge(s, x, y, label, color, d) {
   const s = base(null, null);
   s.addText("Backtests can lie.", { x: 0.5, y: 0.7, w: 9, h: 0.75, fontFace: HEAD, fontSize: 40, bold: true, color: C.text, margin: 0 });
   s.addText("Avalanche can't.", { x: 0.5, y: 1.4, w: 9, h: 0.75, fontFace: HEAD, fontSize: 40, bold: true, color: C.gold, margin: 0 });
-  const stats = [[V.testsEngine, "decision-engine and AI-check tests"], [V.testsAgents, "OKX trading-layer tests"], [V.testsChain, "Avalanche contract tests"]];
+  const stats = [[V.testsEngine, "decision-engine and AI-check tests"], [V.testsAgents, "OKX trading and loop tests"], [V.testsChain, "Avalanche contract tests"]];
   stats.forEach((st, i) => {
     const x = 0.5 + i * 3.05;
     card(s, x, 2.5, 2.85, 1.1);
     s.addText(st[0], { x: x + 0.2, y: 2.55, w: 1.2, h: 0.6, fontFace: HEAD, fontSize: 30, bold: true, color: C.gold, margin: 0 });
     s.addText(st[1], { x: x + 0.2, y: 3.12, w: 2.5, h: 0.4, fontFace: BODY, fontSize: 11, color: C.muted, margin: 0 });
   });
-  s.addText("Automated tests passing, " + V.testsAt + ".", { x: 0.5, y: 3.65, w: 9, h: 0.3, fontFace: BODY, fontSize: 10, italic: true, color: C.dim, margin: 0 });
+  s.addText("Automated tests passing, " + V.testsAt + ". 30-day replay on real OKX prices: worst drop " + V.replay.ddGrail + " vs " + V.replay.ddHold +
+    " for buy-and-hold (return " + V.replay.retGrail + " vs " + V.replay.retHold + "; no claim that it beats buy-and-hold).",
+    { x: 0.5, y: 3.68, w: 9, h: 0.42, fontFace: BODY, fontSize: 10, italic: true, color: C.muted, margin: 0, valign: "top" });
   s.addText([
     { text: "Next: ", options: { bold: true, color: C.gold } },
     { text: "a second \"risk guard\" agent that reviews each decision on chain · a reputation built from opened envelopes · Avalanche mainnet", options: { color: C.text } },
-  ], { x: 0.5, y: 4.05, w: 9, h: 0.6, fontFace: BODY, fontSize: 13, margin: 0, valign: "top" });
-  s.addText(V.repo, { x: 0.5, y: 4.85, w: 9, h: 0.3, fontFace: MONO, fontSize: 11, color: C.proof, margin: 0 });
+  ], { x: 0.5, y: 4.25, w: 9, h: 0.6, fontFace: BODY, fontSize: 13, margin: 0, valign: "top" });
+  s.addText(V.repo, { x: 0.5, y: 4.95, w: 9, h: 0.3, fontFace: MONO, fontSize: 11, color: C.proof, margin: 0 });
   s.addNotes(
     "Quality in one sentence: the decision is built the same way in Python, in the Avalanche contract and in your browser, and they all agree. " +
+    "On risk: in a 30-day replay its worst drop was " + V.replay.ddGrail + " versus " + V.replay.ddHold + " for buy-and-hold; it earned less (" + V.replay.retGrail + " vs " + V.replay.retHold + "), and we say so. " +
     "Mention the next step only briefly. Then close with: 'Backtests can lie. Avalanche can't.' and stop talking."
   );
 }

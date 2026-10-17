@@ -116,3 +116,11 @@ OKX TR katılımcılara gerçek bakiye verdi; emirler canlı hesapta. Erişim: `
 +- T-014 kartı/örnek alan motorun uygulandığı anlamına gelmez. Bu teslim yeni runner/canlı emir/Fuji tx yetkisi vermez; 15:37 ilk canlı kanıtı ve gerçek runtime/journal korunur.
 
 - R-007 2682d99 raporu/handoff’u kullanıcı talimatıyla merge edildi; inceleme DONE, web MAJOR’ları açık. R-005 ilk teslim 0c8a02b’de pushlandı; bu tur root/contract/coord dışında ürün kodu değiştirilmedi.
+
+
+## D-018 · T-015/T-016 ve T-014 reviewer değişimi; yeni LLM/web kanıtı (2026-10-17 16:17)
++- Kullanıcı docs@5a84ed1 T-016 merge/push istedi; 12 soru FAQ + 3 dk runbook/B planı ve hedefin önceki docs/sunum güncellemeleri birlikte kabul edilir. T-016 INTEGRATED kartı açıldı; kök README taşıma/yayın D-012 kapısı aynı.
++- T-015 chain için npm run audit kartı açılır; mevcut GRAIL agent sicilinin tüm döngüleri sabit snapshot’ta salt okunur denetlenir. Yeni tx/OKX/signer/.env gerektirmez; bağımsız Claude incelemesi ve ayrı integrator merge kapısı var. Chain dalı bu talimatla merge edilmez.
++- Kullanıcının kararı: T-014 incelemesi chain/Codex-2’den reviewer Claude Max’e geçti, R-009 hedef16:40. Eski chain özel inceleme ataması/yazma izni kaldırılır; yeni reviewer yalnız coord/reviews/T-014.md + reviewer handoff, role/review. Kullanıcının araç/model tercihi bu görev için önceki atamayı değiştirir; implementer’dan ayrı oturum ve bağımsız hedef/test/onay korunur. Engine teslim16:30, merge<=16:50 ve yetişmezse kapsam dışı kuralı aynı.
++- Kullanıcı/planner kanıtı: Gemini sağlayıcı testi HTTP200, sürekli agents cycle3 5 BUY/5 approved. Önceki “sağlayıcı doğrulanmadı” STATE bilgisi artık geçersiz; doğrulandı. Cycle2’nin skipped/no_provider tarihi değişmez, cycle3 canlı/simulated veya fill bu mesajdan varsayılmaz. Integrator anahtar okumaz veya yeni runner/çağrı/emir başlatmaz.
++- Kullanıcı R-007 web MAJOR’larının role/web@27cc6e8’de düzeltildiğini bildirdi. Web RAPOR’u gelince hedef/sınır/build kontrolüyle merge; önceden veya daha ileri commit otomatik merge edilmez. Main düzeltildi diye yazılmaz. Contracts0.6.1 ve protokol0.6 aynı.

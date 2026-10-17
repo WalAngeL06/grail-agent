@@ -9,7 +9,7 @@
 - PublicR-005GO yalnız tarananmain9acec55/ref kümesi; son yayınSHA fark taraması,linkler/video/rootREADME/prova/form açık. Bu tur yayın/görünürlük/form/slides yükleme yok.
 
 ## Güncel entegrasyon · 18:17
-- Kullanıcı exact engine253c046 alınıyor: T-017 kodda mevcut, MR_ENABLED=False varsayılan KAPALI; önceki AÇIK kayıtlarının yerini bu karar alır. O-U metrikleri sürer, karar yolu T-014. Birleşik engine212/agents157 ve web22test+iki build PASS. Sıradaki exact webc9657b2, sonra örnek config168/VERSION0.6.3; çalışan runtime değişmedi.
+- Engine253c046 → main9f9cc3a push/clean/uzak eşitliği TAMAM: T-017 kodda mevcut, MR_ENABLED=False varsayılan KAPALI; önceki AÇIK kayıtlarının yerini bu karar alır. O-U metrikleri sürer, karar yolu T-014. Birleşik engine212/agents157 ve web22test+iki build PASS. Sıradaki exact webc9657b2, sonra örnek config168/VERSION0.6.3; çalışan runtime değişmedi.
 
 ## Zaman kapıları
 | Saat | Kapı | Durum |

@@ -1,20 +1,14 @@
 # Handoff — agents
 
-- Güncelleme: 2026-10-17 14:10 Europe/Istanbul; Codex · hesap 1, oturum sürüyor.
-- Aktif görev: T-006 / IN_PROGRESS; önce kullanıcı istediği R-002-1/R-002-2 düzeltildi. Yalnız agents/ + bu handoff yazılır.
-- Worktree/branch: Agentic Hack-wt/agents / role/agents; main e06987b ile senkron. Son teslim commit'i: bu handoff'u içeren commit (git log -1).
-- contracts: v0.5; origin/main (76e0724) merge edildi, merge commit 9c67988. Analyst + engine yerelde hazır.
-- Tamamlanan: Python ATK sorgu izin listesi, sabit grail/TR/live + TR API host; state dönüşümleri; spot guardrail, lot/minimum/tick; dry-run simülasyon; kalıcı SQLite client-ID journal; belirsiz emir kimliğiyle sorgulanır, tekrar gönderilmez. Bakiye yenileme + rezerv atomik; dış açık emir canlı gönderimi engeller.
-- Kontrol: cd agents; uv run pytest -q --tb=short → 78 passed (0.20s). Aynı klasörde uv run python -m grail_agents smoke --config ../contracts/config.example.json → exit 0, ok=true; beş coin aktif spot, her coin 49 kapalı mum, nakit 29.40294764 USDT, BTC BUY 2 USDT simulated / okx_order_id=null. Gerçek emir/tx yok.
-- Yetki: kullanıcı bu chat'te CLI 1.4.8'de olmayan --read-only yerine sorgu izin listesini AÇIKÇA onayladı. Canlı emir yok.
-- Eski handoff'taki OKX_DEMO=1 GEÇERSİZ; T-002 + D-007: gerçek grail profili ve dry_run=true. .env okunmadı/değişmedi; anahtar config içinde, loglanmadı.
-- Commit edilmemişler: bu commit sonrası yok (git status ile doğrula). Süreç/port: yok.
-- R-002 kaynağı: origin/main'de henüz yoktu; C:/Users/Serdar Arif/Desktop/Agentic Hack-wt/review/coord/reviews/T-002.md okundu (origin/role/review'da da var). Dosya kopyalanmadı/değişmedi.
-- R-002-1: yalnız iyi biçimli nonzero sCode + boş ordId kesin red sayılır; rejected + rejection_code kalıcı yazılır, rezerv kilitlemez, tekrar sorgulamak durumu bozmaz. CLI stdout nonzero exit'te de incelenir; ham stderr kesin red kanıtı sayılmaz.
-- R-002-2: her yeni canlı execute öncesinde unknown/pending/partial sorgulanır; dolmuş emir rezervden çıkıp taze bakiyeyle hesaplanır. Test önce CASH_BALANCE ile kırıldı, düzeltme sonrası geçti.
-- Son test: cd agents; uv run pytest -q --tb=short → 88 passed (0.42s). Gerçek emir/tx yok. R-002-5'in placement [null] yanıtı da GrailError'a dönüştürüldü.
-- Çalıştırılmayan: ilk canlı emir (dry_run hâlâ true, kullanıcı canlıyı açmadı/onaylamadı); engine/zincir döngüsü T-006 kapsamında. Canlı kod sadece sahte borsayla test edildi.
-- TEKRARLAMA: --read-only bayrağını deneme; OAuth/login/upgrade/transfer/emir komutu çalıştırma. Global siteye geçme.
-- Kanıt ve API: agents/ACCEPTANCE-T-002.md ve agents/README.md. Test geçici klasörü agents/runtime/pytest; ortak Windows temp ACL hatası nedeniyle worktree içinde tutuluyor.
-- T-006'ya devir: tek kalıcı runtime/orders.sqlite3 journal, kalıcı peak_equity_usdt, başarılı Avalanche commit önkoşulu ve GrailError yakalama döngünün sorumluluğu. HOLD için emir çağrılmaz.
-- SIRADAKİ İLK ADIM: T-006 planı + ağsız testler: canonical payload/keccak/salt, kalıcı pending, chain Protocol + sahte adaptör, engine→analyst→commit→simüle emir→reveal→state; chain.json yokken gerçek zincir çağrısı yok.
+- Güncelleme: 2026-10-17 14:13 Europe/Istanbul; Codex · hesap 1, oturum sürüyor.
+- Görev/durum: T-006 / IN_PROGRESS. Worktree Agentic Hack-wt/agents, branch role/agents; son commit bu handoff'u içeren commit (git log -1).
+- contracts v0.5; origin/main 76e0724 merge commit 9c67988; engine + analyst hazır. chain.json yok.
+- Önceki anlamlı teslim: ef5aecd (push edildi): R-002-1 kesin sCode reddi rejected olarak kapanır; timeout/bozuk yanıt unknown. R-002-2 pending/partial/unknown yeni emirden önce sorgulanır. 88 test geçti.
+- İnceleme kaynağı: review worktree/coord/reviews/T-002.md (origin/role/review'da da var; main'de yok). İnceleme dosyasına yazılmadı.
+- Yeni tamamlanan: payload.py kanonik JSON + Ethereum Keccak; storage.py atomik pending/state/control, kalıcı cycle/peak, OS tek-yazar kilidi; chain.py Protocol + açıkça simulated sahte adaptör (diskte de saklanabilir).
+- Kontrol: cd agents; uv run pytest -q --tb=short → 97 passed (0.40s). Yeni testler önce modül yokluğunda kırıldı. Emir/tx/ağ çağrısı yok.
+- Plan/API: agents/PLAN-T-006.md. Yerel engine/analyst editable bağımlılıkları agents/pyproject.toml'a eklendi; uv.lock yalnız agents altında.
+- Sırlar: .env okunmadı/değişmedi; key/log yok. Kullanıcının önceki --read-only yerine sorgu izin listesi onayı geçerli. dry_run=true kalır.
+- Commit edilmemişler: bu commit sonrası yok; süreç/port yok. READY_FOR_REVIEW değil, döngü henüz yazılıyor.
+- TEKRARLAMA: gerçek emir/zincir çağrısı, OAuth/upgrade/transfer, başka rol alanına yazı veya mesaj yok.
+- SIRADAKİ İLK ADIM: PLAN-T-006 Step 2 testleri: engine→analyst→durable commit→simüle emir→reveal→v0.5 state; çökmede kayıtlı payload/salt ile sadece query/reveal, yeniden emir/analist yok. Ardından test + handoff + commit + push.

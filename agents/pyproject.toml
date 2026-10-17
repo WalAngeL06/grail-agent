@@ -7,7 +7,11 @@ name = "grail-agents"
 version = "0.1.0"
 description = "Guarded OKX ATK adapter for GRAIL"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["grail-engine", "grail-analyst", "eth-hash[pycryptodome]>=0.7,<1", "python-dotenv>=1,<2"]
+
+[tool.uv.sources]
+grail-engine = { path = "../engine", editable = true }
+grail-analyst = { path = "../analyst", editable = true }
 
 [dependency-groups]
 dev = ["pytest>=8,<10"]

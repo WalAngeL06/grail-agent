@@ -44,6 +44,7 @@ Anlamlı = `t(b) ≤ −2.5` ve `1 ≤ yarı ömür ≤ 12 sa` (rastgele yürüy
 Giriş `z ≤ −1.5` → hedef = min(momentum coin tavanının yarısı, tek varlık vol hedefi); kol toplamı ≤ %25 × deploy tabanı (mevcut MR coin pozisyonları dahil).
 Elde pozisyon: `z ≥ −0.25` → çıkış (hedef 0), arası → tut. Spot, açığa satış yok; max_order / max_total / nakit / kill switch aynen.
 `signals[inst].ou = {half_life_h, z, significant, sleeve: momentum|mean_reversion|none}` (2 ondalık; karar aynı sayıdan).
+Kol `decision.MR_ENABLED` ile açılır; **varsayılan kapalı** (lookback 168'de T-017 < T-014, `out/lookback-168.md`). Kapalıyken O-U raporlanır, sleeve ranging'de "none", karar T-014 ile aynı.
 **Replay (T-012)** — son 30 günün OKX mumlarıyla kararları geriye oynatır, eşit ağırlıklı al-tut ile karşılaştırır. Emir/tx yok.
 ```
 uv run python scripts/replay_okx.py --fetch   # `okx market candles` (salt okunur) → data/okx-candles-1H.json, sonra oynat

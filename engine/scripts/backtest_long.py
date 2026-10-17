@@ -114,6 +114,8 @@ def simulate(job: dict) -> dict:
         mods.update(hurst_dfa=lambda r: 0.6, breakout_setup=lambda c, tol: "retest")
     elif s == "t014":
         mods.update(_mr_target=lambda *a, **k: None)
+    else:  # t017, t017_mr_exit_only_mr: MR kolu açık (decision.MR_ENABLED varsayılanı kapalı)
+        mods.setdefault("MR_ENABLED", True)
     for k, v in mods.items():
         setattr(mod, k, v)
 

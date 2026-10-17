@@ -32,7 +32,8 @@ HOURS_PER_YEAR = 8760
 
 def run(cfg: dict, candles: dict, mr_on: bool) -> dict:
     """replay() ile aynı simülasyon; ek olarak her bar/coin için karar skoru, hedef ağırlık, n_eff ve equity."""
-    orig = mod._mr_target
+    orig, orig_flag = mod._mr_target, mod.MR_ENABLED
+    mod.MR_ENABLED = mr_on  # varsayılan kapalı; T-017 koşusu için aç
     if not mr_on:
         mod._mr_target = lambda *a, **k: None
     try:
@@ -71,7 +72,7 @@ def run(cfg: dict, candles: dict, mr_on: bool) -> dict:
         return {"coins": coins, "closes": closes, "rows": rows, "equity": equity, "capital": capital, "trades": trades,
                 "n_ts": len(ts)}
     finally:
-        mod._mr_target = orig
+        mod._mr_target, mod.MR_ENABLED = orig, orig_flag
 
 
 def newey_west_t(x: np.ndarray, lags: int) -> float:

@@ -1,6 +1,8 @@
 # Handoff — engine / analyst (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 ~17:58 (180 günlük backtest bitişi)
+- Güncelleme zamanı: 2026-10-17 ~18:15 (lookback 168 + MR_ENABLED bitişi)
+- Son iş: kullanıcı kararı lookback 48 → 168. Kod 48'e sabit değil (config'ten ölçekleniyor), değişiklik gerekmedi. `scripts/lookback_168.py` → `out/lookback-168.{md,json}`: 168'de T-014 180 gün +7.12% / OOS +5.17% (Sharpe +1.01), T-017 −2.55% / −3.16% → `decision.MR_ENABLED = False` varsayılan (O-U yine raporlanır, sleeve ranging'de "none", karar T-014 ile aynı; test var). Analiz betikleri T-017 koşularında bayrağı açıkça açıyor. Kill switch analizi md §4'te (uygulanmadı). Config değişikliği (lookback_bars 168) integrator/kullanıcıda; agents en az 169 kapanmış bar göndermeli.
+- Önceki: 180 günlük backtest (0eda3cc).
 - Son iş: 180 günlük uzun backtest (salt okuma analiz, planner) / READY_FOR_REVIEW. `engine/scripts/backtest_long.py` (`--fetch` → OKX public history-candles, anahtarsız) → `engine/data/okx-candles-1H-180d.json` (5 coin × 4512 bar, eksik 0) → `engine/out/backtest-180d.{md,json}` (json'da her stratejinin günlük değeri). src'ye dokunulmadı; stratejiler betik içinde modül özniteliği değiştirilerek (base: Hurst 0.6 + retest sabit; t014: `_mr_target`→None; e: MR miktarı izlenir). İki çalıştırma byte-byte aynı (~1 dk, ProcessPool).
   - Sonuç: 180 gün al-tut +16.73% (düşüş 32.7%); base −5.64%, T-014 −3.22%, T-017 −8.50%, (e) −3.84% (düşüş 6.1–14.6%). Örneklem dışı 150 gün Sharpe al-tut +0.69, GRAIL −1.06…−2.43. Kill switch saat oranı: base %78, T-014 %31, T-017 %76; kapatınca üçü de daha kötü. Duyarlılık: üçü de HASSAS (örn. t014 lookback168 +7.12%) → aşırı uyum uyarısı, ayar yapılmadı.
 - Önceki iş: Grinold Temel Yasası ölçümü (salt okuma analiz, planner) / aa77641. `engine/scripts/grinold_ic.py` → `engine/out/grinold-30d.{json,md}`; src'ye dokunulmadı (T-014 = betik içinde `_mr_target` kapatılarak). İki çalıştırma byte-byte aynı.

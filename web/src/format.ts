@@ -68,4 +68,23 @@ export function shortHash(h?: string, head = 6, tail = 4): string {
   return h.length > head + tail + 3 ? `${h.slice(0, head)}…${h.slice(-tail)}` : h;
 }
 
+/** R-007-6: never claim certainty from a 0-decimal percentage. */
+export function psrText(psr: number | undefined | null): string {
+  if (psr === undefined || psr === null) return DASH;
+  if (psr >= 0.995) return "> 99%";
+  if (psr < 0.005) return "< 1%";
+  return `${n(psr * 100, 0)}%`;
+}
+
+/** "last 48h" from lookback_bars × candle_bar (R-007-12). */
+export function windowLabel(cfg: Record<string, unknown>, fallbackBars?: number): string {
+  const bars = typeof cfg.lookback_bars === "number" ? cfg.lookback_bars : fallbackBars;
+  const bar = typeof cfg.candle_bar === "string" ? cfg.candle_bar : "1H";
+  const m = /^(\d+)([mHD])$/.exec(bar);
+  if (!bars || !m) return "recent prices";
+  const unit = m[2] === "m" ? 1 / 60 : m[2] === "H" ? 1 : 24;
+  const hours = bars * Number(m[1]) * unit;
+  return hours > 72 && hours % 24 === 0 ? `last ${hours / 24} days` : `last ${Math.round(hours)}h`;
+}
+
 export const coin = (inst?: string) => (inst ? inst.replace(/-USDT$/, "") : DASH);

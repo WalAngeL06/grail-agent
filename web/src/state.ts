@@ -24,6 +24,25 @@ const numMap = (v: unknown): Record<string, number> => {
   return out;
 };
 
+export type Signal = { hurst?: number; regime?: "trending" | "unclear" | "ranging"; setup?: "none" | "breakout" | "retest" };
+const REGIMES = ["trending", "unclear", "ranging"] as const;
+const SETUPS = ["none", "breakout", "retest"] as const;
+function signals(v: unknown): Record<string, Signal> {
+  const out: Record<string, Signal> = {};
+  for (const [k, x] of Object.entries(obj(v))) {
+    const o = obj(x);
+    const r = str(o.regime);
+    const st = str(o.setup);
+    const sig: Signal = {
+      hurst: num(o.hurst),
+      regime: (REGIMES as readonly string[]).includes(r ?? "") ? (r as Signal["regime"]) : undefined,
+      setup: (SETUPS as readonly string[]).includes(st ?? "") ? (st as Signal["setup"]) : undefined,
+    };
+    if (sig.hurst !== undefined || sig.regime || sig.setup) out[k] = sig;
+  }
+  return out;
+}
+
 export type ErrorItem = { code?: string; message?: string; at_ms?: number; where?: string };
 export type Decision = {
   key: string;
@@ -81,6 +100,8 @@ export type GrailState = {
     drawdown_pct?: number;
     kill_switch?: boolean;
     window_bars?: number;
+    /** T-014 (optional): per-coin entry signals; empty when the engine doesn't write them */
+    signals: Record<string, Signal>;
   };
   decisions: Decision[];
   chain: {
@@ -152,6 +173,7 @@ export function normalize(raw: unknown): GrailState {
       drawdown_pct: num(m.drawdown_pct),
       kill_switch: bool(m.kill_switch),
       window_bars: num(m.window_bars),
+      signals: signals(m.signals),
     },
     decisions: arr(r.decisions).map((x, i) => {
       const o = obj(x);
@@ -215,6 +237,8 @@ export type Cycle = {
   dry_run?: boolean;
   trades: number;
   synthetic: boolean;
+  /** read from GrailLedger event logs, not present in this state file */
+  fromChain?: boolean;
 };
 
 export function groupCycles(s: GrailState): Cycle[] {
@@ -258,7 +282,10 @@ export function decisionDryRun(d: Decision, s: GrailState): boolean | undefined 
   return s.dry_run;
 }
 
-export type Source = "live" | "demo" | "mock" | "bundled";
+export type Source = "live" | "demo" | "mock" | "bundled" | "snapshot";
+
+/** `vite build --mode public`: static jury build, no server, no local files. */
+export const PUBLIC_SNAPSHOT = import.meta.env.MODE === "public";
 export type Feed = {
   state: GrailState | null;
   source: Source | null;
@@ -286,6 +313,28 @@ export function useGrailFeed(): Feed {
   useEffect(() => {
     alive.current = true;
     let timer: number | undefined;
+
+    if (PUBLIC_SNAPSHOT) {
+      // Static build: the agent state is a frozen snapshot; chain reads in Ledger / Verify stay live from the browser.
+      Promise.all([import("../fixtures/public-snapshot.json"), import("../../contracts/chain.json")]).then(
+        ([snap, chainJson]) =>
+          alive.current &&
+          setFeed({
+            // a frozen snapshot has no "next check-in": hide every countdown
+            state: { ...normalize(snap.default), agent: { ...normalize(snap.default).agent, next_cycle_at_ms: undefined } },
+            source: "snapshot",
+            missingPath: null,
+            loading: false,
+            error: null,
+            fetchedAt: Date.now(),
+            chainJson: chainJson.default,
+          }),
+        (e) => alive.current && setFeed((f) => ({ ...f, loading: false, error: String(e), state: normalize(mockState), source: "bundled" })),
+      );
+      return () => {
+        alive.current = false;
+      };
+    }
 
     const tick = async () => {
       try {

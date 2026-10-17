@@ -152,3 +152,69 @@ export function parseOrderIds(raw: string): { inst: string; id: string }[] | "no
     return null;
   }
 }
+
+// ---- full on-chain history from event logs (Routescan logs API; Fuji public RPC caps eth_getLogs at 100 blocks) ----
+const LEDGER_DEPLOY_BLOCK = 59595834; // R-003-6: GrailLedger deploy block (chain.json has no deployBlock yet)
+const topic = (sig: string) => "0x" + bytesToHex(keccak_256(utf8ToBytes(sig)));
+const T_COMMIT = topic("DecisionCommitted(uint256,uint256,bytes32,uint256)");
+const T_REVEAL = topic("DecisionRevealed(uint256,uint256,bytes,string)");
+
+export type ChainCycle = {
+  cycleId: number;
+  commitTx?: string;
+  commitHash?: string;
+  committedAt?: number; // ms
+  revealTx?: string;
+  payloadUtf8?: string;
+  okxOrderId?: string;
+};
+
+type Log = { topics: string[]; data: string; transactionHash: string; timeStamp?: string };
+
+export async function readLedgerHistory(c: ChainInfo, agentId: string): Promise<ChainCycle[]> {
+  if (!c.ledger) throw new Error("no GrailLedger address in chain.json");
+  const t1 = "0x" + word(toBig(agentId));
+  const get = async (t0: string) => {
+    const q = new URLSearchParams({
+      module: "logs",
+      action: "getLogs",
+      address: c.ledger!,
+      fromBlock: String(LEDGER_DEPLOY_BLOCK),
+      toBlock: "latest",
+      topic0: t0,
+      topic1: t1,
+      topic0_1_opr: "and",
+    });
+    const res = await fetch(`${ROUTESCAN}?${q}`);
+    const j = (await res.json()) as { status?: string; result?: Log[] | string; message?: string };
+    if (!Array.isArray(j.result)) {
+      if (j.message === "No records found") return [];
+      throw new Error(typeof j.result === "string" ? j.result : (j.message ?? "logs error"));
+    }
+    return j.result;
+  };
+  const [commits, reveals] = await Promise.all([get(T_COMMIT), get(T_REVEAL)]);
+  const out = new Map<number, ChainCycle>();
+  const at = (id: number) => out.get(id) ?? (out.set(id, { cycleId: id }), out.get(id)!);
+  for (const l of commits) {
+    const id = Number(BigInt(l.topics[2]));
+    const d = l.data.replace(/^0x/, "");
+    Object.assign(at(id), { commitTx: l.transactionHash, commitHash: "0x" + d.slice(0, 64), committedAt: Number(BigInt("0x" + d.slice(64, 128))) * 1000 });
+  }
+  const dec = new TextDecoder();
+  for (const l of reveals) {
+    const id = Number(BigInt(l.topics[2]));
+    const d = l.data.replace(/^0x/, "");
+    const dyn = (offHex: string) => {
+      const off = Number(BigInt("0x" + offHex)) * 2;
+      const len = Number(BigInt("0x" + d.slice(off, off + 64)));
+      return dec.decode(hexToBytes(d.slice(off + 64, off + 64 + len * 2)));
+    };
+    try {
+      Object.assign(at(id), { revealTx: l.transactionHash, payloadUtf8: dyn(d.slice(0, 64)), okxOrderId: dyn(d.slice(64, 128)) });
+    } catch {
+      Object.assign(at(id), { revealTx: l.transactionHash });
+    }
+  }
+  return [...out.values()].sort((a, b) => b.cycleId - a.cycleId);
+}

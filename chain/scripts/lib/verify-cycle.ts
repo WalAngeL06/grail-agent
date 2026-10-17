@@ -20,7 +20,7 @@ export type CycleResult = {
   saltHex?: string;
   dryRun?: boolean;
 };
-export type CycleHints = { commitTx?: string; revealTx?: string };
+export type CycleHints = { commitTx?: string; revealTx?: string; stateBlockTag?: "latest" };
 
 export function parseCycle(value: string | undefined): bigint {
   if (value === undefined || !/^\d+$/.test(value) || BigInt(value) >= 2n ** 256n) {
@@ -31,6 +31,7 @@ export function parseCycle(value: string | undefined): bigint {
 
 /** Reads only public RPC data. The salt always comes from reveal transaction calldata. */
 export async function verifyCycle(provider: Provider, deployment: CycleDeployment, cycleId: bigint, hints: CycleHints = {}): Promise<CycleResult> {
+  const stateBlockTag = hints.stateBlockTag;
   hints = { commitTx: hints.commitTx?.toLowerCase(), revealTx: hints.revealTx?.toLowerCase() };
   parseCycle(cycleId.toString());
   const agentId = parseCycle(deployment.agentId);
@@ -109,7 +110,9 @@ export async function verifyCycle(provider: Provider, deployment: CycleDeploymen
   });
   const commits = parsed.filter(({ event }) => event.name === "DecisionCommitted");
   const reveals = parsed.filter(({ event }) => event.name === "DecisionRevealed");
-  const stored = await ledger.decisions(agentId, cycleId, { blockTag: head });
+  // Full audits use latest state with fresh before/after counter checks (R-011).
+  // The standalone cycle reader retains its original fixed-head behavior.
+  const stored = await ledger.decisions(agentId, cycleId, { blockTag: stateBlockTag ?? head });
   const base = { agentId: agentId.toString(), cycleId: cycleId.toString() };
   if (commits.length === 0) {
     if (stored.committed || reveals.length) throw new Error("Commit event missing from RPC results");

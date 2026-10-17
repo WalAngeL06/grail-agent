@@ -1,10 +1,10 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r25 · 2026-10-17 15:47 (Europe/Istanbul)
+- Durum revizyonu: r26 · 2026-10-17 15:47 (Europe/Istanbul)
 - Ürün: Fuji 43113, ERC-8004 agentId 1. İlk CANLI emir 15:37 başarılı: cycle 2, BTC-USDT BUY 2 USDT, filled (kullanıcı/planner bildirimi + yerel state eşleşmesi).
 - OKX: grail profili, gerçek para; örnek config dry_run=true. Yeni/sürekli runner için ek talimat yok. LLM_API_KEY eklendi (kullanıcı bildirimi; içerik okunmadı, sağlayıcı çağrısı doğrulanmadı).
 - Aktif sözleşme: contracts/VERSION 0.6; chain.json deployment 0.5, adres/ABI/hash/testVector değişmedi.
-- Sıralı kullanıcı entegrasyonu (bu teslim): 1/3; alınan chain@2e45f77; kalan docs@e77eaed; agents@1370d41. Her merge sonrası main push edilir.
+- Sıralı kullanıcı entegrasyonu (bu teslim): 3/3; alınan chain@2e45f77, docs@e77eaed, agents@1370d41. Üç merge tamamlandı; her merge sonrası main push edildi.
 - Önceki ürün kontrolleri (b07f0d0): web build PASS; engine 104, agents 157, chain 38 + typecheck. Bu tur ürün kaynakları değişmedi; test/RPC/runner yeniden çalıştırılmadı.
 - Public kapısı: R-005 raporu + yayınlanacak son SHA taraması beklenir; repo görünürlüğü değişmedi. README freeze sonrası D-012.
 - Önceki ayrıntılı kanıtlar: coord/archive/STATE-r17-20261017.md (tarihsel kayıt; güncel durum bu dosya).
@@ -64,6 +64,8 @@
 - T-010 kanıt/handoff 2e45f77: JSON checkedAt yenilendi; diğer metadata ve bütün ürün kaynakları aynı. Scope, diff --check, JSON eşitliği doğrulandı.
 
 - R-006 gerçek çıktı coord/reviews/T-010.md (karttaki R-006.md yerine); docs rolü reviewer şapkasıyla, Codex implementer’dan farklı model. Kullanıcının açık e77eaed merge talimatıyla kabul edildi. RPC 429 MINOR; API önbelleği/.env yüklenmesi/test edilemeyen senaryo INFO; 4 Snowtrace #code sayfasının gözle kontrolü açık.
+
+- agents@1370d41 yalnız hazırlık handoff’u: tarihsel 15:30 boş runtime kaydıdır; 15:37 canlı koşu sonrası artık boş değildir. Sonraki oturum canlı runtime/journal/pending’i korur, temizlemez veya yeni runner başlatmaz.
 
 ## Bekleyenler / sınırlar
 - Önceki altı ürün merge tamamlandı; bu teslim yalnız kanıt/inceleme/handoff ekidir.

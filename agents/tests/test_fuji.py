@@ -335,3 +335,65 @@ def test_crash_after_receipt_leaves_checkpoint_covering_confirmed_tx(evm, monkey
     w3.eth.send_transaction({'from': w3.eth.accounts[0], 'to': w3.eth.accounts[1], 'value': 1})
     with pytest.raises(GrailError, match='CHAIN_TX_UNKNOWN'):
         adapter(evm).commit(5, digest)
+
+
+def test_explicit_live_cli_uses_confirmed_chain_and_persistent_order_journal(evm, cfg_dict, monkeypatch, capsys):
+    from grail_agents import __main__ as cli
+    from grail_agents import loop as loop_module
+    from test_loop import Market, fixed_decide
+    chain = adapter(evm)
+    cfg_dict.update(dry_run=False, coins=['BTC-USDT', 'ETH-USDT', 'SOL-USDT'])
+    path = evm[5].parent / 'live-config.json'
+    path.write_text(json.dumps(cfg_dict))
+    effects = []
+
+    class OfflineExchange(Market):
+        def open_orders(self):
+            return []
+        def _place_spot(self, prepared):
+            assert chain.lookup(1)['revealed'] is False
+            effects.append('place')
+            return {'client_order_id': prepared['client_order_id'], 'okx_order_id': '42', 'order_status': 'pending', 'fill_price': None}
+        def order_status(self, inst, client_order_id):
+            effects.append('query')
+            return {'client_order_id': client_order_id, 'okx_order_id': '42', 'order_status': 'filled', 'fill_price': '100'}
+
+    def one_buy(snapshot, portfolio, cfg):
+        result = fixed_decide(snapshot, portfolio, cfg)
+        result['payload']['dry_run'] = False
+        for decision in result['payload']['decisions']:
+            decision.update(dry_run=False)
+            if decision['inst_id'] != 'BTC-USDT':
+                decision.update(action='HOLD', size_usdt='0')
+        return result
+
+    reveal = chain.reveal
+    def observed_reveal(*args):
+        effects.append('reveal')
+        return reveal(*args)
+    monkeypatch.setattr(chain, 'reveal', observed_reveal)
+    monkeypatch.setattr(loop_module, 'decide', one_buy)
+    monkeypatch.setattr(cli, 'AtkClient', lambda: OfflineExchange(cfg_dict['coins']))
+    monkeypatch.setattr(cli, 'load_provider', lambda: None)
+    monkeypatch.setattr(cli, 'FujiChain', lambda path, runtime: chain)
+    argv = ['run', '--config', str(path), '--chain', 'fuji', '--live', '--confirm-live', 'GRAIL-LIVE-SPOT', '--cycles', '1', '--runtime', str(evm[5])]
+    assert cli.main(argv) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result['dry_run'] is False and result['chain_simulated'] is False
+    assert result['commits'] == result['reveals'] == 1
+    assert effects == ['place', 'query', 'reveal']
+    assert (evm[5] / 'orders.sqlite3').exists()
+    assert (evm[5] / 'fuji-transactions.json').exists()
+    state = json.loads((evm[5] / 'state.json').read_text())
+    btc = next(row for row in state['decisions'] if row['inst_id'] == 'BTC-USDT')
+    assert btc['verified'] is True and btc['order_status'] == 'filled' and btc['okx_order_id'] == '42'
+    # Same runtime, HOLD-only restart: journal and cycle IDs remain intact.
+    def all_hold(snapshot, portfolio, cfg):
+        result = one_buy(snapshot, portfolio, cfg)
+        for row in result['payload']['decisions']:
+            row.update(action='HOLD', size_usdt='0')
+        return result
+    monkeypatch.setattr(loop_module, 'decide', all_hold)
+    assert cli.main(argv) == 0
+    assert json.loads(capsys.readouterr().out)['cycle_id'] == 2
+    assert effects == ['place', 'query', 'reveal', 'reveal']

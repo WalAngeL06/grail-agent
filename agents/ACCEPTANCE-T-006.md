@@ -43,5 +43,13 @@ Existing loop tests cover BUY reduction/veto matching commit/execution/reveal, u
 - Keep the runtime: its pending salt/payload, control/peak, transaction hash/nonce journal and future orders.sqlite3 are recovery data. On a fresh runtime the next cycle is read from the largest own-agent DecisionCommitted cycleId, checked against commitCount; local counters never move backwards.
 - Pending bytes/salt are published in state.decisions only after successful reveal. Guard outcomes never change committed decision fields; rounded execution sizes have separate execution_size_* fields.
 - Commit receipt/event/state must confirm before execute. Unknown transactions only get queried by durable signed hash; no automatic resend. One runner/runtime per signer/ledger is required.
-- Live orders remain disabled by the CLI. R-002-1/2 fixes have regressions; R-002-3/4 were not expanded in this task. First live order is a separate explicit user-observed step.
+- At the original Fuji gate, live orders were disabled by the CLI. The R-004 follow-up adds explicit activation for separate review; no actual live order was run. R-002-1/2 fixes have regressions; R-002-3/4 were not expanded in this task. First live order is a separate explicit user-observed step.
 - Independent cross-model review is pending through the integrator, as required by AGENTS.md. Shared contracts/, coord/STATE.md and other roles' files were not edited by agents.
+
+## R-004 follow-up (offline only, 2026-10-17)
+
+- R-004-1: a7312a3 already aligns config/state to contracts 0.6 while preserving deployment descriptor 0.5 and saved-state history. Baseline full suite: 136 passed (10.50s).
+- R-004-2: eadee19 creates automatic dry-run services per batch; the regression first failed in a later cycle, then passed with full suite 137 passed (9.86s). Limits still apply across the current batch.
+- R-004-3: d23f0c8 persists incremental block cursors and confirmed receipt markers. Regressions cover restart, partial/empty log responses, canonical checkpoint change, legacy journal upgrade, receipt query counts and crash between receipt and post-send lookup. Full suite: 145 passed (16.10s).
+- GO condition 2: CLI requires config dry_run=false, --live --confirm-live GRAIL-LIVE-SPOT, and --chain fuji. Tests first produced 13 failures, then all passed. Positive execution uses a local EVM and fake exchange, verifies commit-before-execute and query-before-reveal, and restarts the same runtime without replaying its order. Final full suite: 157 passed (15.31s).
+- CLI-only review base: d23f0c8; inspect the following commit's __main__.py, test_cli.py and live-CLI regression in test_fuji.py. Review independently before any real live run. R-004-4/5/6/7 remain open and outside this requested change. No new external RPC, ATK smoke, Fuji transaction or actual OKX order was run in this follow-up.

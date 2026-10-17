@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from grail_agents import __main__ as cli
 from test_loop import Market
 
@@ -18,7 +20,36 @@ def test_run_cli_refuses_live_config(cfg_dict, tmp_path, monkeypatch, capsys):
     path.write_text(json.dumps(cfg_dict))
     monkeypatch.setattr(cli, "AtkClient", lambda: (_ for _ in ()).throw(AssertionError("must not construct ATK")))
     assert cli.main(["run", "--config", str(path), "--chain", "simulated", "--cycles", "1", "--runtime", str(tmp_path / "runtime")]) == 1
-    assert "RUN_DRY_RUN" in capsys.readouterr().out
+    assert "LIVE_CONFIRMATION" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize('command,dry_run,chain,flags,error', [
+    ('run', False, 'fuji', [], 'LIVE_CONFIRMATION'),
+    ('run', False, 'fuji', ['--live'], 'LIVE_CONFIRMATION'),
+    ('run', False, 'fuji', ['--confirm-live', 'GRAIL-LIVE-SPOT'], 'LIVE_CONFIRMATION'),
+    ('run', False, 'fuji', ['--live', '--confirm-live', 'wrong'], 'LIVE_CONFIRMATION'),
+    ('run', False, 'simulated', ['--live', '--confirm-live', 'GRAIL-LIVE-SPOT'], 'LIVE_CHAIN'),
+    ('run', False, None, ['--live', '--confirm-live', 'GRAIL-LIVE-SPOT'], 'LIVE_CHAIN'),
+    ('run', True, 'fuji', ['--live', '--confirm-live', 'GRAIL-LIVE-SPOT'], 'LIVE_CONFIG'),
+    ('run', True, 'simulated', ['--live'], 'LIVE_CONFIG'),
+    ('run', True, 'simulated', ['--confirm-live', ''], 'LIVE_CONFIG'),
+    ('smoke', True, None, ['--live'], 'LIVE_FLAGS'),
+    ('smoke', True, None, ['--confirm-live', 'GRAIL-LIVE-SPOT'], 'LIVE_FLAGS'),
+])
+def test_live_cli_rejects_incomplete_activation_before_any_effect(cfg_dict, tmp_path, monkeypatch, capsys, command, dry_run, chain, flags, error):
+    cfg_dict['dry_run'] = dry_run
+    path = tmp_path / 'config.json'
+    path.write_text(json.dumps(cfg_dict))
+    def forbidden(*args, **kwargs):
+        pytest.fail('invalid activation must not construct clients, chains or providers')
+    for name in ('AtkClient', 'FujiChain', 'SimulatedChain', 'load_provider'):
+        monkeypatch.setattr(cli, name, forbidden)
+    argv = [command, '--config', str(path), '--cycles', '1', '--runtime', str(tmp_path / 'runtime'), *flags]
+    if chain:
+        argv += ['--chain', chain]
+    assert cli.main(argv) == 1
+    assert error in capsys.readouterr().out
+    assert not (tmp_path / 'runtime').exists()
 
 
 def test_run_cli_writes_v06_state_with_offline_market(cfg_dict, tmp_path, monkeypatch, capsys):

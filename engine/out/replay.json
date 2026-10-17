@@ -30,7 +30,7 @@
     "fee_pct": 0.1,
     "fills": "simulated at each bar close, no slippage",
     "cycle": "one engine decision per closed bar",
-    "peak_equity": "highest simulated equity in the last 168 hours (kill switch)",
+    "peak_equity": "highest simulated equity so far (kill switch)",
     "orders_sent": 0,
     "chain_tx_sent": 0,
     "config": {

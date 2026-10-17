@@ -82,6 +82,21 @@ def _iso(ms: int) -> str:
     return datetime.fromtimestamp(ms / 1000, timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
 
 
+class PeakTracker:
+    """Analiz için kayan pencere zirvesi (son 168 saatin en yüksek equity'si). Motora girmedi (kullanıcı kararı:
+    canlıda eski kural, tüm zamanlar zirvesi); sadece out/kill-switch-168.md ölçümü için burada."""
+
+    def __init__(self, window_h: float = 168):
+        from collections import deque
+        self.window_ms, self.points = int(window_h * 3_600_000), deque()
+
+    def update(self, t_ms: int, equity: float) -> float:
+        self.points.append((int(t_ms), float(equity)))
+        while self.points and self.points[0][0] <= t_ms - self.window_ms:
+            self.points.popleft()
+        return max(e for _, e in self.points)
+
+
 # ---------------------------------------------------------------- simülasyon
 def simulate(job: dict) -> dict:
     """Tek koşu (ayrı süreçte): job = {strategy, cfg_overrides, mod_overrides, n_bars}."""
@@ -120,7 +135,6 @@ def simulate(job: dict) -> dict:
         setattr(mod, k, v)
 
     cash, qty, peak = capital, {c: 0.0 for c in coins}, capital
-    from grail_engine.peak import PeakTracker
     tracker = PeakTracker() if job.get("peak") == "rolling_168h" else None  # yoksa tüm zamanlar zirvesi (eski)
     mr_qty = {c: 0.0 for c in coins}
     px: dict[str, float] = {}

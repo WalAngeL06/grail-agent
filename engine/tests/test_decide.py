@@ -153,58 +153,11 @@ def test_total_deploy_budget_caps_buys(cfg):
     assert sum(Decimal(d["size_usdt"]) for d in buys) <= Decimal("4")
 
 
-def test_kill_switch_blocks_buys_but_allows_selling(cfg):
-    """(a) %5+ düşüş → BUY yok; (d) SELL / nakde geçiş her zaman mümkün (pozisyon dondurulmaz)."""
+def test_kill_switch_holds_everything(cfg):
     pos = [{"inst_id": "BTC-USDT", "value_usdt": "20"}]
     res = decide(down_market(), make_portfolio(equity="90", cash="70", positions=pos, peak_equity_usdt="100"), cfg)
-    d = by_inst(res)
-    assert res["metrics"]["kill_switch"] is True
-    assert d["BTC-USDT"]["action"] == "SELL" and "safety stop on (down 10.0%)" in d["BTC-USDT"]["reason"]
-    assert all(d[c]["action"] == "HOLD" and d[c]["reason"].startswith("Safety stop: losses hit the limit, no new buys")
-               for c in COINS5 if c != "BTC-USDT")
-
-
-@pytest.mark.parametrize("equity, kill", [("95", True), ("94", True), ("95.01", False)])
-def test_kill_switch_no_buys_in_up_market(cfg, no_gates, equity, kill):
-    """(a) eşik config'teki kill_switch_drawdown_pct (%5): tetikliyken hiç BUY yok, limitler aynen."""
-    res = decide(up_market(), make_portfolio(equity=equity, peak_equity_usdt="100"), cfg)
-    assert res["metrics"]["kill_switch"] is kill
-    buys = [d for d in res["payload"]["decisions"] if d["action"] == "BUY"]
-    if kill:
-        assert not buys
-    else:
-        assert buys and all(Decimal(d["size_usdt"]) <= Decimal(cfg["max_order_usdt"]) for d in buys)
-
-
-def test_kill_switch_releases_when_window_peak_rolls_off(cfg, no_gates):
-    """(b) zirve 168 saatlik pencereden düşünce kendiliğinden serbest; (c) düşüş pencere içinde sürerken erken serbest kalmaz."""
-    from grail_engine.peak import HOUR_MS, KILL_SWITCH_WINDOW_H, PeakTracker
-
-    tr, t0 = PeakTracker(), 1_760_000_000_000
-    tr.update(t0, 100.0)
-    states = []
-    for h in range(1, KILL_SWITCH_WINDOW_H + 3):
-        eq = max(94.0, 100.0 - h * 0.5)  # 12 saatte %6 düşer, sonra 94'te kalır
-        peak = tr.update(t0 + h * HOUR_MS, eq)
-        res = decide(up_market(), make_portfolio(equity=str(eq), peak_equity_usdt=str(peak)), cfg)
-        states.append((h, peak, res["metrics"]["kill_switch"], any(d["action"] == "BUY" for d in res["payload"]["decisions"])))
-    for h, peak, kill, bought in states:
-        if h < KILL_SWITCH_WINDOW_H:
-            assert peak == 100.0  # 100'lük zirve pencerede
-        if 10 <= h < KILL_SWITCH_WINDOW_H:
-            assert kill and not bought  # düşüş ≥ %5 iken asla erken serbest yok
-    h, peak, kill, bought = states[-1]
-    assert peak < 100.0 and not kill and bought  # zirve pencereden çıktı → serbest
-
-
-def test_rolling_peak_matches_tracker():
-    from grail_engine.peak import HOUR_MS, PeakTracker, rolling_peak
-
-    pts, tr, t0 = [], PeakTracker(window_h=3), 0
-    for h, e in enumerate([100, 103, 101, 99, 98, 97]):
-        pts.append((t0 + h * HOUR_MS, e))
-        assert tr.update(t0 + h * HOUR_MS, e) == rolling_peak(pts, t0 + h * HOUR_MS, window_h=3)
-    assert rolling_peak(pts, t0 + 5 * HOUR_MS, window_h=3) == 99  # 103 (h=1) pencereden çıktı
+    assert {d["action"] for d in res["payload"]["decisions"]} == {"HOLD"}
+    assert by_inst(res)["BTC-USDT"]["reason"].startswith("Safety stop: losses hit the limit")
 
 
 # --- hata nesnesi, istisna yok ---

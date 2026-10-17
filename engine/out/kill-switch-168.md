@@ -1,5 +1,7 @@
 # Safety stop (kill switch): rolling 7-day peak, sells allowed
 
+> **Status: analysis only, NOT in the engine.** User decision (18:22): keep the old rule (all-time peak, freeze), because it did better at lookback 168 (+7.12% / 5.81% worst drop) and the joint agents + engine change was too risky 35 minutes before submission. The code change described below was made (d240923) and then reverted on the same branch. The numbers stay as a record. The rolling-peak helper now lives only in `scripts/backtest_long.py`. Re-running `kill_switch_168.py` on the reverted engine reproduces every row except the two "all-time + sell_ok" rows, which needed the reverted sell-while-stopped code.
+
 **Özet (TR):** Kill switch artık son 168 saatin en yüksek hesap değerine göre ölçülüyor ve tetikliyken sadece yeni alım duruyor, satış serbest. Böylece motor kilitli kalmıyor: 180 günde durdurma hiç açılmadı, çünkü haftalık en kötü düşüş %3.62'de kaldı. Bedeli şu: kayıplar bir haftadan uzun sürede biriktiği için toplam düşüş %8.80'e çıktı (eski %5.81) ve T-014 getirisi +7.12%'den +2.27%'ye indi. Eski kuralın 168'deki iyi sonucu büyük ölçüde şanstı: Haziran çöküşünde pozisyonları dondurdu, onlar da Ağustos rallisinde toparlandı. UYARI: engine değişikliği agents'ın kayan zirve değişikliğiyle BİRLİKTE canlıya çıkmalı; tek başına (zirve hâlâ tüm zamanlar + satış serbest) en kötü kombinasyon: −3.37%, durdurma saatlerin %64'ünde açık.
 
 ## 1. Diagnosis (before this change)

@@ -53,7 +53,7 @@ Kimliğin araç adı DEĞİL, **rol + worktree**'dir. İki Codex oturumu (iki ay
 - Bağımlılık: her Python paketi kendi `pyproject.toml`'una sahip (`engine/`, `agents/`). Kökte ortak lock dosyası yok.
 - Sırlar (API key, private key) sadece `.env` içinde. Asla commit edilmez, asla rapora/loga yazılmaz.
   Tek `.env`: ana klasördeki `Agentic Hack/.env` (worktree'lerde kopya açma; yolu `GRAIL_ENV` ile ver).
-  OKX anahtarları `.env`'de değil, ATK'nın `~/.okx/config.toml` profilinde (`demo = true`); kod sadece profil adını bilir.
+  OKX erişimi ATK'nın kendi girişinden (`okx auth login`, site `tr`) gelir; kodda/`.env`'de OKX anahtarı yok.
 
 ## İletişim — araçlar birbirini OTOMATİK görmez
 Mesajlaşma yok. Tek iletişim yolu: **dosyalar + kullanıcının taşıdığı RAPOR**.
@@ -100,6 +100,12 @@ Integrator yedeği: Codex · hesap 1 limiti dolarsa önce o hesabın sıfırlama
 İki Codex hesabı aynı anda: her hesap ayrı `CODEX_HOME` klasöründe oturum açar (hesap 2 için ör. `%USERPROFILE%\.codex-hesap2`).
 
 ## Güvenlik
-- OKX: geliştirme ve testte DEMO modu. Canlı emir sadece kullanıcı açıkça izin verirse, config'teki limitlerle.
+- OKX: **gerçek para** (OKX TR'nin hackathon için verdiği bakiye). Bu yüzden:
+  - Kod yazan AI araçları ASLA emir vermez; MCP'leri sadece `market` modülüyle (salt okunur) bağlıdır. Emri sadece agent kodu verir.
+  - Geliştirme ve testte `dry_run: true`: karar + zincir commit/reveal çalışır, emir gönderilmez (simüle edilir, öyle etiketlenir).
+  - `dry_run: false` sadece kullanıcı açıkça açar. İlk canlı emri kullanıcı izler.
+  - Limitler config'ten ve kod tarafından zorlanır: sadece spot, kaldıraç yok, sadece config'teki coinler,
+    emir başına `max_order_usdt`, toplam `max_total_deploy_usdt`, `kill_switch_drawdown_pct` → aşılırsa emir yok.
+  - Çekim (withdraw), transfer, kaldıraç, hesap ayarı değişikliği hiçbir kodda yok.
 - Belirsiz emir/tx (timeout vb.): önce kimliğiyle durumunu sorgula; bilinmeden tekrar gönderme.
 - Commit tx başarısızsa o döngüde emir verilmez (fail-closed); hata loglanır, agent sonraki döngüye geçer.

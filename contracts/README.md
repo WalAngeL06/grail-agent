@@ -8,7 +8,8 @@ Etkilenen roller bir sonraki görev başında `git merge main` ile alır ve RAPO
 - Para / miktar / fiyat: **ondalık string** (`"0.00012"`), float değil. Birim alan adında: `*_usdt`, `size_base` (coin cinsinden).
 - Yüzde: 0–100 arası sayı, alan adı `*_pct` (0.2 ≠ %20 karışıklığı olmasın).
 - Sembol: OKX instId biçimi, `"BTC-USDT"`.
-- Mod: `"demo"` | `"live"`. Her emir ve state kaydı modu taşır.
+- Mod: `"live"` (OKX TR gerçek bakiye). `dry_run: true` iken emir gönderilmez, `order_status: "simulated"`. Her emir ve state kaydı `mode` ve `dry_run` taşır.
+- Para limitleri (config): `max_order_usdt` emir başı, `max_total_deploy_usdt` toplam; kod emirden önce zorlar.
 - Hata nesnesi: `{ "code": "ATK_TIMEOUT", "message": "...", "at_ms": 0, "where": "agents.order", "context": {} }`.
 - Bilinmeyen alanlar okuyucuyu çökertmez (ileriye uyumlu).
 

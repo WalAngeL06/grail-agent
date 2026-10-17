@@ -1,7 +1,8 @@
 {
-  "contract_version": "0.1",
+  "contract_version": "0.2",
   "generated_at_ms": 1760700090000,
-  "mode": "demo",
+  "mode": "live",
+  "dry_run": true,
   "agent": { "name": "GRAIL-01", "status": "running", "cycle_id": 12, "next_cycle_at_ms": 1760700180000 },
   "config": { "coins": ["BTC-USDT", "ETH-USDT", "SOL-USDT", "AVAX-USDT", "OKB-USDT"], "risk_budget_pct": 10, "max_position_pct": 30, "cycle_seconds": 90 },
   "market": [

@@ -1,6 +1,8 @@
 {
-  "contract_version": "0.1",
-  "mode": "demo",
+  "contract_version": "0.2",
+  "mode": "live",
+  "dry_run": true,
+  "okx_site": "tr",
   "agent_name": "GRAIL-01",
   "coins": ["BTC-USDT", "ETH-USDT", "SOL-USDT", "AVAX-USDT", "OKB-USDT"],
   "quote": "USDT",
@@ -12,5 +14,6 @@
   "target_vol_pct": 20,
   "max_order_usdt": "10",
   "min_order_usdt": "2",
+  "max_total_deploy_usdt": "50",
   "kill_switch_drawdown_pct": 5
 }

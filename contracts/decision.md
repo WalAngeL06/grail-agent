@@ -1,11 +1,12 @@
-# Karar nesnesi ve hash kuralı (v0.1)
+# Karar nesnesi ve hash kuralı (v0.2)
 
 ## Karar (engine.decide çıktısı, coin başına bir tane)
 ```json
 {
   "cycle_id": 12,
   "agent": "GRAIL-01",
-  "mode": "demo",
+  "mode": "live",
+  "dry_run": true,
   "inst_id": "BTC-USDT",
   "action": "BUY",
   "size_usdt": "5",
@@ -16,7 +17,8 @@
 }
 ```
 - `action`: `"BUY"` | `"SELL"` | `"HOLD"`. HOLD'da `size_usdt` = `"0"`.
-- Bir döngüdeki bütün kararlar tek payload'da toplanır: `{ "cycle_id", "agent", "mode", "decided_at_ms", "decisions": [ ... ] }`.
+- Bir döngüdeki bütün kararlar tek payload'da toplanır: `{ "cycle_id", "agent", "mode", "dry_run", "decided_at_ms", "decisions": [ ... ] }`.
+  `dry_run` hash'e girer: zincirde simüle ve canlı kararlar ayırt edilir.
 
 ## Kanonik payload (hash'lenen bayt dizisi)
 - JSON, anahtarlar alfabetik sıralı (iç içe nesneler dahil), boşluksuz (`separators=(",", ":")`); ASCII dışı karakterler `\uXXXX` olarak kaçışlanır (Python: `ensure_ascii=True`); sonuç UTF-8 bayt.

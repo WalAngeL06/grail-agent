@@ -33,3 +33,10 @@ Geçen hackathon dersi. Engine canlı/son veriden karar üretir; tarihsel kontro
 - ATK: `@okx_ai/okx-trade-cli` / `okx-trade-mcp`; site `tr`; anahtarlar `~/.okx/config.toml` profilinde (`demo = true`), `.env`'de değil.
 - Jüri sorusu listesi (slayt 16): canlı mı çalışıyor; yetki/limitler; kimlik ve geçmiş doğrulanabilir mi; hata/beklenmedik girdide ne yapıyor;
   problem ve hedef kullanıcı. Demo ve UI bu beş soruya cevap verecek şekilde kurulur.
+
+## D-007 · Gerçek para (OKX TR hackathon bakiyesi) · contracts 0.2
+OKX TR katılımcılara gerçek bakiye verdi; emirler canlı hesapta. Demo profili yok, erişim `okx auth login` (site tr).
+- Kod yazan AI araçları emir veremez (MCP sadece `market`). Emri sadece agent kodu verir.
+- `dry_run` bayrağı (varsayılan true): karar + zincir commit/reveal çalışır, emir simüle edilir. Canlıya kullanıcı geçirir; ilk canlı emri kullanıcı izler.
+- Kod tarafında zorunlu guardrail: sadece spot, kaldıraç yok, sadece config coinleri, `max_order_usdt`, `max_total_deploy_usdt`, kill switch.
+- Çekim/transfer/kaldıraç/hesap ayarı çağrısı yok. Bu, slayt 10'daki "yetkiyi daralt, harcamayı sınırla, izi tut, insan onayı" ilkesinin karşılığı ve sunumda gösterilir.

@@ -23,7 +23,8 @@ const coins = ["AVAX-USDT", "BTC-USDT", "ETH-USDT", "OKB-USDT", "SOL-USDT"];
 const price = { "BTC-USDT": 67250.1, "ETH-USDT": 2612.4, "SOL-USDT": 152.37, "AVAX-USDT": 27.415, "OKB-USDT": 43.21 };
 const trend = { "BTC-USDT": 2.4, "ETH-USDT": 1.1, "SOL-USDT": -0.8, "AVAX-USDT": 3.2, "OKB-USDT": -1.9 };
 const vol = { "BTC-USDT": 38.2, "ETH-USDT": 51.7, "SOL-USDT": 74.9, "AVAX-USDT": 82.3, "OKB-USDT": 46.1 };
-const hrp = { "BTC-USDT": 31.4, "ETH-USDT": 21.8, "SOL-USDT": 13.2, "AVAX-USDT": 12.6, "OKB-USDT": 21.0 };
+// engine: HRP only among coins trending up; trending-down coins get 0 (R-007-11)
+const hrp = { "BTC-USDT": 47.72, "ETH-USDT": 33.13, "SOL-USDT": 0, "AVAX-USDT": 19.15, "OKB-USDT": 0 };
 const tw = { "BTC-USDT": 26.18, "ETH-USDT": 19.34, "SOL-USDT": 0, "AVAX-USDT": 12.15, "OKB-USDT": 0 };
 
 // Zamanlar üretim anına göre; demo öncesi `npm run fixture` ile tazele.
@@ -40,9 +41,12 @@ for (const cycle_id of cycles) {
     if (cycle_id === 11 && inst_id === "SOL-USDT") { action = "SELL"; size = "4.20"; }
     if (cycle_id === 12 && inst_id === "BTC-USDT") { action = "BUY"; size = "5.00"; }
     const p = (price[inst_id] * (1 + (cycle_id - 12) * 0.0007)).toFixed(inst_id === "BTC-USDT" ? 1 : 3);
+    // engine/src/grail_engine/decision.py reason format (English, T-009)
+    const held = ["BTC-USDT", "ETH-USDT"].includes(inst_id);
     const reason = up
-      ? `trend +${trend[inst_id].toFixed(1)}%, hrp ${(hrp[inst_id] / 100).toFixed(2)}, vol ${vol[inst_id].toFixed(0)}%->hedef 20%, n_eff 1.44`
-      : `trend ${trend[inst_id].toFixed(1)}%<=0 -> nakit, n_eff 1.44`;
+      ? `Price trending up (+${trend[inst_id].toFixed(1)}%), target ${tw[inst_id]}% of funds (1.4 independent bets)` +
+        (vol[inst_id] > 50 ? `; size cut to keep risk near 20% (was ${Math.round(vol[inst_id] * 0.55)}%)` : "")
+      : `Price trending down (${trend[inst_id].toFixed(1)}%), ${held ? "moving to cash" : "staying in cash"}`;
     return { action, agent, cycle_id, decided_at_ms: at, dry_run: true, inst_id, mode: "live", reason, ref_price: p, size_usdt: size, target_weight_pct: tw[inst_id] };
   });
   // v0.5 analist (analyst/src/grail_analyst/review.py davranışı): sadece BUY'lar incelenir, SELL exempt,
@@ -139,6 +143,14 @@ const state = {
     hrp_weights_pct: hrp, target_weights_pct: tw, trend_pct: trend, vol_pct: vol,
     portfolio_vol_raw_pct: 41.3, portfolio_vol_pct: 18.5, psr: 0.71, psr_basis: "hrp_all_valid_in_sample",
     window_bars: 48, drawdown_pct: 0.8, kill_switch: false,
+    // T-014 shape (engine fixture pending): per-coin Hurst regime + breakout/retest setup
+    signals: {
+      "BTC-USDT": { hurst: 0.61, regime: "trending", setup: "retest" },
+      "ETH-USDT": { hurst: 0.57, regime: "trending", setup: "breakout" },
+      "SOL-USDT": { hurst: 0.42, regime: "ranging", setup: "none" },
+      "AVAX-USDT": { hurst: 0.51, regime: "unclear", setup: "breakout" },
+      "OKB-USDT": { hurst: 0.44, regime: "ranging", setup: "none" },
+    },
   },
   decisions: decisions.reverse(),
   chain: {

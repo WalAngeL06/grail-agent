@@ -1,13 +1,13 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r6 · 2026-10-17 13:53 (Europe/Istanbul)
+- Durum revizyonu: r7 · 2026-10-17 13:56 (Europe/Istanbul)
 - Ürün: `coord/BRIEF.md` (kesinleşti). Fuji test cüzdanı `.env` içinde hazır (`AGENT_ADDRESS`); 13:05 organizatörden 1 test AVAX kullanıcının MetaMask'ına (0x3b8b2…3C537, Fuji) GELDİ → kullanıcı ~0.9 AVAX agent adresine aktaracak (gas için ~0.1 MetaMask'ta kalır).
 - OKX: `grail` profili bağlı (gerçek para; `dry_run` açık).
-- Entegrasyon: T-001 (`main@e06987b`), T-004 (`main@a630cb6`), T-007 (`main@3181848`), T-005 v1 (`role/web@3cce8c2`, bu kayıtla aynı merge commit'i).
-- Son doğrulanmış parçalar: engine + analyst 84 test (13:52); web main build (13:53); T-004 brif kabul kontrolü. Uçtan uca döngü / gerçek state / Fuji UI henüz doğrulanmadı.
-- Aktif sözleşme: `contracts/VERSION` = 0.4 (D-010: risk bütçesi yorumu kabul; lookback 168 → 48; dry_run açık)
+- Entegrasyon: T-001 (`main@e06987b`), T-004 (`main@a630cb6`), T-007 (`main@3181848`), T-005 v1 (`main@67a5e4a`); hepsi push edildi.
+- Son doğrulanmış parçalar: contracts 0.5 ile engine + analyst 84 test, web build, JSON/analist kontrolü (13:56). Uçtan uca döngü / gerçek state / Fuji UI henüz doğrulanmadı.
+- Aktif sözleşme: `contracts/VERSION` = 0.5 (D-011: LLM alanları hash'e, SELL exempt, state limit/kimlik alanları; ledger[] RED; dry_run açık)
 - Kaynak: Avalanche workshop slaytı (ERC-8004 boilerplate) ve ATK yapılandırması → D-006
-- Sıradaki öncelik: contracts 0.5 ve T-002/T-006 kartları; T-002 R-002 APPROVE gelene kadar bekler. T-003 deploy → T-006 uçtan uca → UI gerçek state/Fuji.
+- Sıradaki öncelik: T-002 R-002 APPROVE → kontrol + merge; T-003 deploy → T-006 (analist dahil) → UI gerçek state/Fuji ve LLM alanlarının gösterimi. Roller temiz worktree'de `git merge main` ile 0.5'i almalı.
 
 ## Zaman kapıları
 | Saat | Kapı | Ölçüt |
@@ -25,13 +25,14 @@
 ## Görev panosu
 | Görev | Başlık | Sahip | Durum | Bağımlılık |
 |---|---|---|---|---|
-| T-001 | Quant engine çekirdeği + golden testler | engine (Claude Code · Max) | INTEGRATED | contracts 0.3; 0.4 uyumu doğrulandı |
+| T-001 | Quant engine çekirdeği + golden testler | engine (Claude Code · Max) | INTEGRATED | contracts 0.5 uyumu doğrulandı |
 | T-002 | ATK veri çekme + emir katmanı (dry_run → küçük canlı) | agents (Codex · hesap 1) | READY_FOR_REVIEW — R-002 sürüyor, MERGE BEKLER | contracts 0.4 |
 | T-003 | ERC-8004 kimlik + GrailLedger + Fuji deploy | chain (Codex · hesap 2) | IN_PROGRESS (13:48 başlangıç) | contracts 0.3 |
 | T-004 | UI brifi (ekranlar, palet, alan eşlemesi) | docs (Claude · Pro) | INTEGRATED | contracts 0.3 |
 | T-005 | UI v1 (mock/demo); gerçek state/Fuji doğrulaması bekliyor | web (Claude Code · Max) · QA: Antigravity | INTEGRATED (v1; gerçek state/Fuji açık) | T-004; gerçek veri T-003/T-006 |
-| T-006 | Agent döngüsü: veri → engine → commit → ATK → reveal → state.json | agents (Codex · hesap 1) | TODO | T-001, T-002, T-003 |
-| T-007 | LLM analist (yalnız BUY riskini azaltır; SELL exempt) | analyst (Claude Code · Max) | INTEGRATED | T-001; contracts 0.5 eki hazırlanıyor |
+| T-006 | Agent döngüsü: decide → analyst review_payload → commit → ATK → reveal → state | agents (Codex · hesap 1) | TODO | T-001, T-002, T-003, T-007; contracts 0.5 |
+| T-007 | LLM analist (yalnız BUY riskini azaltır; SELL exempt) | analyst (Claude Code · Max) | INTEGRATED | T-001; contracts 0.5 |
+| R-002 | T-002 bağımsız incelemesi; APPROVE merge koşulu | Claude · Pro | IN_PROGRESS | role/agents@1e36e99 |
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
 ## Kanıtlar (tx hash, emir kimliği, test çıktıları)
@@ -41,9 +42,11 @@
 - T-004: `1b61651` uzak dalda; sınır docs/ + kendi handoff'u. Brif kabul/formül kontrolü geçti (n_eff=1.437, SR_p=0.599); `git diff --check` geçti.
 - T-007: `98ae2ba` uzak dalda; analyst/ + engine/pyproject.toml test bağlantısı + kendi handoff'u (kullanıcının doğruladığı teslim). `cd engine && uv run pytest -q` → merge öncesi ve main üzerinde 84 passed (1.51s).
 - T-005 v1: `3cce8c2` uzak dalda; sınır web/ + kendi handoff'u. `cd web && npm run build` dalda ve main'de geçti (main: 45 modül, 523ms). Gerçek state/Fuji doğrulaması yapılmadı.
+- v0.5 son kontrol: `cd engine && uv run pytest -q` → 84 passed (1.99s); `cd web && npm run build` → geçti (45 modül, 612ms). VERSION/config/state, üç limit, null kimlik, ledger yok; gerçek engine payload'ında analist skip/veto + SELL exempt + kanonik LLM alanları doğrulandı (ağsız).
 
 ## Bekleyen merge'ler
 - T-002 `role/agents@1e36e99`: Claude R-002 incelemesi sürüyor; APPROVE gelmeden merge YOK.
 
 ## Engeller
 - Fuji deploy gecikti (13:30 kapısı kaçtı; chain 13:48'de başladı). Gerçek state/Fuji UI kontrolü T-003/T-006 çıktısını bekliyor.
+- Web v1 llm_note/llm_flag için ayrı satır göstermiyor (ham payload detayında bulunabilir); web sahibi 0.5 alanlarını UI'a yansıtmalı.

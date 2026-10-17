@@ -41,13 +41,15 @@ class AgentConfig:
 
     @classmethod
     def from_mapping(cls, cfg: dict):
+        if not isinstance(cfg, dict):
+            raise GrailError("CONFIG: expected a JSON object")
         if cfg.get("okx_site") != "tr" or cfg.get("quote") != "USDT" or cfg.get("mode") != "live":
             raise GrailError("CONFIG: requires site=tr, quote=USDT, mode=live")
         dry = cfg.get("dry_run", True)
         if type(dry) is not bool:
             raise GrailError("CONFIG: dry_run must be a boolean")
         coins = cfg.get("coins")
-        if not isinstance(coins, list) or not coins or len(set(coins)) != len(coins):
+        if not isinstance(coins, list) or not coins or not all(isinstance(coin, str) for coin in coins) or len(set(coins)) != len(coins):
             raise GrailError("CONFIG: coins must be a nonempty unique list")
         coins = tuple(spot_id(coin) for coin in coins)
         minimum = number(cfg.get("min_order_usdt"), "min_order_usdt", positive=True)

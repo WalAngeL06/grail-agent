@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 import pytest
 
 from grail_agents.config import AgentConfig, GrailError
@@ -24,6 +22,9 @@ class Exchange:
 
     def balance(self):
         return [{"details": [{"ccy": "USDT", "cashBal": "100", "availBal": "100"}]}]
+
+    def open_orders(self):
+        return []
 
     def _place_spot(self, prepared):
         self.placed.append(prepared)
@@ -212,3 +213,29 @@ def test_journal_is_committed_before_exchange_submission(setup_order, tmp_path):
     with pytest.raises(SystemExit):
         service(setup_order, journal=OrderJournal(path)).execute(decision, portfolio, client_order_id="g1", live_confirmed=True)
     assert service(setup_order, journal=OrderJournal(path)).execute(decision, portfolio, client_order_id="g1", live_confirmed=True)["order_status"] == "pending"
+
+
+def test_untracked_open_order_blocks_new_live_order(setup_order, tmp_path):
+    cfg, exchange, portfolio, decision = setup_order
+    cfg["dry_run"] = decision["dry_run"] = False
+    exchange.open_orders = lambda: [{"instId": "BTC-USDT", "clOrdId": "otherAgent", "ordId": "7"}]
+    with pytest.raises(GrailError, match="UNTRACKED_ORDERS"):
+        service(setup_order, journal=OrderJournal(tmp_path / "orders.sqlite3")).execute(decision, portfolio, client_order_id="g1", live_confirmed=True)
+    assert exchange.placed == []
+
+
+def test_balance_refresh_and_budget_claim_are_serialized(setup_order, tmp_path):
+    import sqlite3
+    cfg, exchange, portfolio, decision = setup_order
+    cfg["dry_run"] = decision["dry_run"] = False
+    path = tmp_path / "orders.sqlite3"
+    svc = service(setup_order, journal=OrderJournal(path))
+    original_balance = exchange.balance
+    def balance_during_claim():
+        # A concurrent reconciler must not release a reservation against an older snapshot.
+        with sqlite3.connect(path, timeout=0) as concurrent:
+            with pytest.raises(sqlite3.OperationalError, match="locked"):
+                concurrent.execute("BEGIN IMMEDIATE")
+        return original_balance()
+    exchange.balance = balance_during_claim
+    assert svc.execute(decision, portfolio, client_order_id="g1", live_confirmed=True)["order_status"] == "pending"

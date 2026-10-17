@@ -83,3 +83,9 @@ def test_spot_placement_uses_cash_and_quote_buy_budget():
     assert args[args.index("--sz") + 1] == "5"
     assert "--banAmend" in args
     assert result["order_status"] == "pending" and result["okx_order_id"] == "42"
+
+
+def test_try_valuation_uses_inverse_usdt_try_public_ticker():
+    run = Runner([{"instId": "USDT-TRY", "last": "50"}])
+    assert AtkClient(command=("okx",), runner=run).try_usdt_rate() == "0.02"
+    assert run.calls[0][0][-3:] == ["market", "ticker", "USDT-TRY"]

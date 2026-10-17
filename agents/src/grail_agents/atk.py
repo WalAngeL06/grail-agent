@@ -6,7 +6,7 @@ import re
 import shutil
 import subprocess
 
-from .config import GrailError, spot_id
+from .config import GrailError, money, number, spot_id
 
 
 def cli_command() -> tuple[str, ...]:
@@ -24,7 +24,7 @@ def cli_command() -> tuple[str, ...]:
 
 
 class AtkClient:
-    READ_COMMANDS = frozenset({("market", "ticker"), ("market", "candles"), ("market", "instruments"), ("account", "balance"), ("spot", "get")})
+    READ_COMMANDS = frozenset({("market", "ticker"), ("market", "candles"), ("market", "instruments"), ("account", "balance"), ("spot", "get"), ("spot", "orders")})
 
     def __init__(self, *, command=None, runner=None, timeout=25):
         self.command = tuple(command) if command is not None else cli_command()
@@ -88,6 +88,16 @@ class AtkClient:
 
     def balance(self):
         return self._read("account", "balance")
+
+    def open_orders(self):
+        return self._read("spot", "orders")
+
+    def try_usdt_rate(self):
+        """Value Turkish-lira dust; this pair is never accepted by the order path."""
+        rows = self._read("market", "ticker", "USDT-TRY")
+        if len(rows) != 1 or not isinstance(rows[0], dict) or rows[0].get("instId") != "USDT-TRY":
+            raise GrailError("ATK_VALUATION: missing USDT-TRY ticker")
+        return money(1 / number(rows[0].get("last"), "USDT-TRY", positive=True))
 
     def order_status(self, inst_id, client_order_id):
         validate_client_id(client_order_id)

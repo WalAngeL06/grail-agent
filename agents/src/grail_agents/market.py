@@ -18,12 +18,14 @@ def normalize_ticker(row):
 
 
 def normalize_portfolio(balance, prices):
-    if not isinstance(balance, list) or len(balance) != 1 or not isinstance(balance[0].get("details"), list):
+    if not isinstance(balance, list) or len(balance) != 1 or not isinstance(balance[0], dict) or not isinstance(balance[0].get("details"), list):
         raise GrailError("ATK_BALANCE: invalid account response")
     equity, cash = Decimal(0), Decimal(0)
     positions = []
     seen = set()
     for row in balance[0]["details"]:
+        if not isinstance(row, dict):
+            raise GrailError("ATK_BALANCE: invalid currency row")
         ccy = row.get("ccy")
         if not isinstance(ccy, str) or ccy in seen:
             raise GrailError("ATK_BALANCE: invalid or repeated currency")
@@ -42,6 +44,8 @@ def normalize_portfolio(balance, prices):
             value = total * number(prices[inst], "valuation", positive=True)
             equity += value
             positions.append({"inst_id": inst, "size_base": money(total), "available_base": money(available), "value_usdt": money(value)})
+            if ccy == "TRY":
+                positions[-1].update({"tradable": False, "valuation_pair": "USDT-TRY"})
     for position in positions:
         position["weight_pct"] = float(number(position["value_usdt"], "value") / equity * 100) if equity else 0.0
     return {"equity_usdt": money(equity), "cash_usdt": money(cash), "positions": sorted(positions, key=lambda p: p["inst_id"])}
@@ -92,6 +96,16 @@ def fetch_snapshot(client, cfg: AgentConfig):
     rules = validate_instruments(client.instruments(), cfg.coins)
     market = [normalize_ticker(client.ticker(inst)) for inst in cfg.coins]
     prices = {row["inst_id"]: row["last"] for row in market}
-    portfolio = normalize_portfolio(client.balance(), prices)
+    portfolio = fetch_portfolio(client, prices)
     candles = {inst: confirmed_candles(client.candles(inst, cfg.candle_bar, cfg.lookback_bars + 2), cfg.lookback_bars + 1) for inst in cfg.coins}
     return {"market": market, "portfolio": portfolio, "candles": candles, "instruments": rules}
+
+
+def fetch_portfolio(client, prices):
+    balance = client.balance()
+    if isinstance(balance, list) and len(balance) == 1 and isinstance(balance[0], dict):
+        for row in balance[0].get("details", []):
+            if isinstance(row, dict) and row.get("ccy") == "TRY" and number(row.get("cashBal"), "TRY cashBal"):
+                prices = {**prices, "TRY-USDT": client.try_usdt_rate()}
+                break
+    return normalize_portfolio(balance, prices)

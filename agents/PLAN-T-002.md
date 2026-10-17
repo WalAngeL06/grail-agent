@@ -28,9 +28,9 @@ Interface: OrderService.execute(decision, portfolio, client_order_id=..., order_
 
 ## Task 3 — safe acceptance smoke and delivery
 Files: src/grail_agents/__main__.py, README.md, tests/test_smoke.py, coord/handoffs/agents.md.
-- [ ] Add CLI smoke which refuses dry_run=false, reads configured instruments/tickers/candles/balance, prints normalized state fragment + simulated order.
-- [ ] Run offline suite and read-only live-account smoke; no order placement. Record missing endpoint or auth failures as BLOCKED, without fallback/retries.
-- [ ] Check ownership diff, clean status and matching origin/role/agents commit; final RAPOR requests independent review. First live order remains user-gated for a later step.
+- [x] Add CLI smoke which refuses dry_run=false, reads configured instruments/tickers/candles/balance, prints normalized state fragment + simulated order.
+- [x] Run offline suite and read-only live-account smoke; no order placement. Record missing endpoint or auth failures as BLOCKED, without fallback/retries.
+- [x] Check ownership diff, clean status and matching origin/role/agents commit; final RAPOR requests independent review. First live order remains user-gated for a later step.
 
 ## Review focus
 - CLI errors may contain credentials; expose stable error codes only.
@@ -45,3 +45,7 @@ Files: src/grail_agents/__main__.py, README.md, tests/test_smoke.py, coord/hando
 - Task 1: initial collection failed because config/atk/market modules did not exist; implementation then passed 33/33 tests. Public BTC ticker via fixed TR/profile succeeded. API-key presence confirmed without printing credentials. Every command explicitly passes --site tr.
 - Task 2: transport tests first exposed an environment base-URL override and missing write method; new order/journal tests first failed on missing modules. After implementation 66/66 pass. Windows shared pytest temporary directory had stale ACLs; tests now use verified worktree-local agents/runtime/pytest (parent created in test config).
 - Ruling: force OKX_API_BASE_URL=https://tr.okx.com as well as --site tr. ATK's configured base_url otherwise overrides the site flag; cost is deliberately refusing other API hosts.
+- Task 3: 78/78 tests pass (0.20s); full real-account read-only smoke succeeded with five active instruments, 49 confirmed bars each, cash 29.40294764 USDT and simulated BTC BUY 2 USDT (no exchange order ID / fill price).
+- Final review fixes: safe malformed input errors; untracked live open orders block; fresh balance and reservation claims serialized. New tests were observed failing before implementation (7 failures plus absent smoke module), then green.
+- First real smoke exposed TRY dust (0.001855 TRY) as an unpriced holding. Added two red-to-green tests and inverse public USDT-TRY valuation; second smoke passed. TRY is included in equity as an explicitly nontradable synthetic position, not available USDT cash. Other unpriced holdings still block (cost: config must cover them).
+- Independent review: pending Claude Pro per AGENTS.md; no subagent or inter-role message sent. First live acceptance deliberately unrun: config remains dry_run=true and user has not enabled live trading.

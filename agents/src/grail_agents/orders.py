@@ -5,7 +5,7 @@ from threading import RLock
 
 from .atk import validate_client_id
 from .config import AgentConfig, GrailError, money, number, spot_id
-from .market import normalize_portfolio, normalize_ticker, validate_instruments
+from .market import fetch_portfolio, normalize_ticker, validate_instruments
 
 
 def _floor(value, step):
@@ -135,10 +135,6 @@ class OrderService:
                     if self._query_record(record)["order_status"] == "unknown":
                         raise GrailError("UNCERTAIN_ORDER: reconcile existing client ID before another order")
             self.instruments = validate_instruments(self.client.instruments(), self.config.coins)
-            prices = {inst: normalize_ticker(self.client.ticker(inst))["last"] for inst in self.config.coins}
-            fresh = normalize_portfolio(self.client.balance(), prices)
-            # A peak is required for live orders; the caller owns durable peak tracking (T-006).
-            fresh["peak_equity_usdt"] = money(number(portfolio.get("peak_equity_usdt"), "peak_equity_usdt", positive=True))
             prepared = self._prepare(intent, client_order_id)
             unknown = {"client_order_id": client_order_id, "okx_order_id": None, "order_status": "unknown", "fill_price": None}
             with self.journal.transaction() as session:
@@ -147,6 +143,15 @@ class OrderService:
                 records = session.records()
                 if any(r["result"]["order_status"] == "unknown" for r in records):
                     raise GrailError("UNCERTAIN_ORDER: another unresolved submission exists")
+                known = {r["prepared"]["client_order_id"] for r in records}
+                if any(row.get("clOrdId") not in known for row in self.client.open_orders()):
+                    raise GrailError("UNTRACKED_ORDERS: account has open spot orders outside this journal")
+                # Serialize balance refresh with journal updates: another worker cannot
+                # release a reservation against a snapshot taken before its fill.
+                prices = {inst: normalize_ticker(self.client.ticker(inst))["last"] for inst in self.config.coins}
+                fresh = fetch_portfolio(self.client, prices)
+                # The caller owns durable peak tracking (T-006); require it for live.
+                fresh["peak_equity_usdt"] = money(number(portfolio.get("peak_equity_usdt"), "peak_equity_usdt", positive=True))
                 self._guard(prepared, fresh, records, kill_switch)
                 session.save(client_order_id, {"intent": intent, "prepared": prepared, "result": unknown})
             # The transaction is committed BEFORE the external effect. A crash remains unknown.

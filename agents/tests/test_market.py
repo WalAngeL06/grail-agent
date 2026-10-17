@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 import pytest
 
 from grail_agents.config import AgentConfig, GrailError
@@ -75,3 +73,17 @@ def test_bad_config_cannot_reach_exchange(cfg_dict, change):
     cfg_dict.update(change)
     with pytest.raises(GrailError):
         AgentConfig.from_mapping(cfg_dict)
+
+
+@pytest.mark.parametrize("value", [None, [], {"coins": [["BTC-USDT"]]}])
+def test_malformed_config_has_safe_error(value, cfg_dict):
+    if isinstance(value, dict):
+        value = cfg_dict | value
+    with pytest.raises(GrailError):
+        AgentConfig.from_mapping(value)
+
+
+@pytest.mark.parametrize("balance", [[None], [{"details": [None]}], [{"details": [{"ccy": "USDT", "cashBal": "-1", "availBal": "0"}]}]])
+def test_malformed_balance_is_explicit(balance):
+    with pytest.raises(GrailError):
+        normalize_portfolio(balance, {})

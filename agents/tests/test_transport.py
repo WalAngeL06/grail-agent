@@ -62,3 +62,24 @@ def test_order_state_mapping():
     for raw, expected in [("live", "pending"), ("partially_filled", "partial"), ("filled", "filled"), ("canceled", "canceled"), ("mmp_canceled", "canceled"), ("novel_state", "unknown")]:
         client = AtkClient(command=("okx",), runner=Runner([{"state": raw, "ordId": "42", "clOrdId": "grail1", "avgPx": "60000", "instId": "BTC-USDT"}]))
         assert client.order_status("BTC-USDT", "grail1")["order_status"] == expected
+
+
+def test_environment_cannot_override_credentials_or_tr_host(ticker_row, monkeypatch):
+    monkeypatch.setenv("OKX_API_KEY", "do-not-use")
+    monkeypatch.setenv("OKX_API_BASE_URL", "https://www.okx.com")
+    run = Runner([ticker_row])
+    AtkClient(command=("okx",), runner=run).ticker("BTC-USDT")
+    env = run.calls[0][1]["env"]
+    assert "OKX_API_KEY" not in env
+    assert env["OKX_API_BASE_URL"] == "https://tr.okx.com"
+
+
+def test_spot_placement_uses_cash_and_quote_buy_budget():
+    run = Runner([{"sCode": "0", "ordId": "42", "clOrdId": "g1"}])
+    result = AtkClient(command=("okx",), runner=run)._place_spot({"inst_id": "BTC-USDT", "action": "BUY", "order_type": "market", "size": "5", "size_usdt": "5", "tgt_ccy": "quote_ccy", "client_order_id": "g1", "price": None})
+    args = run.calls[0][0]
+    assert args[args.index("--tdMode") + 1] == "cash"
+    assert args[args.index("--tgtCcy") + 1] == "quote_ccy"
+    assert args[args.index("--sz") + 1] == "5"
+    assert "--banAmend" in args
+    assert result["order_status"] == "pending" and result["okx_order_id"] == "42"

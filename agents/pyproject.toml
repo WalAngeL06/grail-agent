@@ -15,6 +15,7 @@ dev = ["pytest>=8,<10"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+addopts = ["--basetemp=runtime/pytest"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/grail_agents"]

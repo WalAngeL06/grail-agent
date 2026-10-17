@@ -38,6 +38,9 @@ class AtkClient:
         for key in ("OKX_API_KEY", "OKX_SECRET_KEY", "OKX_PASSPHRASE", "OKX_BASE_URL", "OKX_DEMO", "OKX_PROFILE"):
             env.pop(key, None)
         env["OKX_SITE"] = "tr"
+        # ATK otherwise lets environment/TOML base_url override --site.
+        env["OKX_API_BASE_URL"] = "https://tr.okx.com"
+        env["OKX_UPDATE_CHECK"] = "false"
         argv = [*self.command, "--profile", "grail", "--site", "tr", "--live", "--json", *args]
         try:
             result = self.runner(argv, capture_output=True, text=True, encoding="utf-8", shell=False, timeout=self.timeout, env=env)
@@ -96,6 +99,21 @@ class AtkClient:
             raise GrailError("ATK_ORDER: mismatched order identity")
         status = {"live": "pending", "partially_filled": "partial", "filled": "filled", "canceled": "canceled", "mmp_canceled": "canceled"}.get(row.get("state"), "unknown")
         return {"client_order_id": client_order_id, "okx_order_id": row.get("ordId") or None, "order_status": status, "fill_price": row.get("avgPx") or None}
+
+    def _place_spot(self, order):
+        """Internal write boundary. Only OrderService calls this after guards/journal."""
+        validate_client_id(order["client_order_id"])
+        if order["action"] not in {"BUY", "SELL"} or order["order_type"] not in {"market", "limit"}:
+            raise GrailError("SPOT_ONLY: unsupported action or order type")
+        args = ["spot", "place", "--instId", spot_id(order["inst_id"]), "--tdMode", "cash", "--side", order["action"].lower(), "--ordType", order["order_type"], "--sz", order["size"], "--tgtCcy", order["tgt_ccy"], "--clOrdId", order["client_order_id"]]
+        if order["price"] is not None:
+            args.extend(["--px", order["price"]])
+        if order["order_type"] == "market" and order["action"] == "BUY":
+            args.append("--banAmend")
+        rows = self._invoke(args)
+        if len(rows) != 1 or str(rows[0].get("sCode")) != "0" or not rows[0].get("ordId"):
+            raise GrailError("ATK_SUBMISSION: order not acknowledged; reconcile client order ID")
+        return {"client_order_id": order["client_order_id"], "okx_order_id": rows[0]["ordId"], "order_status": "pending", "fill_price": None}
 
 
 def validate_client_id(value):

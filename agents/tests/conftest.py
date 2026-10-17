@@ -4,6 +4,11 @@ from pathlib import Path
 import pytest
 
 
+def pytest_configure(config):
+    # Keep test data in the worktree; Windows' shared pytest temp has stale ACLs.
+    (Path(config.rootpath) / "runtime").mkdir(exist_ok=True)
+
+
 @pytest.fixture
 def cfg_dict():
     return json.loads((Path(__file__).parents[2] / "contracts/config.example.json").read_text())

@@ -22,9 +22,9 @@ Interfaces: AgentConfig.from_mapping(dict); AtkClient.ticker/candles/instruments
 ## Task 2 — guarded execution
 Files: src/grail_agents/{orders,journal}.py, tests/test_orders.py.
 Interface: OrderService.execute(decision, portfolio, client_order_id=..., order_type='market', limit_price=None, kill_switch=False, live_confirmed=False).
-- [ ] Write and run failing tests: allowed spot only, finite positive sizes, order/deploy/cash/base limits, drawdown threshold, dry-run flag, lot/minimum/tick constraints, multiple reservations, idempotent client IDs and unknown submission reconciliation.
-- [ ] Implement simulation without place calls; live path needs config dry_run=false AND explicit confirmation, fresh account snapshot, durable journal claim before submission; unknown submissions are queried by same client ID and never automatically sent again.
-- [ ] Run full suite; update handoff, commit and push.
+- [x] Write and run failing tests: allowed spot only, finite positive sizes, order/deploy/cash/base limits, drawdown threshold, dry-run flag, lot/minimum/tick constraints, multiple reservations, idempotent client IDs and unknown submission reconciliation.
+- [x] Implement simulation without place calls; live path needs config dry_run=false AND explicit confirmation, fresh account snapshot, durable journal claim before submission; unknown submissions are queried by same client ID and never automatically sent again.
+- [x] Run full suite; update handoff, commit and push.
 
 ## Task 3 — safe acceptance smoke and delivery
 Files: src/grail_agents/__main__.py, README.md, tests/test_smoke.py, coord/handoffs/agents.md.
@@ -43,3 +43,5 @@ Files: src/grail_agents/__main__.py, README.md, tests/test_smoke.py, coord/hando
 - Initial main sync: 987d7e4 -> e06987b; clean role/agents; contracts 0.4.
 - Recon: CLI 1.4.8 has --json and --site; --read-only rejected by parser, CLI context hardcodes readOnly=false. User authorized allowlist alternative.
 - Task 1: initial collection failed because config/atk/market modules did not exist; implementation then passed 33/33 tests. Public BTC ticker via fixed TR/profile succeeded. API-key presence confirmed without printing credentials. Every command explicitly passes --site tr.
+- Task 2: transport tests first exposed an environment base-URL override and missing write method; new order/journal tests first failed on missing modules. After implementation 66/66 pass. Windows shared pytest temporary directory had stale ACLs; tests now use verified worktree-local agents/runtime/pytest (parent created in test config).
+- Ruling: force OKX_API_BASE_URL=https://tr.okx.com as well as --site tr. ATK's configured base_url otherwise overrides the site flag; cost is deliberately refusing other API hosts.

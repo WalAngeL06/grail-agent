@@ -1,22 +1,23 @@
 # Handoff — engine / analyst (sadece bu rol yazar)
 
-- Güncelleme zamanı: 2026-10-17 (T-007 bitişi)
-- Aktif görev / durum: T-007 / READY_FOR_REVIEW (T-001 INTEGRATED)
-- Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`); main@e06987b merge edildi (fast-forward)
-- contracts okunan sürüm: 0.4
-- Tamamlanan somut davranış (T-007):
-  - `analyst/` uv paketi `grail-analyst` (`src/grail_analyst`, sadece stdlib): `review(decisions, snapshot, news, cfg, provider)`, `review_payload(payload, ...)`, `make_provider(env)`, `GeminiProvider`. Ayrıntı: `analyst/README.md`.
-  - Kod zorlar (planner onayı): sadece BUY LLM'e gider; SELL her durumda aynen (`llm_flag "exempt"`). BUY: action' ∈ {BUY, HOLD}; ters yön → HOLD; HOLD emre dönmez; size' ≤ size (kuruşa aşağı), min_order altı → HOLD; bilinmeyen coin yok sayılır.
-  - Sağlayıcı yok / timeout (daemon thread, tavan 8 sn) / bozuk JSON / hata → kararlar aynen, `llm_flag "skipped"`, `llm_note "skipped: <neden>"`. BUY yoksa LLM çağrılmaz (`no_buys`). İstisna fırlatmaz, girdi değişmez.
-  - Karara `llm_note` (ASCII ≤160) + `llm_flag` (skipped|approved|reduced|vetoed|exempt) eklenir → payload'la hash'lenir.
-  - `engine/pyproject.toml`: pytest `testpaths += ../analyst/tests`, `pythonpath = ../analyst/src` → engine test komutu analyst testlerini de koşar.
+- Güncelleme zamanı: 2026-10-17 (T-009 bitişi)
+- Aktif görev / durum: T-009 / READY_FOR_REVIEW (T-001, T-007 INTEGRATED). T-009 kartı main'de yok; kapsam kullanıcı mesajından: "engine reason metinlerini sade İngilizce yap, alan adları/API değişmez".
+- Worktree / branch / son commit: `Agentic Hack-wt/engine` / `role/engine` / bu handoff ile aynı commit (`git log -1`); main@5db51a2 merge edildi (fast-forward)
+- contracts okunan sürüm: 0.6
+- Tamamlanan somut davranış (T-009), sadece `engine/src/grail_engine/decision.py` metinleri:
+  - Veri: `Not enough data (no prices)`, `Not enough data (5 prices, need 11)`, `Bad price data, skipping (missing or invalid price)`, `Price is flat, no signal`.
+  - Koruma: `Safety stop: losses hit the limit, no trades (down 10.0%, limit 5%)`, `Account balance unknown, no trades`, `Engine error, no trades (ZeroDivisionError)`.
+  - Yükseliş: `Price trending up (+4.4%), target 25.06% of funds (3.7 independent bets)`; vol ölçeklemesi varsa `; size cut to keep risk near 20% (was 97%)`; yükselişte SELL ise `; trimming to target`.
+  - Düşüş: `Price trending down (-9.6%), moving to cash` (pozisyon varsa) / `staying in cash` (yoksa).
+  - Ekler: `; short history (40 of 48 bars)`, `; change too small to trade (1.81 < 2 USDT minimum)`, `; spending limit reached (budget left 0.00, cash 150.00 USDT)`.
+  - n_eff sonsuzsa `many`. Karar mantığı, alanlar, sıralar, sayılar değişmedi; sadece `reason` string'i (hash'e girdiği için payload hash'leri değişir).
 - Commit edilmemiş / izlenmeyen dosyalar: yok
-- Çalıştırılan kontroller: `cd engine && uv run pytest -q` → `84 passed` (49 engine + 35 analyst, ağsız; gerçek engine payload'ı ile uçtan uca test dahil).
-- Çalıştırılmayan kontroller ve nedeni: gerçek Gemini çağrısı (LLM_API_KEY yok/ağ testi kapsam dışı); varsayılan model adı `gemini-flash-latest` canlıda doğrulanmadı (`LLM_MODEL` ile değiştirilebilir).
+- Çalıştırılan kontroller: `cd engine && uv run pytest -q` → `88 passed` (önce 9 kırmızı → sonra yeşil; +4 yeni reason testi: Türkçe kelime yok, ASCII, büyük harfle başlar, her dal metni).
+- Çalıştırılmayan kontroller ve nedeni: web build / agents testleri (başka rollerin alanı; metin değişikliği onları kırmamalı ama doğrulanmadı).
 - Devam eden süreçler / portlar: yok
 - Dış eylemler (emir id, tx hash): yok
 - Açık konular (integrator kararı):
-  - Sözleşme: decision.md karar nesnesine opsiyonel `llm_note`, `llm_flag` alanları (hash'e girer). contracts güncellemesi integrator'da.
-  - Agent bağlantısı (T-006 eki, agents rolü): `decide` → `review_payload` → commit. `agents/pyproject.toml`'a `grail-analyst` path bağımlılığı.
+  - `contracts/chain.json` golden payload'ında Türkçe reason `Volatilite bütçesi; HOLD`, `contracts/decision.md` örneğinde `trend+, n_eff=1.9, vol hedefi altında`, `state.example.json`'da `trend+, n_eff=1.9` duruyor → örnekler İngilizceye çekilmeli mi (chain.json chain rolünün, golden hash değişir).
+  - Öneri: `errors[].message` (`config gecersiz`, `market_snapshot dict degil`, `equity_usdt yok/gecersiz`) ve `config.py` doğrulama mesajları da Türkçe; UI'da gösteriliyorsa ayrı kartla İngilizceye çekilebilir.
 - TEKRARLANMAMASI gereken işlem: modül adı `decide.py` yapma (paket `decide` fonksiyonu modülü gölgeliyor → `decision.py`).
-- SIRADAKİ İLK ADIM: T-007 review bulgusu varsa düzelt; yoksa integrator'dan yeni görev kartı bekle — yeni chat, `Agentic Hack-wt/engine` içinde.
+- SIRADAKİ İLK ADIM: T-009 review bulgusu varsa düzelt; yoksa integrator'dan yeni görev kartı bekle — yeni chat, `Agentic Hack-wt/engine` içinde.

@@ -22,4 +22,4 @@ res["errors"]    # contracts hata nesneleri; res["ok"] False ise state.errors'a 
 (risk bütçesi yorumu: coin başına yıllık vol katkısı tavanı) · hedef = `w * min(equity, max_total_deploy_usdt)` ·
 `|fark| < min_order` → HOLD, BUY/SELL `<= max_order_usdt`; BUY'lar toplamda kalan deploy bütçesi ve nakitle sınırlı (inst_id sırasıyla).
 Bozuk veri (pencerede NaN/≤0, std=0, < 11 kapanış) → o coin HOLD, pozisyon olsa da satış yok. Kill switch → hepsi HOLD.
-`reason` sadece ASCII (JS `JSON.stringify` ile Python `ensure_ascii` aynı baytı üretsin). Para string, `size_usdt` kuruşa aşağı yuvarlı.
+`reason` kullanıcıya gösterilir: sade İngilizce, önce düz cümle sonra sayılar (ör. `Not enough data (5 prices, need 11)`, `Price trending down (-9.6%), moving to cash`). Sadece ASCII (JS `JSON.stringify` ile Python `ensure_ascii` aynı baytı üretsin). Para string, `size_usdt` kuruşa aşağı yuvarlı.

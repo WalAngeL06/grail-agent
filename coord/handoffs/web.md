@@ -1,16 +1,32 @@
 # Handoff — web (sadece bu rol yazar)
 
-- Güncelleme zamanı:
-- Aktif görev / durum: T-005 / TODO (15:00'te başlar)
-- Oturum: araç + hesap etiketi (ör. "Codex · hesap 1"), durdu / sürüyor
-- Worktree / branch / son commit:
-- contracts okunan sürüm:
+- Güncelleme zamanı: 2026-10-17 13:40
+- Aktif görev / durum: T-005 / READY_FOR_REVIEW (ilk sürüm; tasarım docs/ui-brief.md olmadan BRIEF + state.example.json'dan yapıldı)
+- Oturum: Claude Code · Max (Opus 5.5), durdu
+- Worktree / branch / son commit: `Agentic Hack-wt/web` / `role/web` / bu dosyayı içeren son commit (`git log -1`)
+- contracts okunan sürüm: v0.4
 - Tamamlanan somut davranış:
-- Commit edilmemiş / izlenmeyen dosyalar:
+  - `web/`: Vite 5 + React 18 + TS. 4 ekran, hash route: `#/dashboard`, `#/kararlar`, `#/sicil`, `#/limitler`.
+  - Portföy: "5 coin → 1,44 bahis" + Holy Grail eğrisi (N_eff, stats.py formülü), ρ kaydırıcısı (senaryo), hover tooltip, korelasyon ısı haritası, rejim (trend/vol/HRP/hedef), piyasa, hata günlüğü.
+  - Karar akışı: döngü başına gruplu; AL/SAT/BEKLE, gerekçe, dry_run etiketi; her satırda "Kendin doğrula": keccak256(payload‖salt) tarayıcıda → ✅/❌, payload düzenlenebilir (tek karakter → ❌), payload↔satır kontrolü, Fuji RPC'den commit tx calldata'sında hash arama (ABI gerekmez).
+  - Sicil: commit/reveal/açıkta kalan sayaçları, ERC-8004 agentId, kontrat/registry Snowtrace linkleri (sadece geçerli hex ise link), döngü akış tablosu.
+  - Yetki ve limitler: config guardrail'leri, izinli coinler, yetki listesi (withdraw/kaldıraç yok), hata davranışı.
+  - Veri: Vite middleware `/api/state` ← `GRAIL_STATE_PATH` (yoksa contracts/state.example.json + uyarı bandı), `/api/chain` ← `GRAIL_CHAIN_PATH` | contracts/chain.json (yoksa `null`). 3 sn polling. Bozuk JSON/sunucu yok → son durum kalır / paketlenmiş örnek.
+  - `npm run dev:demo`: `web/fixtures/demo-state.json` (gerçek hash, uydurma tx; UI "demo verisi" etiketler). `npm run fixture` zamanları tazeler.
+- Commit edilmemiş / izlenmeyen dosyalar: worktree kökünde `.claude/launch.json` (sadece önizleme aracı için, commit EDİLMEDİ, web/ dışı).
 - Çalıştırılan kontroller (komut → sonuç):
-- Çalıştırılmayan kontroller ve nedeni:
-- Devam eden süreçler / portlar:
-- Dış eylemler (emir id, tx hash) ve durumu; belirsiz olanlar işaretli:
+  - `cd web && npm run build` → geçti (tsc + vite, 202 kB js).
+  - `npm run dev` (mock) ve `npm run dev:demo` → 4 ekran açıldı, konsolda hata yok; ekran görüntüleri `web/docs/screenshots/`.
+  - Kendin doğrula: demo döngü #11 ✅; payload'a 1 boşluk → ❌; Fuji RPC erişildi, demo tx "bulunamadı" (beklenen).
+  - normalize(): null/sayı/dizi/yanlış tipli 7 girdi → hiçbiri fırlatmadı.
+  - Kanonik payload: demo üreticisinin JSON'u Python `json.dumps(sort_keys, separators, ensure_ascii)` ile birebir; keccak256("") test vektörü doğru.
+  - `GRAIL_STATE_PATH` var → `X-Grail-Source: live`; yok → mock + `X-Grail-Missing`.
+- Çalıştırılmayan kontroller ve nedeni: gerçek `runtime/state.json` yok (agent T-006 henüz yazmıyor); gerçek Fuji commit tx ile zincir kontrolü (T-003 deploy bekleniyor).
+- Devam eden süreçler / portlar: önizleme sunucuları 5173 (mock) ve 5174 (demo) açık kalmış olabilir; kapatmak serbest.
+- Dış eylemler (emir id, tx hash) ve durumu: yok.
 - Açık sorun / denenenler:
-- TEKRARLANMAMASI gereken işlem:
-- SIRADAKİ İLK ADIM: 15:00 öncesi BAŞLAMA. 15:00'te: git merge main; docs/ui-brief.md ve T-005 oku.
+  - UI dili Türkçe. Jüri İngilizce isterse metinler bileşenlerde düz string (i18n yok).
+  - state.config örnekte sadece 4 alan taşıyor; limit ekranı eksik alanları "agent bu değeri state'e yazmıyor" diye gösterir → istek: agent tam config'i state.config'e yazsın.
+  - state.chain'de `agent_id` (ERC-8004) ve `identity_registry` alanları sözleşmede yok; UI okuyor (agent_id | agentId) → istek.
+- TEKRARLANMAMASI gereken işlem: vite.config'te yol için `new URL(...).pathname` kullanma (boşluklu klasörde %20 → 404); `fileURLToPath` kullan. Gövdeye global `tabular-nums` koyma (Schibsted'de noktalama aralanıyor).
+- SIRADAKİ İLK ADIM: `git merge main`; docs/ui-brief.md veya docs/design/ geldiyse farkları uygula; T-006 state.json yazınca `GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev` ile gerçek veriyle ekran görüntüsü al; chain.json gelince `chainHints()` (src/verify.ts) anahtarlarını gerçek şekle göre düzelt.

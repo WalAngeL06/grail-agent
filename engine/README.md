@@ -22,4 +22,13 @@ res["errors"]    # contracts hata nesneleri; res["ok"] False ise state.errors'a 
 (risk bütçesi yorumu: coin başına yıllık vol katkısı tavanı) · hedef = `w * min(equity, max_total_deploy_usdt)` ·
 `|fark| < min_order` → HOLD, BUY/SELL `<= max_order_usdt`; BUY'lar toplamda kalan deploy bütçesi ve nakitle sınırlı (inst_id sırasıyla).
 Bozuk veri (pencerede NaN/≤0, std=0, < 11 kapanış) → o coin HOLD, pozisyon olsa da satış yok. Kill switch → hepsi HOLD.
-`reason` sadece ASCII (JS `JSON.stringify` ile Python `ensure_ascii` aynı baytı üretsin). Para string, `size_usdt` kuruşa aşağı yuvarlı.
+**Replay (T-012)** — son 30 günün OKX mumlarıyla kararları geriye oynatır, eşit ağırlıklı al-tut ile karşılaştırır. Emir/tx yok.
+```
+uv run python scripts/replay_okx.py --fetch   # `okx market candles` (salt okunur) → data/okx-candles-1H.json, sonra oynat
+uv run python scripts/replay_okx.py           # kayıtlı mumlarla, ağsız ve deterministik
+```
+Çıktı `out/replay.json` (`series`: saatlik `grail_usdt`/`buy_hold_usdt`/`grail_cash_pct`/`independent_bets`; `grail.max_drawdown_pct`,
+`avg_independent_bets`, `times_went_to_cash`, `kill_switch_bars`) + `out/replay-summary.md` (3 cümle). Saf kısım `grail_engine.replay`.
+Varsayımlar: sermaye = `max_total_deploy_usdt`, her kapanmış barda bir karar, dolum bar kapanışında, ücret %0.1, kill switch tepesi = en yüksek equity.
+
+`reason` kullanıcıya gösterilir: sade İngilizce, önce düz cümle sonra sayılar (ör. `Not enough data (5 prices, need 11)`, `Price trending down (-9.6%), moving to cash`). Sadece ASCII (JS `JSON.stringify` ile Python `ensure_ascii` aynı baytı üretsin). Para string, `size_usdt` kuruşa aşağı yuvarlı.

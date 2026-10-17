@@ -12,9 +12,15 @@ import numpy as np
 
 from .config import bar_minutes, to_decimal, validate_config
 from .hrp import hrp_weights
-from .stats import avg_corr, corr_matrix, n_eff, psr, sr_portfolio
+from .stats import avg_corr, breakout_setup, corr_matrix, hurst_dfa, n_eff, psr, sr_portfolio
 
 SR_SINGLE = 0.5  # Holy Grail metriği için varsayılan tekil SR (sadece gösterim)
+# T-014 kapıları (config'te değil, sabit). 48 bar kısa → Hurst gürültülü, bu yüzden arada ölü bant.
+HURST_RANGING = 0.45  # altı: ortalamaya dönen piyasa → momentum alımı yok
+HURST_TRENDING = 0.55  # üstü: trend; arası "unclear" (engel yok)
+RETEST_TOL_MIN = 0.002  # retest bandı: seviyenin ±max(%0.2, 0.5 × bar vol)'ü
+RETEST_TOL_SD = 0.5
+SETUP_SIZE = {"retest": 1.0, "none": 0.5, "breakout": 0.0}  # hedefin çarpanı; kapılar sadece azaltır
 MIN_RETURNS = 10  # bir coinin geçerli sayılması için gereken en az getiri (lookback daha kısaysa o)
 CURVE_N = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 50]
 CENT = Decimal("0.01")
@@ -88,7 +94,12 @@ def _analyze(raw, lookback: int) -> dict:
     sd = float(rets.std(ddof=1))
     if not sd > 1e-12:
         return {"ok": False, "why": "Price is flat, no signal"}
-    return {"ok": True, "rets": rets, "trend": float(win[-1] / win[0] - 1.0), "sd": sd, "lb": lb, "last": float(win[-1])}
+    h = hurst_dfa(rets)
+    regime = "unclear" if not math.isfinite(h) else (
+        "ranging" if h < HURST_RANGING else "trending" if h >= HURST_TRENDING else "unclear")
+    setup = breakout_setup(win, max(RETEST_TOL_MIN, RETEST_TOL_SD * sd))
+    return {"ok": True, "rets": rets, "trend": float(win[-1] / win[0] - 1.0), "sd": sd, "lb": lb, "last": float(win[-1]),
+            "hurst": h, "regime": regime, "setup": setup}
 
 
 def _last_price(snap: dict, inst: str, raw) -> float:
@@ -219,16 +230,29 @@ def _decide(snap: dict, positions, cfg: dict, errors: list) -> dict:
             reason = info[c]["why"]
         else:
             tr, tw = info[c]["trend"], round(weight[c] * 100.0, 2)
+            target = weight[c] * deploy_base
             ne_s = f"{ne:.1f}" if ne is not None and math.isfinite(ne) else "many"
             if tr > 0:
-                reason = f"Price trending up ({tr:+.1%}), target {tw:g}% of funds ({ne_s} independent bets)"
-                if scale < 1.0:
-                    reason += f"; size cut to keep risk near {tv:g}% (was {pv_raw:.0f}%)"
+                # T-014 kapıları: alım hedefini mult × hedefe indirir; mevcut pozisyon [mult × hedef, hedef] arasında
+                # ise dokunulmaz (kapı satış üretmez), hedefin üstündeyse eski kural gibi kırpılır.
+                h, regime, setup = info[c]["hurst"], info[c]["regime"], info[c]["setup"]
+                mult = 0.0 if regime == "ranging" else SETUP_SIZE[setup]
+                target = min(target, max(mult * target, cur))
+                tw = round(target / deploy_base * 100.0, 2) if deploy_base > 0 else 0
+                if regime == "ranging":
+                    reason = f"Market is ranging (Hurst {h:.2f}), momentum buys paused"
+                elif setup == "breakout":
+                    reason = "Breakout not retested yet"
+                else:
+                    reason = f"Price trending up ({tr:+.1%}), target {tw:g}% of funds ({ne_s} independent bets)"
+                    if scale < 1.0:
+                        reason += f"; size cut to keep risk near {tv:g}% (was {pv_raw:.0f}%)"
+                    reason += "; breakout + retest confirmed" if setup == "retest" else "; no breakout yet, half size"
             else:
                 reason = f"Price trending down ({tr:+.1%}), " + ("moving to cash" if cur > 0 else "staying in cash")
             if info[c]["lb"] < cfg["lookback_bars"]:
                 reason += f"; short history ({info[c]['lb']} of {cfg['lookback_bars']} bars)"
-            diff = _cents(weight[c] * deploy_base - cur)
+            diff = _cents(target - cur)
             if abs(diff) < min_o:
                 if diff != 0:
                     reason += f"; change too small to trade ({abs(diff)} < {min_o} USDT minimum)"
@@ -267,5 +291,7 @@ def _decide(snap: dict, positions, cfg: dict, errors: list) -> dict:
         "portfolio_vol_raw_pct": _clean(pv_raw, 2), "portfolio_vol_pct": _clean(pv, 2),
         "psr": _clean(psr(port_r)) if port_r is not None else None, "psr_basis": "hrp_all_valid_in_sample",
         "window_bars": m, "drawdown_pct": _clean(dd_pct, 2), "kill_switch": kill,
+        "signals": {c: {"hurst": _clean(info[c]["hurst"]), "regime": info[c]["regime"], "setup": info[c]["setup"]}
+                    for c in V},
     }
     return {"ok": not errors, "payload": payload, "metrics": metrics, "errors": errors}

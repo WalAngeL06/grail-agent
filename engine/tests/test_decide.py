@@ -91,7 +91,7 @@ def test_all_down_with_position_sells(cfg):
 
 
 # --- bozuk veri: çökme yok, ilgili coin HOLD ---
-def test_constant_nan_and_single_price(cfg):
+def test_constant_nan_and_single_price(cfg, no_gates):
     snap = up_market()
     snap["closes"]["BTC-USDT"] = [100.0] * 169
     nan_series = make_closes(seed=2)
@@ -127,7 +127,7 @@ def single_cfg(cfg):
     return cfg
 
 
-def test_diff_above_max_order_is_capped(cfg):
+def test_diff_above_max_order_is_capped(cfg, no_gates):
     cfg = single_cfg(cfg)
     snap = make_snapshot({"BTC-USDT": make_closes(seed=5, drift=0.001, vol=0.001)})
     d = by_inst(decide(snap, make_portfolio(), cfg))["BTC-USDT"]
@@ -215,7 +215,7 @@ def test_reasons_plain_english_up_and_down(cfg):
     assert "staying in cash" in down["ETH-USDT"]["reason"]
 
 
-def test_reasons_plain_english_order_limits(cfg):
+def test_reasons_plain_english_order_limits(cfg, no_gates):
     snap = make_snapshot({"BTC-USDT": make_closes(seed=5, drift=0.001, vol=0.001)})
     first = by_inst(decide(snap, make_portfolio(), single_cfg(cfg)))["BTC-USDT"]
     pos = [{"inst_id": "BTC-USDT", "value_usdt": f"{first['target_weight_pct'] / 100 * 50 - 1:.2f}"}]
@@ -224,7 +224,7 @@ def test_reasons_plain_english_order_limits(cfg):
     assert "change too small to trade" in small["reason"]
 
 
-def test_reasons_plain_english_budget_limit(cfg):
+def test_reasons_plain_english_budget_limit(cfg, no_gates):
     pos = [{"inst_id": "BTC-USDT", "value_usdt": "46"}]
     res = decide(up_market(), make_portfolio(equity="200", cash="154", positions=pos), cfg)
     reasons = [d["reason"] for d in res["payload"]["decisions"]]

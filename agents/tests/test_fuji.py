@@ -171,3 +171,167 @@ def test_fuji_rpc_log_limit_of_100_blocks_is_respected(evm):
             return []
     assert chain._logs(Event(), end=chain.start_block + 251) == []
     assert ranges == [100, 100, 52]
+
+
+def track_log_ranges(w3, monkeypatch):
+    original = w3.eth.get_logs
+    ranges = []
+    def tracked(params):
+        ranges.append((params['fromBlock'], params['toBlock']))
+        return original(params)
+    monkeypatch.setattr(w3.eth, 'get_logs', tracked)
+    return ranges
+
+
+def test_log_cursor_survives_restart_and_only_scans_new_blocks(evm, monkeypatch):
+    chain = adapter(evm)
+    w3 = evm[0]
+    digest = commitment('{}', '0x' + '11' * 32)
+    tx = chain.commit(4, digest)
+    chain.reveal(4, '{}', '0x' + '11' * 32, '')
+    scanned = w3.eth.block_number
+    ranges = track_log_ranges(w3, monkeypatch)
+    fresh = adapter(evm)
+    assert fresh.next_cycle_id() == 5
+    assert fresh.lookup(4)['commit_tx'] == tx
+    assert fresh.lookup(4)['revealed'] is True
+    assert ranges == []  # persisted history already covers this head
+    w3.provider.ethereum_tester.mine_blocks(3)
+    assert fresh.next_cycle_id() == 5
+    assert ranges == [(scanned + 1, scanned + 3)]
+
+
+def test_failed_log_page_does_not_advance_cursor_or_duplicate_events(evm, monkeypatch):
+    chain = adapter(evm)
+    w3 = evm[0]
+    chain.commit(4, commitment('{}', '0x' + '11' * 32))
+    scanned = w3.eth.block_number
+    w3.provider.ethereum_tester.mine_blocks(105)
+    original = w3.eth.get_logs
+    calls = []
+    def interrupted(params):
+        calls.append((params['fromBlock'], params['toBlock']))
+        if len(calls) == 2:
+            raise TimeoutError('page unavailable')
+        return original(params)
+    monkeypatch.setattr(w3.eth, 'get_logs', interrupted)
+    with pytest.raises(GrailError, match='CHAIN_RPC'):
+        chain.next_cycle_id()
+    ranges = track_log_ranges(w3, monkeypatch)
+    assert adapter(evm).next_cycle_id() == 5
+    assert ranges == [(scanned + 1, scanned + 100), (scanned + 101, scanned + 105)]
+
+
+def test_changed_canonical_checkpoint_rebuilds_log_history(evm):
+    chain = adapter(evm)
+    w3 = evm[0]
+    tester = w3.provider.ethereum_tester
+    snapshot = tester.take_snapshot()
+    chain.commit(4, commitment('{}', '0x' + '11' * 32))
+    assert chain.next_cycle_id() == 5
+    tester.revert_to_snapshot(snapshot)
+    # A replacement block at the same height must invalidate the saved events.
+    w3.eth.send_transaction({'from': w3.eth.accounts[0], 'to': w3.eth.accounts[1], 'value': 1})
+    assert adapter(evm).next_cycle_id() == 1
+
+
+def test_confirmed_journal_transactions_are_not_polled_again(evm, monkeypatch):
+    chain = adapter(evm)
+    w3 = evm[0]
+    salt = '0x' + '11' * 32
+    digest = commitment('{}', salt)
+    commit_tx = chain.commit(4, digest)
+    reveal_tx = chain.reveal(4, '{}', salt, '')
+    path = evm[5] / 'fuji-transactions.json'
+    journal = json.loads(path.read_text())
+    assert all(row.get('status') == 'confirmed' for row in journal['transactions'].values())
+    original = w3.eth.get_transaction_receipt
+    polled = []
+    def receipt(tx):
+        polled.append(tx)
+        return original(tx)
+    monkeypatch.setattr(w3.eth, 'get_transaction_receipt', receipt)
+    fresh = adapter(evm)
+    assert fresh.lookup(4)['revealed'] is True
+    fresh.commit(5, digest)
+    assert commit_tx not in polled and reveal_tx not in polled
+    assert all(row.get('status') == 'confirmed' for row in json.loads(path.read_text())['transactions'].values())
+
+
+def test_legacy_journal_receipts_are_confirmed_once_then_skipped(evm, monkeypatch):
+    chain = adapter(evm)
+    w3 = evm[0]
+    digest = commitment('{}', '0x' + '11' * 32)
+    tx = chain.commit(4, digest)
+    path = evm[5] / 'fuji-transactions.json'
+    journal = json.loads(path.read_text())
+    for row in journal['transactions'].values():
+        row.pop('status', None)
+    path.write_text(json.dumps(journal))
+    original = w3.eth.get_transaction_receipt
+    polled = []
+    def receipt(tx):
+        polled.append(tx)
+        return original(tx)
+    monkeypatch.setattr(w3.eth, 'get_transaction_receipt', receipt)
+    fresh = adapter(evm)
+    assert fresh.lookup(4)['commit_tx'] == tx
+    assert fresh.lookup(4)['commit_tx'] == tx
+    fresh.commit(5, digest)
+    assert polled.count(tx) == 1
+
+
+def test_incomplete_log_response_does_not_poison_persisted_cursor(evm, monkeypatch):
+    chain = adapter(evm)
+    chain.commit(4, commitment('{}', '0x' + '11' * 32))
+    # An older runtime has no event cache and must discover existing history.
+    path = evm[5] / 'fuji-events.json'
+    if path.exists():
+        path.unlink()
+    fresh = adapter(evm)
+    original = evm[0].eth.get_logs
+    monkeypatch.setattr(evm[0].eth, 'get_logs', lambda params: [])
+    with pytest.raises(GrailError, match='CHAIN_LOGS'):
+        fresh.next_cycle_id()
+    monkeypatch.setattr(evm[0].eth, 'get_logs', original)
+    assert adapter(evm).next_cycle_id() == 5
+
+
+def test_changed_checkpoint_requeries_old_hash_before_any_new_broadcast(evm, monkeypatch):
+    chain = adapter(evm)
+    w3 = evm[0]
+    tester = w3.provider.ethereum_tester
+    snapshot = tester.take_snapshot()
+    digest = commitment('{}', '0x' + '11' * 32)
+    chain.commit(4, digest)
+    tester.revert_to_snapshot(snapshot)
+    w3.eth.send_transaction({'from': w3.eth.accounts[0], 'to': w3.eth.accounts[1], 'value': 1})
+    broadcasts = []
+    original = w3.eth.send_raw_transaction
+    def send(raw):
+        broadcasts.append(raw)
+        return original(raw)
+    monkeypatch.setattr(w3.eth, 'send_raw_transaction', send)
+    with pytest.raises(GrailError, match='CHAIN_TX_UNKNOWN'):
+        adapter(evm).commit(5, digest)
+    assert broadcasts == []
+
+
+def test_crash_after_receipt_leaves_checkpoint_covering_confirmed_tx(evm, monkeypatch):
+    chain = adapter(evm)
+    w3 = evm[0]
+    tester = w3.provider.ethereum_tester
+    snapshot = tester.take_snapshot()
+    digest = commitment('{}', '0x' + '11' * 32)
+    lookup = chain.lookup
+    def crash_after_send(cycle):
+        if cycle == 4 and chain._journal()['transactions']:
+            raise SystemExit('crash before post-send lookup')
+        return lookup(cycle)
+    monkeypatch.setattr(chain, 'lookup', crash_after_send)
+    with pytest.raises(SystemExit):
+        chain.commit(4, digest)
+    tester.revert_to_snapshot(snapshot)
+    w3.eth.send_transaction({'from': w3.eth.accounts[0], 'to': w3.eth.accounts[1], 'value': 1})
+    with pytest.raises(GrailError, match='CHAIN_TX_UNKNOWN'):
+        adapter(evm).commit(5, digest)

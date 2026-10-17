@@ -15,3 +15,6 @@ Evidence:
 - Initial HEAD a7312a3; clean worktree; local main sync merge 230be85.
 - R-004-1 verified: full suite 136 passed (10.50s), existing v0.6 startup/state and saved-state restart tests included.
 - R-004-2 RED: multi-cycle test reproduced all BUYs blocked in a later cycle (1 failed). Automatic dry-run service is now local to its batch; injected services retain caller ownership.
+- R-004-2 GREEN: full suite 137 passed (9.86s), pushed eadee19.
+- R-004-3 RED: 4 new regressions failed (repeat full scans, lost page progress, no confirmed markers, repeated legacy receipt queries). GREEN: 12 Fuji tests passed. Added incomplete-page and checkpoint-change regressions: both failed, then passed. Added receipt-before-event-lookup crash regression: failed, then passed after persisting a covering checkpoint before marking confirmed.
+- R-004-3 final verification: full suite 145 passed (16.10s). No external RPC/order/tx; local EVM only. Receipt markers apply only to successful canonical receipts; reverted/unknown hashes retain existing reconciliation behavior.

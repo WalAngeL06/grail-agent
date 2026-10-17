@@ -80,6 +80,7 @@ class FujiChain:
         self.start_block = deployment['blockNumber']
         self.receipt_timeout = receipt_timeout
         self.path = Path(runtime) / 'fuji-transactions.json'
+        self.events_path = Path(runtime) / 'fuji-events.json'
         self.identity = {'chain_id': 43113, 'ledger': self.ledger.address, 'sender': self.address, 'agent_id': str(self.agent_id)}
         journal = self._journal()
         if journal['identity'] != self.identity:
@@ -88,15 +89,56 @@ class FujiChain:
     def _journal(self):
         return read_json(self.path, {'identity': self.identity, 'transactions': {}})
 
-    def _logs(self, event, cycle_id=None, *, end=None):
+    def _logs(self, event, cycle_id=None, *, end=None, start=None):
         end = self.w3.eth.block_number if end is None else end
         arguments = {'agentId': self.agent_id}
         if cycle_id is not None:
             arguments['cycleId'] = cycle_id
         logs = []
-        for start in range(self.start_block, end + 1, 100):
-            logs.extend(event.get_logs(from_block=start, to_block=min(start + 99, end), argument_filters=arguments))
+        for page in range(self.start_block if start is None else start, end + 1, 100):
+            logs.extend(event.get_logs(from_block=page, to_block=min(page + 99, end), argument_filters=arguments))
         return logs
+
+    def _invalidate_confirmations(self):
+        journal = self._journal()
+        changed = False
+        for record in journal['transactions'].values():
+            if record.pop('status', None) is not None:
+                changed = True
+        if changed:
+            atomic_json(self.path, journal)
+
+    def _event_logs(self, name, *, end):
+        cache = read_json(self.events_path, {'identity': self.identity, 'streams': {}})
+        if cache['identity'] != self.identity:
+            raise GrailError('CHAIN_JOURNAL: event history belongs to another ledger/signer')
+        stream = cache['streams'].get(name)
+        if stream and (stream['through_block'] > end or self.w3.eth.get_block(stream['through_block'])['hash'].to_0x_hex() != stream['block_hash']):
+            # A changed canonical checkpoint invalidates both history and receipt
+            # confirmations. Unresolved hashes must be queried before any new send.
+            cache['streams'] = {}
+            self._invalidate_confirmations()
+            stream = None
+        start = stream['through_block'] + 1 if stream else self.start_block
+        if start > end:
+            return stream['logs']
+        checkpoint = self.w3.eth.get_block(end)['hash'].to_0x_hex()
+        rows = list(stream['logs']) if stream else []
+        event = getattr(self.ledger.events, name)()
+        for log in self._logs(event, start=start, end=end):
+            row = {'cycle_id': int(log['args']['cycleId']), 'tx_hash': log['transactionHash'].to_0x_hex()}
+            if name == 'DecisionCommitted':
+                row['commit_hash'] = Web3.to_hex(log['args']['commitHash'])
+            rows.append(row)
+        counter = self.ledger.functions.commitCount if name == 'DecisionCommitted' else self.ledger.functions.revealCount
+        if len(rows) != counter(self.agent_id).call(block_identifier=end) or len({row['cycle_id'] for row in rows}) != len(rows):
+            raise GrailError('CHAIN_LOGS: incomplete or duplicate event history; cursor retained')
+        if self.w3.eth.get_block(end)['hash'].to_0x_hex() != checkpoint:
+            raise GrailError('CHAIN_LOGS: canonical checkpoint changed during scan')
+        # Cursor and complete event rows advance together, after every page succeeds.
+        cache['streams'][name] = {'through_block': end, 'block_hash': checkpoint, 'logs': rows}
+        atomic_json(self.events_path, cache)
+        return rows
 
     def _receipt(self, tx_hash, *, wait=False):
         try:
@@ -119,19 +161,40 @@ class FujiChain:
             raise GrailError(f'CHAIN_TX_REVERTED: {tx_hash}; no order authorized')
         return receipt
 
+    def _confirm_transaction(self, tx_hash, *, wait=False):
+        journal = self._journal()
+        record = next((row for row in journal['transactions'].values() if row['tx_hash'] == tx_hash), None)
+        if record and record.get('status') == 'confirmed':
+            return
+        receipt = self._receipt(tx_hash, wait=wait)
+        if record is not None:
+            # Persist a checkpoint covering the receipt BEFORE its skip marker.
+            # A crash between these writes can only cause another verification.
+            self._event_logs('DecisionCommitted', end=self.w3.eth.block_number)
+            if self.w3.eth.get_block(receipt['blockNumber'])['hash'] != receipt['blockHash']:
+                raise GrailError('CHAIN_RECEIPT: canonical block changed during confirmation')
+            journal = self._journal()
+            record = next(row for row in journal['transactions'].values() if row['tx_hash'] == tx_hash)
+            record['status'] = 'confirmed'
+            atomic_json(self.path, journal)
+
     def _send(self, key, function):
+        # Validate the saved canonical checkpoint before trusting terminal receipts.
+        self._event_logs('DecisionCommitted', end=self.w3.eth.block_number)
         journal = self._journal()
         data = function._encode_transaction_data()
         previous = journal['transactions'].get(key)
         if previous:
             if previous['data'] != data:
                 raise GrailError('CHAIN_JOURNAL: transaction intent differs; never replace or resend')
-            self._receipt(previous['tx_hash'], wait=True)
+            self._confirm_transaction(previous['tx_hash'], wait=True)
             return previous['tx_hash']
         # A new nonce must not bypass an ambiguous earlier submission.
         for record in journal['transactions'].values():
+            if record.get('status') == 'confirmed':
+                continue
             try:
-                self._receipt(record['tx_hash'])
+                self._confirm_transaction(record['tx_hash'])
             except GrailError as error:
                 if not str(error).startswith('CHAIN_TX_REVERTED:'):
                     raise
@@ -143,6 +206,7 @@ class FujiChain:
         transaction = function.build_transaction({'from': self.address, 'chainId': 43113, 'nonce': nonce, 'gas': gas, 'gasPrice': gas_price, 'value': 0})
         signed = self.account.sign_transaction(transaction)
         tx_hash = signed.hash.to_0x_hex()
+        journal = self._journal()  # retain confirmations persisted during reconciliation
         journal['transactions'][key] = {'tx_hash': tx_hash, 'nonce': nonce, 'data': data}
         atomic_json(self.path, journal)
         try:
@@ -151,40 +215,41 @@ class FujiChain:
                 raise GrailError('CHAIN_RECEIPT: broadcast hash mismatch')
         except Exception:
             # Sending may have succeeded. The signed hash is already durable.
-            self._receipt(tx_hash, wait=True)
+            self._confirm_transaction(tx_hash, wait=True)
             return tx_hash
-        self._receipt(tx_hash, wait=True)
+        self._confirm_transaction(tx_hash, wait=True)
         return tx_hash
 
     @safe_chain
     def next_cycle_id(self):
         end = self.w3.eth.block_number
-        logs = self._logs(self.ledger.events.DecisionCommitted(), end=end)
+        logs = self._event_logs('DecisionCommitted', end=end)
         if len(logs) != self.ledger.functions.commitCount(self.agent_id).call(block_identifier=end):
             raise GrailError('CHAIN_LOGS: incomplete commitment history; cannot allocate cycle')
-        return max((log['args']['cycleId'] for log in logs), default=0) + 1
+        return max((log['cycle_id'] for log in logs), default=0) + 1
 
     @safe_chain
     def lookup(self, cycle_id):
-        digest, _, committed, revealed = self.ledger.functions.decisions(self.agent_id, cycle_id).call()
+        end = self.w3.eth.block_number
+        digest, _, committed, revealed = self.ledger.functions.decisions(self.agent_id, cycle_id).call(block_identifier=end)
         if not committed:
             previous = self._journal()['transactions'].get(f'commit:{cycle_id}')
             if previous:
                 try:
-                    self._receipt(previous['tx_hash'])
+                    self._confirm_transaction(previous['tx_hash'])
                 except GrailError as error:
                     if not str(error).startswith('CHAIN_TX_REVERTED:'):
                         raise
             return None
-        commits = self._logs(self.ledger.events.DecisionCommitted(), cycle_id)
-        reveals = self._logs(self.ledger.events.DecisionRevealed(), cycle_id) if revealed else []
-        if len(commits) != 1 or (revealed and len(reveals) != 1) or bytes(commits[0]['args']['commitHash']) != bytes(digest):
+        commits = [log for log in self._event_logs('DecisionCommitted', end=end) if log['cycle_id'] == cycle_id]
+        reveals = [log for log in self._event_logs('DecisionRevealed', end=end) if log['cycle_id'] == cycle_id] if revealed else []
+        if len(commits) != 1 or (revealed and len(reveals) != 1) or commits[0]['commit_hash'] != Web3.to_hex(digest):
             raise GrailError('CHAIN_LOGS: missing or inconsistent decision events')
-        commit_tx = commits[0]['transactionHash'].to_0x_hex()
-        self._receipt(commit_tx)
-        reveal_tx = reveals[0]['transactionHash'].to_0x_hex() if reveals else None
+        commit_tx = commits[0]['tx_hash']
+        self._confirm_transaction(commit_tx)
+        reveal_tx = reveals[0]['tx_hash'] if reveals else None
         if reveal_tx:
-            self._receipt(reveal_tx)
+            self._confirm_transaction(reveal_tx)
         return {'commit_hash': Web3.to_hex(digest), 'commit_tx': commit_tx, 'revealed': revealed, 'reveal_tx': reveal_tx}
 
     @safe_chain

@@ -28,6 +28,8 @@ State follows contracts 0.6: configured limits and verified identity fields, ana
 
 Before signing, `FujiChain` checks the deployment testVector, Fuji chainId 43113, deployed ledger/registry code, their linkage, agent authorization, and signer/deployment wallet identity. Read settings come from process environment or the existing main checkout's `GRAIL_ENV`: `AGENT_PRIVATE_KEY`, `AGENT_ADDRESS`, optional `FUJI_RPC_URL` / `AVAX_RPC_URL`, `AVAX_CHAIN_ID`. No keys are written into runtime or reports. The chain descriptor defaults to the repository's `contracts/chain.json`; override with `--chain-file`.
 
+`fuji-events.json` keeps the complete own-agent commit/reveal event history and a separate block cursor for each stream. Subsequent scans, including after restart, request only blocks after that cursor in pages of at most 100 blocks. A cursor advances atomically with the events only after every page, on-chain event counter and canonical checkpoint agree. Missing/incomplete pages retain the previous cursor. A changed checkpoint rebuilds history and clears receipt confirmations. A successful receipt is marked `confirmed` in `fuji-transactions.json` only after the persistent checkpoint covers its canonical block; confirmed journal hashes are skipped by later lookups/submissions. Older journal rows are verified once before being marked. Unknown hashes still block new submissions and are never rebroadcast.
+
 ```powershell
 $env:GRAIL_ENV = 'C:/Users/Serdar Arif/Desktop/Agentic Hack/.env'
 # Acceptance used this explicit Fuji endpoint after the configured endpoint returned HTTP 429.

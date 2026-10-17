@@ -1,0 +1,342 @@
+{
+  "task": "T-017 enabled OU sleeve and Gemini Flash Lite runtime restart",
+  "verified_at_utc": "2026-10-17T15:06:47.652661+00:00",
+  "contracts_version_read": "0.6.2",
+  "runtime_contract_version": "0.6",
+  "source_commit": "f465e876052da4a8b52d16492f2f4d2d0506a503",
+  "merged_origin_main": "f9beb7e",
+  "runtime": "C:\\Users\\Serdar Arif\\Desktop\\Agentic Hack-wt\\agents\\agents\\runtime\\dryrun-5coin-20261017-1545",
+  "state_path": "C:\\Users\\Serdar Arif\\Desktop\\Agentic Hack-wt\\agents\\agents\\runtime\\dryrun-5coin-20261017-1545\\state.json",
+  "launcher_pid": 43144,
+  "worker_pid": 46308,
+  "llm_model": "gemini-flash-lite-latest",
+  "previous_llm_model": "gemini-3.7-flash",
+  "continuous": true,
+  "cycle_seconds": 90,
+  "dry_run": true,
+  "chain_simulated": false,
+  "chain_id": 43113,
+  "stop": {
+    "old_worker_pid": 48008,
+    "old_launcher_pid": 36484,
+    "stopped_at_cycle": 89,
+    "pending_count": 0,
+    "journal_all_confirmed": true
+  },
+  "prelaunch_chain_next_cycle_id": 90,
+  "original_journal_records_preserved": 174,
+  "historical_decision_rows_preserved": 435,
+  "protected_live_files_unchanged": true,
+  "protected_file_count": 8,
+  "stderr_bytes": 0,
+  "cycles": [
+    {
+      "cycle_id": 90,
+      "new_errors": 0,
+      "historical_errors": 2,
+      "signals": {
+        "AVAX-USDT": {
+          "hurst": 0.52,
+          "ou": {
+            "half_life_h": 6.08,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -1.31
+          },
+          "regime": "unclear",
+          "setup": "none"
+        },
+        "BTC-USDT": {
+          "hurst": 0.44,
+          "ou": {
+            "half_life_h": 4.41,
+            "significant": false,
+            "sleeve": "none",
+            "z": -0.75
+          },
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "ETH-USDT": {
+          "hurst": 0.67,
+          "ou": {
+            "half_life_h": 2.89,
+            "significant": true,
+            "sleeve": "momentum",
+            "z": -0.92
+          },
+          "regime": "trending",
+          "setup": "none"
+        },
+        "OKB-USDT": {
+          "hurst": 0.76,
+          "ou": {
+            "half_life_h": 5.52,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -1.02
+          },
+          "regime": "trending",
+          "setup": "none"
+        },
+        "SOL-USDT": {
+          "hurst": 0.51,
+          "ou": {
+            "half_life_h": 5.48,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -0.8
+          },
+          "regime": "unclear",
+          "setup": "none"
+        }
+      },
+      "decisions": [
+        {
+          "inst_id": "AVAX-USDT",
+          "action": "BUY",
+          "size_usdt": "4.55",
+          "reason": "Price trending up (+0.1%), target 9.12% of funds (1.4 independent bets); size cut to keep risk near 20% (was 38%); no breakout yet, half size",
+          "order_status": "simulated",
+          "llm_flag": "approved",
+          "llm_note": "Approved proposed reduced size; positive trend with moderate risk allocation."
+        },
+        {
+          "inst_id": "BTC-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-0.4%), moving to cash; change too small to trade (1.99 < 2 USDT minimum)",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        },
+        {
+          "inst_id": "ETH-USDT",
+          "action": "BUY",
+          "size_usdt": "6.39",
+          "reason": "Price trending up (+1.3%), target 12.79% of funds (1.4 independent bets); size cut to keep risk near 20% (was 38%); no breakout yet, half size",
+          "order_status": "simulated",
+          "llm_flag": "approved",
+          "llm_note": "Approved proposed reduced size; positive momentum supports the entry."
+        },
+        {
+          "inst_id": "OKB-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-1.0%), staying in cash",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        },
+        {
+          "inst_id": "SOL-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-0.5%), staying in cash",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        }
+      ],
+      "actions": {
+        "BUY": 2,
+        "HOLD": 3
+      },
+      "commit_tx": "0xdd0cd5d39640d3287a6a50b0935a033e8634c0e96f3fa7a65d5ffd2b8132249f",
+      "reveal_tx": "0x340790a6af7bee9572432f21e8a3decd831cd41fcf0917789f79fd879a377061",
+      "commit_block": 59605318,
+      "reveal_block": 59605322,
+      "receipt_statuses": [
+        1,
+        1
+      ],
+      "payload_salt_hash_and_events_verified": true,
+      "historical_decisions_unchanged": true,
+      "signals_outside_payload": true,
+      "buy_reviews": [
+        {
+          "inst_id": "AVAX-USDT",
+          "action": "BUY",
+          "llm_flag": "approved",
+          "llm_note": "Approved proposed reduced size; positive trend with moderate risk allocation."
+        },
+        {
+          "inst_id": "ETH-USDT",
+          "action": "BUY",
+          "llm_flag": "approved",
+          "llm_note": "Approved proposed reduced size; positive momentum supports the entry."
+        }
+      ],
+      "buy_reviews_skipped": 0
+    },
+    {
+      "cycle_id": 91,
+      "new_errors": 0,
+      "historical_errors": 2,
+      "signals": {
+        "AVAX-USDT": {
+          "hurst": 0.52,
+          "ou": {
+            "half_life_h": 6.08,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -1.31
+          },
+          "regime": "unclear",
+          "setup": "none"
+        },
+        "BTC-USDT": {
+          "hurst": 0.44,
+          "ou": {
+            "half_life_h": 4.41,
+            "significant": false,
+            "sleeve": "none",
+            "z": -0.75
+          },
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "ETH-USDT": {
+          "hurst": 0.67,
+          "ou": {
+            "half_life_h": 2.89,
+            "significant": true,
+            "sleeve": "momentum",
+            "z": -0.92
+          },
+          "regime": "trending",
+          "setup": "none"
+        },
+        "OKB-USDT": {
+          "hurst": 0.76,
+          "ou": {
+            "half_life_h": 5.52,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -1.02
+          },
+          "regime": "trending",
+          "setup": "none"
+        },
+        "SOL-USDT": {
+          "hurst": 0.51,
+          "ou": {
+            "half_life_h": 5.48,
+            "significant": false,
+            "sleeve": "momentum",
+            "z": -0.8
+          },
+          "regime": "unclear",
+          "setup": "none"
+        }
+      },
+      "decisions": [
+        {
+          "inst_id": "AVAX-USDT",
+          "action": "BUY",
+          "size_usdt": "4.55",
+          "reason": "Price trending up (+0.1%), target 9.12% of funds (1.4 independent bets); size cut to keep risk near 20% (was 38%); no breakout yet, half size",
+          "order_status": "simulated",
+          "llm_flag": "approved",
+          "llm_note": "Approved proposed size, minor positive trend with acceptable risk."
+        },
+        {
+          "inst_id": "BTC-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-0.4%), moving to cash; change too small to trade (1.99 < 2 USDT minimum)",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        },
+        {
+          "inst_id": "ETH-USDT",
+          "action": "BUY",
+          "size_usdt": "6.39",
+          "reason": "Price trending up (+1.3%), target 12.79% of funds (1.4 independent bets); size cut to keep risk near 20% (was 38%); no breakout yet, half size",
+          "order_status": "simulated",
+          "llm_flag": "approved",
+          "llm_note": "Approved proposed size, positive momentum supports the allocation."
+        },
+        {
+          "inst_id": "OKB-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-1.0%), staying in cash",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        },
+        {
+          "inst_id": "SOL-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Price trending down (-0.5%), staying in cash",
+          "order_status": "hold",
+          "llm_flag": "skipped",
+          "llm_note": ""
+        }
+      ],
+      "actions": {
+        "BUY": 2,
+        "HOLD": 3
+      },
+      "commit_tx": "0xab45f4b87f337f43969e41a1cfbec4a8ce7ee243ad6b8304eb6164eae52a5f81",
+      "reveal_tx": "0x27678b76f080ad8a1884bfa14ee506e4f444433075b962157cebaae288ff5574",
+      "commit_block": 59605421,
+      "reveal_block": 59605424,
+      "receipt_statuses": [
+        1,
+        1
+      ],
+      "payload_salt_hash_and_events_verified": true,
+      "historical_decisions_unchanged": true,
+      "signals_outside_payload": true,
+      "buy_reviews": [
+        {
+          "inst_id": "AVAX-USDT",
+          "action": "BUY",
+          "llm_flag": "approved",
+          "llm_note": "Approved proposed size, minor positive trend with acceptable risk."
+        },
+        {
+          "inst_id": "ETH-USDT",
+          "action": "BUY",
+          "llm_flag": "approved",
+          "llm_note": "Approved proposed size, positive momentum supports the allocation."
+        }
+      ],
+      "buy_reviews_skipped": 0
+    }
+  ],
+  "historical_chain_rpc_errors": [
+    {
+      "at_ms": 1792245914608,
+      "code": "CHAIN_RPC",
+      "context": {
+        "cycle_id": 54
+      },
+      "message": "CHAIN_RPC: info failed (Web3RPCError)",
+      "where": "agents.chain.info"
+    },
+    {
+      "at_ms": 1792247597664,
+      "code": "CHAIN_RPC",
+      "context": {
+        "cycle_id": 72
+      },
+      "message": "CHAIN_RPC: next_cycle_id failed (BlockNotFound)",
+      "where": "agents.cycle"
+    }
+  ],
+  "new_chain_rpc_errors": 0,
+  "tests": [
+    {
+      "command": "cd agents; uv run pytest -q",
+      "passed": 157,
+      "seconds": 18.37
+    }
+  ],
+  "receipt_rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+  "verification_block": 59605484
+}

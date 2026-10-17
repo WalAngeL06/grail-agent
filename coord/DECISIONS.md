@@ -48,3 +48,12 @@ OKX TR katılımcılara gerçek bakiye verdi; emirler canlı hesapta. Erişim: `
 - state.decisions[]'e `commit_hash`, `payload_utf8`, `salt_hex` eklendi (eklemeli değişiklik; okuyucular bilinmeyen alanda çökmez).
 - UI'da "Kendin Doğrula": tarayıcı keccak256(payload‖salt) hesaplar, zincirdeki commit'le karşılaştırır.
 - Kaynak: Gemini eleştirisinden alınan 3 fikir; "4. jüri sorusu brief'te yok" iddiası yanlıştı (BRIEF'te vardı).
+
+## D-009 · Claude Max'i ana kas yap; Antigravity QA/yedek; bulut kredisi; LLM analist
+- Claude Max en bol kota: engine (Opus 5.5, high) + web (Sonnet 5.5, medium) + T-007 analyst (Opus). UI tasarımı Claude Design ile (~14:00).
+- Antigravity UI sahibi değil: tarayıcı testi (`coord/reviews/ui-*.md`) ve Claude limiti biterse web'in yedek sahibi.
+- 250$ "bulut oturumu kredisi" (son: 5 Kasım) = Claude Code bulut oturumları; API kredisi DEĞİL. Sırsız işler için ek işçi:
+  inceleme, test yazma, README, mock state ile UI varyantı. Branch `cloud/<görev>`; `.env`/OKX/cüzdan erişimi yok.
+- Agent içindeki LLM (T-007) için ücretsiz katmanlı API (varsayılan Gemini Flash, `LLM_API_KEY`); yoksa analist atlanır, döngü etkilenmez.
+- Model/efor: kritik (engine, kontrat, guardrail) high; UI/dokümantasyon medium. Takılınca önce efor, sonra model.
+- Bağlam: 1 görev = 1 chat; görev ortasında şişerse `/compact <neyi koru>`.

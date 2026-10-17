@@ -16,7 +16,7 @@
 | 14:00 | Engine testleri | `engine` test komutu geçer (golden değerler) |
 | 14:00 | ATK veri + dry_run emir | bakiye + ticker + simüle emir çalışıyor |
 | 15:00 | Uçtan uca ilk döngü | 1 commit tx + 1 ATK (dry_run) emri + 1 reveal tx; ardından kullanıcı onayıyla 1 küçük canlı emir |
-| 15:00 | UI başlar | proje %80 olmasa bile; Antigravity kotası bu saate kadar kullanılmaz |
+| 15:00 | UI inşası başlar | proje %80 olmasa bile; tasarım ~14:00 Claude Design; Antigravity UI testi + yedek |
 | 17:00 | Feature freeze | sadece hata düzeltme + UI güncelleme |
 | 18:00 | Yedek demo videosu | kayıt hazır |
 | 18:45 | Teslim formu | `coord/SUBMISSION.md` kontrol listesi tamam, form gönderildi (zorunlu: Builder Hub e-postası, GitHub, sunum linki) |
@@ -29,8 +29,9 @@
 | T-002 | ATK veri çekme + emir katmanı (dry_run → küçük canlı) | agents (Codex · hesap 1) | TODO | contracts 0.3 |
 | T-003 | ERC-8004 kimlik + GrailLedger + Fuji deploy | chain (Codex · hesap 2) | TODO | contracts 0.3 |
 | T-004 | UI brifi (ekranlar, palet, alan eşlemesi) | docs (Claude · Pro) | TODO | contracts 0.3 |
-| T-005 | UI inşası | web (Antigravity) | TODO (15:00) | T-004, state.example.json |
+| T-005 | UI tasarımı (Claude Design ~14:00) + inşası (15:00) | web (Claude Code · Max, Sonnet) · QA: Antigravity | TODO | T-004, state.example.json |
 | T-006 | Agent döngüsü: veri → engine → commit → ATK → reveal → state.json | agents (Codex · hesap 1) | TODO | T-001, T-002, T-003 |
+| T-007 | LLM analist (sadece riski azaltır, gerekçe zincire) | analyst (Claude Code · Max) | TODO (T-001 sonrası) | T-001 |
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
 ## Kanıtlar (tx hash, emir kimliği, test çıktıları)

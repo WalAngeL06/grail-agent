@@ -36,7 +36,10 @@ Kimliğin araç adı DEĞİL, **rol + worktree**'dir. İki Codex oturumu (iki ay
 | agents | Codex · hesap 1 | `Agentic Hack-wt/agents` | `role/agents` | `agents/`, `coord/handoffs/agents.md` |
 | engine | Claude Code · Max | `Agentic Hack-wt/engine` | `role/engine` | `engine/`, `coord/handoffs/engine.md` |
 | chain | Codex · hesap 2 | `Agentic Hack-wt/chain` | `role/chain` | `chain/`, `contracts/chain.json`, `coord/handoffs/chain.md` |
-| web | Antigravity | `Agentic Hack-wt/web` | `role/web` | `web/`, `coord/handoffs/web.md` |
+| web | Claude Code · Max (Sonnet 5.5) | `Agentic Hack-wt/web` | `role/web` | `web/`, `coord/handoffs/web.md` |
+| ui-qa | Antigravity (UI'ın yedek sahibi) | `Agentic Hack-wt/review` (salt okunur) | `role/review` | sadece `coord/reviews/ui-*.md` — web koduna YAZMAZ; Claude limiti biterse web'i handoff ile devralır |
+| analyst | Claude Code · Max (T-001 bitince) | `Agentic Hack-wt/engine` | `role/engine` | `analyst/`, `coord/handoffs/engine.md` |
+| cloud-* | Claude Code bulut oturumu (bulut kredisi) | GitHub'dan klon | `cloud/<görev>` | sadece görev kartında yazan yol; `.env`/OKX/cüzdan YOK → sırsız işler (test, inceleme, README, mock UI) |
 | docs | Claude · Pro | `Agentic Hack-wt/docs` | `role/docs` | `docs/`, `coord/handoffs/docs.md` |
 | reviewer | Codex · hesap 2 (T-003 bitince) | `Agentic Hack-wt/review` | `role/review` | sadece `coord/reviews/`, `coord/handoffs/reviewer.md` — ürün koduna YAZMAZ |
 

@@ -22,7 +22,7 @@ export default function Dashboard({ s, now }: ScreenProps) {
       </div>
       <PageHead
         eyebrow={T("Dashboard", "Panel")}
-        title={T("How many independent bets GRAIL's coin list really offers, and what the agent is doing right now.", "GRAIL'in coin listesi gerçekte kaç bağımsız bahis sunuyor ve agent şu an ne yapıyor.")}
+        title={T("How many independent bets GRAIL's coin list really offers, and what the agent is doing right now.", "GRAIL'in coin listesi gerçekte kaç bağımsız varlık sunuyor ve agent şu an ne yapıyor.")}
         summary={liveSummary(s, last, ne, now)}
       />
 
@@ -30,10 +30,10 @@ export default function Dashboard({ s, now }: ScreenProps) {
 
       <div className="hero-row">
         <Card className="hero">
-          <Term plain={T("Independent bets", "Bağımsız bahis")} tech={T("effective N (n_eff) · equal-weight list", "n_eff · eşit ağırlıklı liste")} tip={T("How many truly separate bets the coins on GRAIL's list add up to, once you account for how much they move together. It describes the list, not what GRAIL holds right now.", "Coinlerin birlikte ne kadar hareket ettiği hesaba katıldığında, GRAIL'in listesindeki coinlerin kaç gerçekten ayrı bahis ettiği. Listeyi anlatır, GRAIL'in şu an tuttuğu varlıkları değil.")} />
+          <Term plain={T("Independent bets", "Bağımsız varlık")} tech={T("effective N (n_eff) · equal-weight list", "etkin varlık sayısı (n_eff) · eşit ağırlıklı liste")} tip={T("How many truly separate bets the coins on GRAIL's list add up to, once you account for how much they move together. It describes the list, not what GRAIL holds right now.", "Coinlerin birlikte ne kadar hareket ettiği hesaba katıldığında, GRAIL'in listesindeki coinlerin kaç gerçekten ayrı varlık gibi davrandığı. Listeyi anlatır, GRAIL'in şu an tuttuğu varlıkları değil.")} />
           {ne !== undefined ? (
             <div>
-              <div className="num" aria-label={`${n(ne, 2)} ${T("independent bets", "bağımsız bahis")}`}>
+              <div className="num" aria-label={`${n(ne, 2)} ${T("independent bets", "bağımsız varlık")}`}>
                 {n(ne, 1, 1)}
               </div>
               <div className="cap">
@@ -65,7 +65,7 @@ export default function Dashboard({ s, now }: ScreenProps) {
           </details>
         </Card>
 
-        <Card title={T("More coins, fewer real bets", "Daha çok coin, daha az gerçek bahis")} meta={T(`return per unit of risk vs number of coins · togetherness from the ${win}`, `risk başına getiri ve coin sayısı · birliktelik: ${win}`)}>
+        <Card title={T("More coins, fewer real bets", "Daha çok coin, daha az etkin varlık")} meta={T(`return per unit of risk vs number of coins · togetherness from the ${win}`, `risk başına getiri ve coin sayısı · birliktelik: ${win}`)}>
           <HolyGrail nAssets={N} rho={m.avg_corr} srSingle={m.sr_single_assumed} srNow={m.sr_portfolio_est} nEffNow={ne} curve={m.holy_grail_curve} />
         </Card>
       </div>
@@ -78,7 +78,7 @@ export default function Dashboard({ s, now }: ScreenProps) {
             <Term
               plain={T("Diversification boost (illustration)", "Çeşitlendirme etkisi (örnek)")}
               tech={T("√n_eff · Sharpe est. = SR₁ · √n_eff, SR₁ assumed", "√n_eff · Sharpe tahmini = SR₁ · √n_eff, SR₁ varsayım")}
-              tip={T("How much spreading across independent bets would raise return per unit of risk. Illustration only: nothing is measured here.", "Bağımsız bahislere yaymanın risk başına getiriyi ne kadar artıracağı. Sadece örnek: burada hiçbir şey ölçülmüyor.")}
+              tip={T("How much spreading across independent bets would raise return per unit of risk. Illustration only: nothing is measured here.", "Bağımsız varlıklara yaymanın risk başına getiriyi ne kadar artıracağı. Sadece örnek: burada hiçbir şey ölçülmüyor.")}
             />
           }
           value={ne !== undefined ? `×${n(Math.sqrt(ne), 2, 2)}` : "—"}
@@ -117,7 +117,7 @@ function liveSummary(s: GrailState, c: Cycle | undefined, ne: number | undefined
       `Tamamen nakitte — her coinin trendi aşağı, agent bekliyor.${next ? ` Sonraki check-in: ${next}.` : ""}`,
     );
   const k = (a: string) => c.decisions.filter((d) => d.action === a).length;
-  const head = s.metrics.n_assets !== undefined && ne !== undefined ? T(`${s.metrics.n_assets} coins, ${n(ne, 1, 1)} independent bets. `, `${s.metrics.n_assets} coin, ${n(ne, 1, 1)} bağımsız bahis. `) : "";
+  const head = s.metrics.n_assets !== undefined && ne !== undefined ? T(`${s.metrics.n_assets} coins, ${n(ne, 1, 1)} independent bets. `, `${s.metrics.n_assets} coin, ${n(ne, 1, 1)} bağımsız varlık. `) : "";
   return T(
     `${head}Last check-in #${c.id}: ${k("BUY")} buy · ${k("SELL")} sell · ${k("HOLD")} hold.${nextTxt}`,
     `${head}Son check-in #${c.id}: ${k("BUY")} BUY · ${k("SELL")} SELL · ${k("HOLD")} HOLD.${nextTxt}`,

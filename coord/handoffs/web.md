@@ -1,16 +1,33 @@
 # Handoff — web (sadece bu rol yazar)
 
-- Güncelleme zamanı:
-- Aktif görev / durum: T-005 / TODO (15:00'te başlar)
-- Oturum: araç + hesap etiketi (ör. "Codex · hesap 1"), durdu / sürüyor
-- Worktree / branch / son commit:
-- contracts okunan sürüm:
-- Tamamlanan somut davranış:
-- Commit edilmemiş / izlenmeyen dosyalar:
+- Güncelleme zamanı: 2026-10-17 ~14:00
+- Aktif görev / durum: T-005 / READY_FOR_REVIEW — docs/ui-brief.md (origin/role/docs@1b61651, merge EDİLMEDİ, sadece okundu) ile hizalandı
+- Oturum: Claude Code · Max (Opus 5.5), durdu
+- Worktree / branch / son commit: `Agentic Hack-wt/web` / `role/web` / bu dosyayı içeren son commit (`git log -1`)
+- contracts okunan sürüm: v0.4
+- Tamamlanan somut davranış (brife göre):
+  - Arayüz İngilizce. Sol menü: Dashboard · Decisions · On-chain Ledger · Settings; altta "Avalanche Fuji · OKX TR".
+  - Üst bar (56 px, sabit): agent + durum noktası, DRY RUN/LIVE rozeti, MOCK DATA / DEMO DATA rozeti, Cycle #, "next in m:ss", zincir sayaçları c/r/u, hata rozeti (→ #/settings/system), "updated Xs ago".
+  - Palet + Inter / JetBrains Mono brifteki token'larla (`src/styles.css` :root).
+  - Dashboard: 64 px altın n_eff hero, son döngü çipleri, PSR ("— (needs history)"), 4 KPI kartı, Holy Grail (Y = portföy Sharpe, X = 1..20, referans ρ 0/0.2/0.4/0.8, canlı ρ̄ kalın altın, engine noktaları, tavan SR₁/√ρ, nabızlı "You are here", ρ slider 0–0.95 + what-if + reset), pozisyonlar (ağırlık vs HRP çift çubuk, last, 24h), ısı haritası (köşegen soluk), coin sinyalleri (metrics.trend_pct varsa).
+  - Decisions: döngü kartları (yeni üstte), 5 adımlı akış göstergesi (Decided→Committed→Ordered→Revealed→Verified; commit yoksa kırmızı "commit failed → no order (fail-closed)"), satırlar (aksiyon çipi, gerekçe, ref → fill, SIMULATED/filled + OKX id), yeni satır 1,5 sn altın parlama, "Payload & proof" detay, döngü başına "Verify yourself".
+  - Verify: 400 ms "computing…", sonra computed / stated / on-chain satırları + "✅ Match — you didn't have to trust us" / "❌ Mismatch"; mock → gri "Mock data — cannot verify"; reveal edilmemiş → "Not revealed yet"; demo verisinde zincir okunmaz (tx'ler uydurma); "Try tampering" textarea.
+  - Ledger: 3 büyük sayaç (unrevealed amber + "no cherry-picking"), kontrat kartı (Avalanche logosu, Snowtrace), ERC-8004 kartı sadece agent_id varsa, sicil tablosu (OPEN, SIM/LIVE, "1 BUY · 4 HOLD", ✅/❌/—, satır içi Verify).
+  - Settings salt okunur: mod rozeti + "Switching to live is a human action", config'te OLAN bütün anahtarlar (bilinenler etiketli, bilinmeyenler ham; olmayan limit gizli), guardrail listesi, System › Errors tablosu / "No errors".
+  - Durumlar: iskelet + "connecting…", bayat veri (> 3 × cycle_seconds, sadece canlı kaynakta), okuma hatası şeridi (son iyi state kalır), boş karar "Waiting for first cycle — next in …", pozisyon yok "All cash — trend filter is risk-off".
+- Commit edilmemiş / izlenmeyen dosyalar: worktree kökünde `.claude/launch.json` (sadece önizleme aracı için; web/ dışı, commit edilmez).
 - Çalıştırılan kontroller (komut → sonuç):
-- Çalıştırılmayan kontroller ve nedeni:
-- Devam eden süreçler / portlar:
-- Dış eylemler (emir id, tx hash) ve durumu; belirsiz olanlar işaretli:
+  - `cd web && npm run build` → geçti.
+  - `npm run dev:demo` (5174) → 4 ekran açıldı; döngü #11 Verify → ✅ Match, "all 5 decisions match the sealed payload".
+  - `npm run dev` (mock, 5173) → 4 ekran açıldı, hata bandı yok, yatay taşma yok; mock Verify → "Mock data — cannot verify".
+  - Mobil 375 px → menü/üst bar yatay kayar, içerik tek sütun.
+  - Ekran görüntüleri: `web/docs/screenshots/` (1-dashboard, 2-decisions, 2b-verify-match, 3-ledger, 4-settings, mobile-decisions).
+  - Önceki turdan: normalize() 7 bozuk girdi → hata fırlatmadı; GRAIL_STATE_PATH var → live, yok → mock + uyarı; Fuji RPC tarayıcıdan erişilebilir.
+- Çalıştırılmayan kontroller ve nedeni: gerçek runtime/state.json yok (T-006); gerçek Fuji commit tx'iyle zincir kontrolü (T-003 chain.json bekleniyor).
+- Devam eden süreçler / portlar: önizleme sunucuları 5173 (mock), 5174 (demo) açık olabilir; kapatmak serbest.
+- Dış eylemler (emir id, tx hash) ve durumu: yok.
 - Açık sorun / denenenler:
-- TEKRARLANMAMASI gereken işlem:
-- SIRADAKİ İLK ADIM: 15:00 öncesi BAŞLAMA. 15:00'te: git merge main; docs/ui-brief.md ve T-005 oku.
+  - Engine `reason` metinleri Türkçe ("-> nakit", "hedef"); UI İngilizce. Engine'e istek: reason'ı İngilizce yaz (UI metni olduğu gibi gösterir).
+  - Brifte istenen "on-chain 0x…" satırı ABI ile kontrattan okunmuyor; commit tx calldata'sında hash aranıyor (ABI'siz). chain.json gelince `chainHints()` + gerekirse ABI okuması eklenecek.
+- TEKRARLANMAMASI gereken işlem: vite.config'te `new URL(...).pathname` (boşluklu yol → 404) — `fileURLToPath` kullan.
+- SIRADAKİ İLK ADIM: `git merge main` (ui-brief main'e gelmiş olabilir); chain.json gelince src/verify.ts `chainHints()` anahtarlarını gerçek şekle göre düzelt; T-006 state yazınca `GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev` ile gerçek veriden ekran görüntüsü al; Claude Design çıktısı gelirse farkları uygula.

@@ -1,0 +1,125 @@
+// Demo state üretici: contracts/decision.md kanonik payload + keccak256(payload ‖ salt) kuralıyla
+// gerçek hash'li bir state.json yazar (fixtures/demo-state.json). "Kendin Doğrula" ✅ gösterebilsin diye.
+// Zincir tx hash'leri uydurmadır; UI bu kaynağı "demo" olarak etiketler.
+import { keccak_256 } from "@noble/hashes/sha3.js";
+import { bytesToHex, hexToBytes, utf8ToBytes } from "@noble/hashes/utils.js";
+import { writeFileSync } from "node:fs";
+
+let seed = 7;
+const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+const hex32 = () => "0x" + Array.from({ length: 32 }, () => Math.floor(rnd() * 256).toString(16).padStart(2, "0")).join("");
+
+// Python json.dumps(sort_keys=True, separators=(",", ":"), ensure_ascii=True) eşleniği
+const canon = (v) => {
+  if (Array.isArray(v)) return "[" + v.map(canon).join(",") + "]";
+  if (v && typeof v === "object")
+    return "{" + Object.keys(v).sort().map((k) => canon(k) + ":" + canon(v[k])).join(",") + "}";
+  if (typeof v === "string")
+    return JSON.stringify(v).replace(/[\u0080-￿]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
+  return JSON.stringify(v);
+};
+
+const coins = ["AVAX-USDT", "BTC-USDT", "ETH-USDT", "OKB-USDT", "SOL-USDT"];
+const price = { "BTC-USDT": 67250.1, "ETH-USDT": 2612.4, "SOL-USDT": 152.37, "AVAX-USDT": 27.415, "OKB-USDT": 43.21 };
+const trend = { "BTC-USDT": 2.4, "ETH-USDT": 1.1, "SOL-USDT": -0.8, "AVAX-USDT": 3.2, "OKB-USDT": -1.9 };
+const vol = { "BTC-USDT": 38.2, "ETH-USDT": 51.7, "SOL-USDT": 74.9, "AVAX-USDT": 82.3, "OKB-USDT": 46.1 };
+const hrp = { "BTC-USDT": 31.4, "ETH-USDT": 21.8, "SOL-USDT": 13.2, "AVAX-USDT": 12.6, "OKB-USDT": 21.0 };
+const tw = { "BTC-USDT": 26.18, "ETH-USDT": 19.34, "SOL-USDT": 0, "AVAX-USDT": 12.15, "OKB-USDT": 0 };
+
+// Zamanlar üretim anına göre; demo öncesi `npm run fixture` ile tazele.
+const T0 = Math.floor(Date.now() / 1000) * 1000;
+const agent = "GRAIL-01";
+const decisions = [];
+const cycles = [9, 10, 11, 12];
+for (const cycle_id of cycles) {
+  const at = T0 - (12 - cycle_id) * 90_000;
+  const ds = coins.map((inst_id) => {
+    const up = trend[inst_id] > 0;
+    let action = "HOLD", size = "0";
+    if (cycle_id === 9 && up) { action = "BUY"; size = inst_id === "BTC-USDT" ? "10.00" : "6.50"; }
+    if (cycle_id === 11 && inst_id === "SOL-USDT") { action = "SELL"; size = "4.20"; }
+    if (cycle_id === 12 && inst_id === "BTC-USDT") { action = "BUY"; size = "5.00"; }
+    const p = (price[inst_id] * (1 + (cycle_id - 12) * 0.0007)).toFixed(inst_id === "BTC-USDT" ? 1 : 3);
+    const reason = up
+      ? `trend +${trend[inst_id].toFixed(1)}%, hrp ${(hrp[inst_id] / 100).toFixed(2)}, vol ${vol[inst_id].toFixed(0)}%->hedef 20%, n_eff 1.44`
+      : `trend ${trend[inst_id].toFixed(1)}%<=0 -> nakit, n_eff 1.44`;
+    return { action, agent, cycle_id, decided_at_ms: at, dry_run: true, inst_id, mode: "live", reason, ref_price: p, size_usdt: size, target_weight_pct: tw[inst_id] };
+  });
+  const payload = { cycle_id, agent, mode: "live", dry_run: true, decided_at_ms: at, decisions: ds };
+  const payload_utf8 = canon(payload);
+  const salt_hex = hex32();
+  const bytes = new Uint8Array([...utf8ToBytes(payload_utf8), ...hexToBytes(salt_hex.slice(2))]);
+  const commit_hash = "0x" + bytesToHex(keccak_256(bytes));
+  const revealed = cycle_id !== 12;
+  const commit_tx = hex32();
+  const reveal_tx = revealed ? hex32() : null;
+  for (const d of ds) {
+    const traded = d.action !== "HOLD";
+    decisions.push({
+      cycle_id, inst_id: d.inst_id, action: d.action, size_usdt: d.size_usdt, ref_price: d.ref_price,
+      target_weight_pct: d.target_weight_pct, reason: d.reason, decided_at_ms: at, mode: "live", dry_run: true,
+      commit_tx, commit_hash,
+      okx_order_id: traded && revealed ? `sim-${cycle_id}-${d.inst_id}` : null,
+      order_status: traded ? (revealed ? "simulated" : "pending") : "none",
+      fill_price: traded && revealed ? d.ref_price : null,
+      reveal_tx, verified: revealed ? true : null,
+      ...(revealed ? { payload_utf8, salt_hex } : {}),
+    });
+  }
+}
+
+const corrLabels = ["BTC-USDT", "ETH-USDT", "SOL-USDT", "AVAX-USDT", "OKB-USDT"];
+const corrValues = [
+  [1, 0.82, 0.71, 0.68, 0.55],
+  [0.82, 1, 0.74, 0.7, 0.52],
+  [0.71, 0.74, 1, 0.77, 0.46],
+  [0.68, 0.7, 0.77, 1, 0.44],
+  [0.55, 0.52, 0.46, 0.44, 1],
+];
+const rho = 0.639;
+const sr1 = 0.5;
+const neff = (n) => 1 / (1 / n + (1 - 1 / n) * rho);
+
+const state = {
+  contract_version: "0.4",
+  generated_at_ms: T0 + 1500,
+  mode: "live",
+  dry_run: true,
+  agent: { name: agent, status: "running", cycle_id: 12, next_cycle_at_ms: T0 + 90_000 },
+  config: {
+    coins: corrLabels, risk_budget_pct: 10, max_position_pct: 30, cycle_seconds: 90, candle_bar: "1H", lookback_bars: 48,
+    target_vol_pct: 20, max_order_usdt: "10", min_order_usdt: "2", max_total_deploy_usdt: "50", kill_switch_drawdown_pct: 5, okx_site: "tr",
+  },
+  market: corrLabels.map((inst_id) => ({ inst_id, last: String(price[inst_id]), change_24h_pct: trend[inst_id] * 0.7, at_ms: T0 })),
+  portfolio: {
+    equity_usdt: "100.00", cash_usdt: "62.40",
+    positions: [
+      { inst_id: "BTC-USDT", size_base: "0.00022", value_usdt: "14.80", weight_pct: 14.8 },
+      { inst_id: "ETH-USDT", size_base: "0.00249", value_usdt: "6.50", weight_pct: 6.5 },
+      { inst_id: "AVAX-USDT", size_base: "0.2371", value_usdt: "6.50", weight_pct: 6.5 },
+      { inst_id: "OKB-USDT", size_base: "0.2304", value_usdt: "9.80", weight_pct: 9.8 },
+    ],
+  },
+  metrics: {
+    avg_corr: rho, n_assets: 5, n_eff: Number(neff(5).toFixed(4)), sr_single_assumed: sr1,
+    sr_portfolio_est: Number((sr1 * Math.sqrt(neff(5))).toFixed(4)),
+    holy_grail_curve: [1, 2, 3, 5, 10, 20].map((n) => ({ n, sr: Number((sr1 * Math.sqrt(neff(n))).toFixed(4)) })),
+    corr_matrix: { labels: corrLabels, values: corrValues },
+    hrp_weights_pct: hrp, target_weights_pct: tw, trend_pct: trend, vol_pct: vol,
+    portfolio_vol_raw_pct: 41.3, portfolio_vol_pct: 18.5, psr: 0.71, psr_basis: "hrp_all_valid_in_sample",
+    window_bars: 48, drawdown_pct: 0.8, kill_switch: false,
+  },
+  decisions: decisions.reverse(),
+  chain: {
+    network: "fuji", chain_id: 43113, address: "0x7a3E1b1f0cC4D2e9b6f1A4C8d3B5e2F9a1C0d4E7", explorer: "https://testnet.snowtrace.io",
+    agent_id: 7, identity_registry: "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    commits: 4, reveals: 3, unrevealed: 1,
+  },
+  errors: [
+    { code: "ATK_TIMEOUT", message: "ticker timeout, döngü atlandı", at_ms: T0 - 400_000, where: "agents.market", context: {} },
+  ],
+  future_field_from_v0_5: { note: "UI bilinmeyen alanda çökmemeli" },
+};
+
+writeFileSync(new URL("../fixtures/demo-state.json", import.meta.url), JSON.stringify(state, null, 2) + "\n");
+console.log("fixtures/demo-state.json yazıldı:", decisions.length, "karar");

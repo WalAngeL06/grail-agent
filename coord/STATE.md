@@ -1,13 +1,13 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r5 · 2026-10-17 13:52 (Europe/Istanbul)
+- Durum revizyonu: r6 · 2026-10-17 13:53 (Europe/Istanbul)
 - Ürün: `coord/BRIEF.md` (kesinleşti). Fuji test cüzdanı `.env` içinde hazır (`AGENT_ADDRESS`); 13:05 organizatörden 1 test AVAX kullanıcının MetaMask'ına (0x3b8b2…3C537, Fuji) GELDİ → kullanıcı ~0.9 AVAX agent adresine aktaracak (gas için ~0.1 MetaMask'ta kalır).
 - OKX: `grail` profili bağlı (gerçek para; `dry_run` açık).
-- Entegrasyon: T-001 (`main@e06987b`), T-004 (`main@a630cb6`), T-007 (`role/engine@98ae2ba`, bu kayıtla aynı merge commit'i).
-- Son doğrulanmış parçalar: engine + analyst main üzerinde 84 test (13:52); T-004 brif kabul kontrolü + formül sayıları. Uçtan uca döngü henüz doğrulanmadı.
+- Entegrasyon: T-001 (`main@e06987b`), T-004 (`main@a630cb6`), T-007 (`main@3181848`), T-005 v1 (`role/web@3cce8c2`, bu kayıtla aynı merge commit'i).
+- Son doğrulanmış parçalar: engine + analyst 84 test (13:52); web main build (13:53); T-004 brif kabul kontrolü. Uçtan uca döngü / gerçek state / Fuji UI henüz doğrulanmadı.
 - Aktif sözleşme: `contracts/VERSION` = 0.4 (D-010: risk bütçesi yorumu kabul; lookback 168 → 48; dry_run açık)
 - Kaynak: Avalanche workshop slaytı (ERC-8004 boilerplate) ve ATK yapılandırması → D-006
-- Sıradaki öncelik: T-005 v1 merge; ardından contracts 0.5 ve T-002/T-006 kartları. T-002 R-002 APPROVE gelene kadar bekler.
+- Sıradaki öncelik: contracts 0.5 ve T-002/T-006 kartları; T-002 R-002 APPROVE gelene kadar bekler. T-003 deploy → T-006 uçtan uca → UI gerçek state/Fuji.
 
 ## Zaman kapıları
 | Saat | Kapı | Ölçüt |
@@ -29,7 +29,7 @@
 | T-002 | ATK veri çekme + emir katmanı (dry_run → küçük canlı) | agents (Codex · hesap 1) | READY_FOR_REVIEW — R-002 sürüyor, MERGE BEKLER | contracts 0.4 |
 | T-003 | ERC-8004 kimlik + GrailLedger + Fuji deploy | chain (Codex · hesap 2) | IN_PROGRESS (13:48 başlangıç) | contracts 0.3 |
 | T-004 | UI brifi (ekranlar, palet, alan eşlemesi) | docs (Claude · Pro) | INTEGRATED | contracts 0.3 |
-| T-005 | UI v1 (mock/demo); gerçek state/Fuji doğrulaması bekliyor | web (Claude Code · Max) · QA: Antigravity | READY_FOR_REVIEW | T-004, state.example.json |
+| T-005 | UI v1 (mock/demo); gerçek state/Fuji doğrulaması bekliyor | web (Claude Code · Max) · QA: Antigravity | INTEGRATED (v1; gerçek state/Fuji açık) | T-004; gerçek veri T-003/T-006 |
 | T-006 | Agent döngüsü: veri → engine → commit → ATK → reveal → state.json | agents (Codex · hesap 1) | TODO | T-001, T-002, T-003 |
 | T-007 | LLM analist (yalnız BUY riskini azaltır; SELL exempt) | analyst (Claude Code · Max) | INTEGRATED | T-001; contracts 0.5 eki hazırlanıyor |
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
@@ -40,9 +40,9 @@
 - Config kontrolü: v0.4 VERSION/config/state eşleşiyor; validate_config hatasız; 49 sentetik kapanışla 48 bar, deterministik payload ve dry_run=true doğrulandı. Dış emir/tx yok.
 - T-004: `1b61651` uzak dalda; sınır docs/ + kendi handoff'u. Brif kabul/formül kontrolü geçti (n_eff=1.437, SR_p=0.599); `git diff --check` geçti.
 - T-007: `98ae2ba` uzak dalda; analyst/ + engine/pyproject.toml test bağlantısı + kendi handoff'u (kullanıcının doğruladığı teslim). `cd engine && uv run pytest -q` → merge öncesi ve main üzerinde 84 passed (1.51s).
+- T-005 v1: `3cce8c2` uzak dalda; sınır web/ + kendi handoff'u. `cd web && npm run build` dalda ve main'de geçti (main: 45 modül, 523ms). Gerçek state/Fuji doğrulaması yapılmadı.
 
 ## Bekleyen merge'ler
-- T-005 v1 `role/web@3cce8c2`: kullanıcı merge istedi; build çalıştırılacak.
 - T-002 `role/agents@1e36e99`: Claude R-002 incelemesi sürüyor; APPROVE gelmeden merge YOK.
 
 ## Engeller

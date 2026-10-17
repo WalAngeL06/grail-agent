@@ -1,11 +1,11 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r20 · 2026-10-17 15:34 (Europe/Istanbul)
+- Durum revizyonu: r21 · 2026-10-17 15:36 (Europe/Istanbul)
 - Ürün: Fuji 43113, dört kontrat, ERC-8004 agentId 1; tarihsel 14:50 dry_run kapısı geçti. Canlı koşu çalıştırılmaz; sınırlı kullanıcı koşusu R-004b + hedef T-006 main test/merge sonucunu bekler.
 - OKX: grail profili, gerçek para; örnek config dry_run=true. Kod yazan AI ilk canlı emri çalıştırmaz.
 - Aktif sözleşme: contracts/VERSION 0.6; chain.json deployment 0.5, adres/ABI/hash/testVector değişmedi.
-- Sıralı kullanıcı entegrasyonu: 3/6 tamam; kalan: chain@f36a95d; review@ac96902; agents@2bf5668. Her merge sonrası main push edilir.
-- Son yerel kontrol: web build PASS; engine 104, agents 78, chain 25 (önceki tur). Sayıların hangi aşamada koşulduğu aşağıda.
+- Sıralı kullanıcı entegrasyonu: 4/6 tamam; kalan: review@ac96902; agents@2bf5668. Her merge sonrası main push edilir.
+- Son yerel kontrol: web build PASS; engine 104, agents 78, chain 38 + typecheck. Sayıların hangi aşamada koşulduğu aşağıda.
 - Public kapısı: R-005 raporu + yayınlanacak son SHA taraması beklenir; repo görünürlüğü değişmedi. README freeze sonrası D-012.
 - Önceki ayrıntılı kanıtlar: coord/archive/STATE-r17-20261017.md (tarihsel kayıt; güncel durum bu dosya).
 
@@ -34,7 +34,7 @@
 | T-007 | LLM analist (yalnız BUY riskini azaltır; SELL exempt) | analyst (Claude Code · Max) | INTEGRATED | T-001; contracts 0.5 |
 | T-008 | Teslim metinleri: form açıklaması, README taslağı, pitch, demo | docs (Claude Code · Max) | INTEGRATED (taslaklar; freeze sonrası doğrulama açık) | T-003/T-006 gerçek değerleri; D-012 |
 | T-009 | Engine reason sade İngilizce | engine | INTEGRATED | b7e294b; pytest 104; main agents 78 |
-| T-010 | Snowtrace kaynak doğrulama + verify-cycle.ts okuma komutu | chain (Codex · hesap 2) | TODO | T-003 mevcut deploy; yeni deploy/tx yok; contracts 0.6 |
+| T-010 | Explorer kaynak doğrulama + salt okunur cycle komutu | chain | INTEGRATED (R-006 paralel) | f36a95d; 38 test + typecheck; yeni tx yok |
 | T-011 | Pitch outline → PowerPoint (docs/pitch/) | docs (Claude · Pro) | INTEGRATED (taslak; final hazırlığı açık) | caedc29; 10 slayt/not/render; README/kaynak notları/TBD/süreler bekler |
 | T-012 | 30-day replay: GRAIL vs eşit ağırlık | engine | INTEGRATED (kapanış-fill modeli) | b7e294b; 720 saat, ağsız tekrar; yöntem/kabul açıkları kartta |
 | T-013 | Plain English UI metinleri | docs | INTEGRATED (ilk kopya) | 1d411c0; 5 kart, 21 terim, ekran/boş/hata; web uygulaması ayrı |
@@ -42,6 +42,7 @@
 | R-003 | T-003 incelemesi: APPROVE koşullu, yeniden deploy yok | reviewer (Claude Code · Opus 5.5) | DONE | a6044d7; R-003-2 decision.md v0.6, R-003-3 T-006 kabulünde |
 | R-004 | T-006 incelemesi: APPROVE koşullu; 3 MAJOR; canlı NO-GO | reviewer (Claude Code · Opus 5.5) | DONE | 62ef3c3; dcf68db incelendi; D-014 üçü de merge öncesi |
 | R-005 | Public öncesi sır/anahtar/.env/gitignore taraması | reviewer (Codex · hesap 2) | TODO | coord/reviews/R-005-public.md; tüm ref geçmişi + güncel ağaç; yayınlanacak son SHA kontrolü |
+| R-006 | T-010 bağımsız inceleme | reviewer (Claude Pro) | TODO (paralel) | f36a95d, yalnız chain/ farkı; coord/reviews/R-006.md |
 | R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
 
 ## Kanıtlar / bu entegrasyon
@@ -50,12 +51,13 @@
 - T-005 57e2287: UI v2 + How it works; npm run build PASS (48 modül, 556ms). Gerçek Fuji fixture ve ekran kanıtları sahip teslimi; integrator bu tur tarayıcı/RPC açmadı. diff --check: Dashboard.tsx:321 fazladan EOF boş satırı (MINOR, hedef aynen alındı).
 - T-013 1d411c0: docs/ui-copy.md: 5 How it works kartı, 21 terim, ekran şablonları, boş/bekleme/hata metinleri. Belge/alan kapsamı okundu; web uygulaması ve ek tooltip/replay metni tamamlama ayrı. diff --check temiz.
 - T-009/T-012 b7e294b: Engine pytest 104; main agents pytest 78. Kayıtlı OKX verisiyle ağsız replay tekrarlandı, JSON/özet baytları aynı; 720 saatlik ortak bar. Engine reason EN. Replay: kapanış fiyatında dolum, %0.1 ücret varsayımı, slippage/AI yok; sonraki açılış modeli ve sıkı veri/provenance kabulü açık.
+- T-010 f36a95d: hardhat 38 test + typecheck PASS; 4 VERIFIED explorer kaydı ve cycle okuyucu geldi. Integrator bu tur explorer/RPC sorgusu veya tx çalıştırmadı. R-006 bağımsız incelemesi kullanıcı talimatıyla merge ile paralel, Claude Pro kartı açık.
 - Replay sonucu (tarihsel simülasyon): 50 → GRAIL 50.92 (+1.83%, DD 7.48%); equal weight 54.41 (+8.81%, DD 14.51%). Üstünlük iddiası yok; 5% kill switch zarar tavanı değildir. JSON/özet web/sunum sahiplerine aktarılacak.
 
 ## Bekleyenler / sınırlar
-- chain@f36a95d; review@ac96902; agents@2bf5668.
+- review@ac96902; agents@2bf5668.
 - T-011 sunum son hazırlığı: README/kaynak notları/süreler/TBD; T-013 ilk kopyasının eksik tooltip/replay/terimleri docs, uygulamasını web tamamlar.
 - T-012 kapanış-fill varsayımı açık; sonraki açılış, strict eksik/tekrar veri ve provenance/şema kabul maddeleri tamamlanmış sayılmaz.
-- R-005 public taraması bekler; R-006 bağımsız chain incelemesi chain aşamasında kart açılacak. Canlı koşu, deploy, yeni tx veya otomatik rol mesajı yok.
+- R-005 public taraması bekler; R-006 bağımsız chain incelemesi paralel TODO. Canlı koşu, deploy, yeni tx veya otomatik rol mesajı yok.
 - R-004-4/5/6/7 ve R-002-3/4 MINOR/NIT açık; R-004b raporundaki sınırlar korunur. Gerçek runtime UI ve ilk canlı kanıtı henüz yok.
 - T-006 merge kapısı: R-004-1/2/3 düzeltmeleri + bağımsız R-004b + integrator hedef testleri birlikte gerekli; tamamlanmadan canlı koşu yok.

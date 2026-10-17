@@ -60,8 +60,8 @@ async function rpc<T>(url: string, method: string, params: unknown[]): Promise<T
     const q: Record<string, string> | null =
       method === "eth_call"
         ? { action: "eth_call", to: (params[0] as { to: string }).to, data: (params[0] as { data: string }).data, tag: "latest" }
-        : method === "eth_getTransactionByHash"
-          ? { action: "eth_getTransactionByHash", txhash: String(params[0]) }
+        : method === "eth_getTransactionByHash" || method === "eth_getTransactionReceipt"
+          ? { action: method, txhash: String(params[0]) }
           : null;
     if (!q) throw e;
     const res = await fetch(`${ROUTESCAN}?module=proxy&${new URLSearchParams(q)}`);
@@ -94,7 +94,15 @@ const toBig = (v: string | number) => BigInt(v);
 export type OnChainDecision = { commitHash: string; committedAt: number; committed: boolean; revealed: boolean };
 
 /** GrailLedger.decisions(agentId, cycleId) → (bytes32 commitHash, uint256 committedAt, bool committed, bool revealed) */
+/** R-010-5: cycle ids travel as JS numbers; refuse anything that a Number cannot hold exactly. */
+export function safeCycle(v: bigint | number): number {
+  const n = typeof v === "bigint" ? Number(v) : v;
+  if (!Number.isSafeInteger(n) || n < 0 || (typeof v === "bigint" && BigInt(n) !== v)) throw new Error(`check-in id ${String(v)} is outside the supported range`);
+  return n;
+}
+
 export async function readDecision(c: ChainInfo, agentId: string, cycleId: number): Promise<OnChainDecision> {
+  safeCycle(cycleId);
   if (!c.ledger) throw new Error("no GrailLedger address in chain.json");
   const data = "0x" + SEL.decisions + word(toBig(agentId)) + word(BigInt(cycleId));
   const out = await rpc<string>(c.rpc, "eth_call", [{ to: c.ledger, data }, "latest"]);
@@ -115,11 +123,11 @@ export async function readCounts(c: ChainInfo, agentId: string): Promise<{ commi
   return { commits: Number(BigInt(a)), reveals: Number(BigInt(b)) };
 }
 
-export type RevealCall = { agentId: string; cycleId: number; payloadUtf8: string; saltHex: string; okxOrderId: string; to?: string };
+export type RevealCall = { agentId: string; cycleId: string; payloadUtf8: string; saltHex: string; okxOrderId: string; to?: string; from?: string };
 
 /** Decode revealDecision(uint256 agentId, uint256 cycleId, bytes payload, bytes32 salt, string okxOrderId) from the reveal tx input. */
 export async function readReveal(c: ChainInfo, revealTx: string): Promise<RevealCall | null> {
-  const tx = await rpc<{ input?: string; to?: string } | null>(c.rpc, "eth_getTransactionByHash", [revealTx]);
+  const tx = await rpc<{ input?: string; to?: string; from?: string } | null>(c.rpc, "eth_getTransactionByHash", [revealTx]);
   if (!tx?.input) return null;
   const h = tx.input.replace(/^0x/, "");
   if (h.slice(0, 8) !== SEL.revealDecision) throw new Error("reveal tx is not a revealDecision call");
@@ -133,11 +141,12 @@ export async function readReveal(c: ChainInfo, revealTx: string): Promise<Reveal
   const dec = new TextDecoder();
   return {
     agentId: BigInt("0x" + w(0)).toString(),
-    cycleId: Number(BigInt("0x" + w(1))),
+    cycleId: BigInt("0x" + w(1)).toString(),
     payloadUtf8: dec.decode(dyn(w(2))),
     saltHex: "0x" + w(3),
     okxOrderId: dec.decode(dyn(w(4))),
     to: tx.to,
+    from: tx.from,
   };
 }
 
@@ -151,4 +160,104 @@ export function parseOrderIds(raw: string): { inst: string; id: string }[] | "no
   } catch {
     return null;
   }
+}
+
+// ---- full on-chain history from event logs (Routescan logs API; Fuji public RPC caps eth_getLogs at 100 blocks) ----
+const LEDGER_DEPLOY_BLOCK = 59595834; // R-003-6: GrailLedger deploy block (chain.json has no deployBlock yet)
+const topic = (sig: string) => "0x" + bytesToHex(keccak_256(utf8ToBytes(sig)));
+const T_COMMIT = topic("DecisionCommitted(uint256,uint256,bytes32,uint256)");
+const T_REVEAL = topic("DecisionRevealed(uint256,uint256,bytes,string)");
+
+export type ChainCycle = {
+  cycleId: number;
+  commitTx?: string;
+  commitHash?: string;
+  committedAt?: number; // ms
+  revealTx?: string;
+  payloadUtf8?: string;
+  okxOrderId?: string;
+};
+
+type Log = { topics: string[]; data: string; transactionHash: string; timeStamp?: string };
+
+export async function readLedgerHistory(c: ChainInfo, agentId: string): Promise<ChainCycle[]> {
+  if (!c.ledger) throw new Error("no GrailLedger address in chain.json");
+  const t1 = "0x" + word(toBig(agentId));
+  const get = async (t0: string) => {
+    const q = new URLSearchParams({
+      module: "logs",
+      action: "getLogs",
+      address: c.ledger!,
+      fromBlock: String(LEDGER_DEPLOY_BLOCK),
+      toBlock: "latest",
+      nocache: String(Date.now()), // R-010-4: Routescan GETs were served stale from the CDN cache
+      topic0: t0,
+      topic1: t1,
+      topic0_1_opr: "and",
+    });
+    const res = await fetch(`${ROUTESCAN}?${q}`);
+    const j = (await res.json()) as { status?: string; result?: Log[] | string; message?: string };
+    if (!Array.isArray(j.result)) {
+      if (j.message === "No records found") return [];
+      throw new Error(typeof j.result === "string" ? j.result : (j.message ?? "logs error"));
+    }
+    return j.result;
+  };
+  const [commits, reveals] = await Promise.all([get(T_COMMIT), get(T_REVEAL)]);
+  const out = new Map<number, ChainCycle>();
+  const at = (id: number) => out.get(id) ?? (out.set(id, { cycleId: id }), out.get(id)!);
+  for (const l of commits) {
+    const id = safeCycle(BigInt(l.topics[2]));
+    const d = l.data.replace(/^0x/, "");
+    Object.assign(at(id), { commitTx: l.transactionHash, commitHash: "0x" + d.slice(0, 64), committedAt: Number(BigInt("0x" + d.slice(64, 128))) * 1000 });
+  }
+  const dec = new TextDecoder();
+  for (const l of reveals) {
+    const id = safeCycle(BigInt(l.topics[2]));
+    const d = l.data.replace(/^0x/, "");
+    const dyn = (offHex: string) => {
+      const off = Number(BigInt("0x" + offHex)) * 2;
+      const len = Number(BigInt("0x" + d.slice(off, off + 64)));
+      return dec.decode(hexToBytes(d.slice(off + 64, off + 64 + len * 2)));
+    };
+    try {
+      Object.assign(at(id), { revealTx: l.transactionHash, payloadUtf8: dyn(d.slice(0, 64)), okxOrderId: dyn(d.slice(64, 128)) });
+    } catch {
+      Object.assign(at(id), { revealTx: l.transactionHash });
+    }
+  }
+  return [...out.values()].sort((a, b) => b.cycleId - a.cycleId);
+}
+
+
+type Receipt = { status?: string; to?: string; from?: string; logs?: { address?: string; topics?: string[] }[] };
+
+/**
+ * R-010-3 (mirrors chain/scripts/lib/verify-cycle.ts): a reveal only counts if its transaction went to the GrailLedger
+ * from chain.json, calls revealDecision for this agent and check-in, succeeded (receipt status 1), was sent by the
+ * agent wallet, and emitted DecisionRevealed(agentId, cycleId) from the ledger. Returns the decoded call + problems.
+ */
+export async function checkReveal(c: ChainInfo, revealTx: string, agentId: string, cycleId: number): Promise<{ call: RevealCall | null; problems: string[] }> {
+  const [call, receipt] = await Promise.all([readReveal(c, revealTx), rpc<Receipt | null>(c.rpc, "eth_getTransactionReceipt", [revealTx])]);
+  const problems: string[] = [];
+  const same = (a?: string, b?: string) => !!a && !!b && a.toLowerCase() === b.toLowerCase();
+  if (!call) problems.push("reveal transaction not found");
+  if (!receipt) problems.push("reveal receipt not found (pending or dropped)");
+  else if (receipt.status !== "0x1") problems.push("reveal transaction failed (receipt status is not 1)");
+  if (!c.ledger) problems.push("no ledger address in chain.json");
+  if (call) {
+    if (!same(call.to, c.ledger) || (receipt && !same(receipt.to, c.ledger))) problems.push("reveal went to another contract");
+    if (call.agentId !== String(BigInt(agentId))) problems.push(`reveal is for agent ${call.agentId}`);
+    if (call.cycleId !== String(cycleId)) problems.push(`reveal is for check-in ${call.cycleId}`);
+    if (c.agentWallet && !same(call.from, c.agentWallet)) problems.push("reveal was not sent by the agent wallet");
+  }
+  if (receipt && receipt.status === "0x1") {
+    const t1 = "0x" + word(toBig(agentId));
+    const t2 = "0x" + word(BigInt(cycleId));
+    const ev = (receipt.logs ?? []).some(
+      (l) => same(l.address, c.ledger) && l.topics?.[0] === T_REVEAL && same(l.topics?.[1], t1) && same(l.topics?.[2], t2),
+    );
+    if (!ev) problems.push("no DecisionRevealed event for this agent and check-in");
+  }
+  return { call, problems };
 }

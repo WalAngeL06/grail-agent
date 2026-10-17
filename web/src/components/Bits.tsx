@@ -48,10 +48,11 @@ export function Hint({ text }: { text: string }) {
 }
 
 /** Big one-sentence "what you're looking at" + a live summary built from state. */
-export function PageHead({ title, summary, aside }: { title: string; summary?: ReactNode; aside?: ReactNode }) {
+export function PageHead({ eyebrow, title, summary, aside }: { eyebrow?: string; title: string; summary?: ReactNode; aside?: ReactNode }) {
   return (
     <header className="page-head">
       <div>
+        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
         <h1>{title}</h1>
         {summary && <p className="live">{summary}</p>}
       </div>
@@ -177,15 +178,48 @@ const LLM: Record<string, { label: string; title: string }> = {
   approved: { label: "approved", title: "A second AI looked at this buy and kept it as is." },
   reduced: { label: "reduced", title: "A second AI made this buy smaller. It can never make it bigger." },
   vetoed: { label: "vetoed", title: "A second AI cancelled this buy (turned it into hold)." },
-  exempt: { label: "not needed", title: "Sells skip the AI check: reducing risk is never blocked." },
-  skipped: { label: "not needed", title: "The AI check did not run for this decision; the engine's decision stands." },
+  exempt: { label: "not needed (sell)", title: "Sells are not reviewed: reducing risk is never blocked." },
+  skipped: { label: "not needed", title: "No buy to review in this check-in; the decision is unchanged." },
 };
 
 export function LlmBadge({ flag, note }: { flag: string; note?: string }) {
-  const known = LLM[flag];
+  // "skipped" covers two cases: nothing to review (no buys) vs AI not reachable — say which.
+  const unavailable = flag === "skipped" && !!note && /^skipped/.test(note) && !/no_buys/.test(note);
+  const known = unavailable ? { label: "unavailable — decision unchanged", title: "AI review unavailable — decision unchanged." } : LLM[flag];
   return (
-    <span className={`llm ${known ? flag : "unknown"}`} title={[known?.title ?? `llm_flag: ${flag}`, note].filter(Boolean).join(" — ")}>
+    <span className={`llm ${LLM[flag] ? flag : "unknown"}`} title={[known?.title ?? `llm_flag: ${flag}`, note].filter(Boolean).join(" — ")}>
       AI second opinion: {known?.label ?? flag}
+    </span>
+  );
+}
+
+const REGIME_TXT = { trending: "Trend is clear", unclear: "Trend is unclear", ranging: "Market is ranging" } as const;
+const SETUP_TXT = { retest: "Breakout confirmed by retest", breakout: "Waiting for retest", none: "No breakout yet" } as const;
+const SETUP_TIP = {
+  retest: "Price broke out of its range, came back to the old ceiling and held: full-size buy allowed.",
+  breakout: "Price broke out but hasn't retested the old ceiling yet: no new buy until it does.",
+  none: "No breakout from the recent range: buys are limited to half size.",
+} as const;
+
+/** T-014 entry signals in plain words; renders nothing when the engine wrote no signal for this coin. */
+export function SignalChips({ sig }: { sig?: { hurst?: number; regime?: keyof typeof REGIME_TXT; setup?: keyof typeof SETUP_TXT } }) {
+  if (!sig || (!sig.regime && !sig.setup)) return null;
+  return (
+    <span className="signal">
+      {sig.regime && (
+        <span
+          className={`sig ${sig.regime}`}
+          title={`Hurst exponent${sig.hurst !== undefined ? ` ${sig.hurst.toFixed(2)}` : ""}: above ~0.55 prices tend to keep going (trend), below ~0.45 they tend to snap back (range).`}
+        >
+          {REGIME_TXT[sig.regime]}
+          {sig.hurst !== undefined && <span className="tech">H {sig.hurst.toFixed(2)}</span>}
+        </span>
+      )}
+      {sig.setup && (
+        <span className={`sig ${sig.setup}`} title={SETUP_TIP[sig.setup]}>
+          {SETUP_TXT[sig.setup]}
+        </span>
+      )}
     </span>
   );
 }

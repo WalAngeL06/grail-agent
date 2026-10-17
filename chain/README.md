@@ -10,17 +10,30 @@ npm run audit
 This reads every agent #1 commit/reveal from the ledger deployment block through
 one fixed Fuji block, using the public
 [PublicNode Fuji RPC](https://avalanche.publicnode.com/?fuji). It prints terminal
-tables and saves [`deployments/audit-latest.md`](deployments/audit-latest.md).
+tables and saves `runtime/audit-latest.md` in a git-ignored directory.
+The tracked [`deployments/audit-latest.md`](deployments/audit-latest.md) is a
+**sample snapshot from 16:06 on 2026-10-17, containing 16 cycles**; running the
+audit never replaces that example.
 The standalone command does not load Hardhat configuration or `.env`, request a
 signer, send transactions, or call OKX. No key or RPC setup is required.
 
 The scan uses contiguous windows of at most 1,000 blocks, with a 150 ms pause
 between windows. Rate limits (including HTTP 429) have four retries with
 500/1,000/2,000/4,000 ms backoff. The deployment block comes from the verified
-deployment receipt. Event counts must equal `commitCount` and `revealCount` at
-the snapshot block; missing/duplicate events or RPC failures stop the audit.
-The snapshot block hash is checked again at the end. Newer cycles are included
-on the next run.
+deployment receipt. Logs have a fixed upper block, but `commitCount`,
+`revealCount` and `decisions` are read at **latest**, since public RPCs may not
+support historical `eth_call`. Both counters are read freshly before the scan
+and again after all cycle checks, without caching state calls. Both pairs must
+be identical and exactly match the scanned event counts. Missing/duplicate
+events, a changed ledger, or RPC failures stop the audit. A changed ledger is
+reported as **INCOMPLETE**; retry to include the new records. The scan head's
+block hash is also checked again at the end.
+
+Choose another RPC with `npm run audit -- --rpc URL`. Precedence is `--rpc`,
+then `GRAIL_AUDIT_RPC_URL`, then `FUJI_RPC_URL`, then PublicNode. These are shell
+environment variables; the command still does not load `.env`. A custom RPC
+must support Fuji, the log windows and latest state reads. Output identifies
+only its origin, keeping credential paths and query parameters out of reports.
 
 Each row includes commit/reveal tx hashes, block times in UTC, elapsed seconds,
 `dry_run (SIMULATED)`/`LIVE`, hash verification and the exact `okxOrderId` string.
@@ -34,6 +47,7 @@ order IDs. Unopened commitments are `PENDING`; their mode/order result and
 preimage cannot be known yet. LIVE order IDs count only MATCH rows with
 `dry_run=false`, excluding `simulated` and `unknown`. The ledger records the
 agent's reported order IDs; it does not prove exchange execution or fills.
+**okxOrderId is revealed alongside the payload but is not part of the committed hash; it is not proof of exchange execution.**
 
 Exit 0 means a complete scan with no mismatches; valid pending commitments are
 allowed. Mismatches are reported per row and exit 1. RPC/completeness failures

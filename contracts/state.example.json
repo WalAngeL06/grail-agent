@@ -29,9 +29,9 @@
     "signals": {
       "BTC-USDT": { "hurst": 0.61, "regime": "trending", "setup": "breakout" },
       "ETH-USDT": { "hurst": 0.5, "regime": "unclear", "setup": "none" },
-      "SOL-USDT": { "hurst": 0.39, "regime": "ranging", "setup": "none" },
+      "SOL-USDT": { "hurst": 0.39, "regime": "ranging", "setup": "none", "ou": { "half_life_h": 4.0, "z": -1.8, "significant": true, "sleeve": "mean_reversion" } },
       "AVAX-USDT": { "hurst": 0.58, "regime": "trending", "setup": "retest" },
-      "OKB-USDT": { "hurst": 0.47, "regime": "unclear", "setup": "none" }
+      "OKB-USDT": { "hurst": 0.47, "regime": "unclear", "setup": "none", "ou": { "half_life_h": null, "z": null, "significant": false, "sleeve": "none" } }
     },
     "hrp_weights_pct": { "BTC-USDT": 40, "ETH-USDT": 60 },
     "portfolio_vol_pct": 18.5,

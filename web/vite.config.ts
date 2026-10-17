@@ -65,6 +65,8 @@ function grailState(mode: string): Plugin {
 }
 
 export default defineConfig(({ mode }) => ({
+  // public jury build is static (GitHub Pages under /grail-agent/ by default; override with GRAIL_BASE=/other/)
+  base: mode === "public" ? (process.env.GRAIL_BASE ?? "/grail-agent/") : "/",
   plugins: [react(), grailState(mode)],
   server: { port: 5173, fs: { allow: [".."] } },
 }));

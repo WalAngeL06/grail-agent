@@ -1,90 +1,100 @@
-# GRAIL — jury FAQ (12 hard questions, short honest answers)
+# GRAIL — jüri SSS (12 zor soru + 1 ek, kısa ve dürüst cevaplar)
 
-For the presenter. Answers are in English, like the deck. Say the **bold line** first; the rest is backup if they push.
-Every number here comes from the repo: `coord/STATE.md` r26, `contracts/chain.json`, `engine/out/replay.json` and the agents live runtime state. Don't round up and don't improvise new numbers.
-
----
-
-### 1. What if the agent never reveals?
-**Then everyone can see it. The commit stays on Avalanche, and the contract counts commits and reveals separately.**
-- The ledger stores one commit per (agent, cycle) and counts reveals; "unrevealed" shows on the dashboard and on chain. Today: 2 committed, 2 revealed, 0 open.
-- Without the salt, nobody can open the envelope, and the agent can't swap in a different decision either: the contract rejects any payload that doesn't match the hash (`HashMismatch`).
-- Crash safety: the payload and salt are saved to disk *before* the commit, and on restart the agent reveals any open commit first.
-- Honest limit: there is no on-chain penalty (slashing) for an unrevealed commit yet. The only cost is reputation, but that cost is public and permanent.
-
-### 2. Commit-reveal, why not a normal log?
-**A log can be edited, and you can show only the parts you like. A commit on Avalanche is timestamped before the order and can't be changed afterwards.**
-- The hash locks the decision before the market answers. You can't "fix" a bad call later.
-- Why not publish the decision in plain text before trading? That would let others front-run or copy the order. The salt keeps the sealed decision unreadable until after the trade. With only buy/sell/hold for 5 coins, the decision could otherwise be guessed from its hash.
-- Honest limit: commit-reveal proves that *sealed* decisions weren't changed. On its own, it can't prove the agent never traded outside the ledger. Each reveal carries the OKX order id, so the record can be reconciled against the exchange account; we haven't automated that reconciliation.
-
-### 3. Why Fuji and not mainnet?
-**It's a hackathon build with unaudited contracts, and the organizers provided test AVAX. Nothing in the design is Fuji-specific.**
-- The same contracts and deploy script work on C-Chain mainnet; only the network config changes.
-- We'd want an audit first, and a decision on who pays for the agent's gas.
-- The trades are already real: the first live order went to OKX TR with real funds. Only the *record* is on testnet.
-
-### 4. Your return is lower than buy-and-hold. Why is that good?
-**It isn't better on return, and we don't claim it is. GRAIL is built to control risk and to be verifiable.**
-- 30-day replay on real OKX hourly prices (17 Sep → 17 Oct, 50 USDT): GRAIL +1.8% with a worst drop of 7.5%; equal-weight buy-and-hold of the same 5 coins +8.8% with a worst drop of 14.5%.
-- Replay assumptions: fills at bar close, 0.1% fee, no slippage, no AI analyst. 30 days is far too short to judge a strategy.
-- The emergency stop (5%) blocks new orders; it does not sell. That's why the worst drop (7.5%) can be larger than 5%, and the stop paused trading for 23% of the replay.
-- The product is the *verifiable record*. Any strategy, better or worse, can plug into the same seal-trade-open loop.
-
-### 5. When does the AI analyst veto?
-**It only ever looks at buys. It can keep a buy, make it smaller or turn it into a hold. It can never add risk, and it never touches sells.**
-- Code enforces this regardless of what the model says: an opposite direction becomes HOLD, a larger size is clamped back, and anything below the minimum order becomes HOLD.
-- No key, a timeout (max 8 s) or a bad reply → the decision goes through unchanged, flagged `skipped`.
-- The AI's note and flag go *into the hash*, so its opinion is sealed too.
-- Honest: on the first live order the analyst did **not** run (`llm_flag: skipped: no_provider`). The API key was added afterwards, and we haven't yet shown a cycle where it vetoed something live.
-
-### 6. What does ERC-8004 add?
-**A public, portable ID for the agent. The record belongs to a registered identity (agent #1), not to an anonymous wallet.**
-- GrailLedger only accepts commits and reveals from the registered agent's owner or an approved operator. Anyone else's call reverts.
-- If the agent moves to a new wallet or a marketplace, the identity and its record move with it.
-- Honest: the Reputation and Validation registries are deployed but not written to yet. The next step is a second "risk guard" agent that writes validations there.
-
-### 7. How did you limit the real-money risk?
-**Narrow permissions, hard caps checked in code, practice mode by default, and a human who has to switch on live mode explicitly.**
-- The OKX API key has Read + Trade only, with no withdraw right. Orders are spot only, with no leverage, and only for coins in the config. The code has no withdrawal, transfer, leverage or account-settings calls.
-- Limits are checked before every order: max per order, max in total, drawdown emergency stop.
-- Live mode needs three things together: a config with `dry_run: false`, the `--live --confirm-live GRAIL-LIVE-SPOT` flags, and a real Fuji chain.
-- The first live order was deliberately tiny: one coin (BTC), 2 USDT, one cycle, run by a person watching it. It was filled (OKX order 4017748393474314240).
-- The AI coding tools that built this could only read market data; only the agent's own code can place orders.
-
-### 8. What does correlation awareness actually change?
-**Position sizes. Coins that move together share one risk budget instead of each getting its own.**
-- HRP groups similar coins into families and splits risk between families first, then inside them.
-- The volatility target uses portfolio volatility, which already includes correlation. When coins move together, the portfolio is riskier, so total exposure is scaled down.
-- It also tells the user the truth: over the last 30 days, 5 coins behaved like 1.36 independent bets.
-- Honest: we haven't run a with/without-correlation comparison (ablation), so we don't claim a number for its effect on returns.
-
-### 9. Is it really autonomous?
-**Yes. Each cycle runs on its own: read market → decide → AI check → seal → order → open → update. Nobody clicks "approve".**
-- The human sets the rules (config) and decides whether live mode is on. The agent doesn't change either.
-- Honest: in live mode we have run exactly one cycle, by choice, for safety. The continuous loop has run in practice mode with real market data and real Fuji commits.
-
-### 10. What happens when OKX or Avalanche fails mid-cycle?
-**It stops safely. If the commit fails, no order is sent. If an order result is unclear, it looks the order up by ID and never sends it twice.**
-- Any failing step skips the cycle, logs the error, and the agent carries on with the next one.
-- Missing or broken price data → HOLD for that coin, with the reason recorded.
-- Every order has a client ID in a persistent journal, so an unknown result blocks new live orders until it's resolved.
-
-### 11. Can the agent commit many decisions and reveal only the good one?
-**No. The contract allows exactly one commit per cycle for this agent. A second commit for the same cycle reverts (`AlreadyCommitted`).**
-- Cycle IDs are persistent and only go up; a restart doesn't reuse them.
-- Honest: the contract doesn't force cycle IDs to be consecutive. A skipped number would show up as a visible gap in the record, but nothing on chain blocks it.
-
-### 12. How do I verify it myself, without trusting you?
-**Three ways: the "Verify yourself" button in the dashboard, the terminal command, and Snowtrace.**
-- Dashboard: your browser recomputes `keccak256(payload ‖ salt)` and compares it with the commit transaction on Fuji.
-- Terminal: `cd chain && npm run verify:cycle:1`. It decodes the payload and salt from the reveal transaction's calldata, recomputes the hash and compares it with the commit stored on chain → `MATCH`. It needs no wallet and no keys.
-- Snowtrace: all 4 contracts have verified source code, e.g. GrailLedger https://testnet.snowtrace.io/address/0x1B5fcf6DeFf2F9375338A2C35932224522118851#code
+Sunucu için. Final sunum Türkçe. Önce **kalın cümleyi** söyle; alttakiler jüri üstelerse yedek.
+Buradaki her sayının kaynağı repo: `coord/STATE.md` r31, `contracts/chain.json`, `engine/out/replay.json` (T-014 sonrası, role/engine@87539f8),
+`chain/deployments/audit-latest.md` (`npm run audit`), Fuji `commitCount/revealCount(1)` ve agents canlı runtime state'i. Sayıyı yuvarlayıp büyütme, yenisini uydurma.
+Ekran/UI adları İngilizce kalır (site İngilizce): "Verify yourself" (kendin doğrula).
 
 ---
 
-### Don't say
-- "It beats the market" / "profitable": the replay shows a lower return.
-- "The AI approved the live trade": it was `skipped`.
-- "The kill switch caps losses at 5%": it blocks new orders; it doesn't close positions.
-- "Fully audited" or "production-ready".
+### 1. Ajan hiç açmazsa (reveal etmezse) ne olur?
+**Herkes görür. Mühür Avalanche'ta kalır ve kontrat mühürleri ve açılışları ayrı ayrı sayar.**
+- Sicil her (ajan, döngü) için tek bir mühür tutar ve açılışları sayar; "Unrevealed" (açılmamış) hem panelde hem zincirde görünür. Şu an zincirde 40'tan fazla döngü var, hepsi açılmış (16:47'de 42 mühür / 42 açılış).
+- Rastgele değer (salt) olmadan zarfı kimse açamaz. Ajan da başka bir kararla değiştiremez: kontrat parmak iziyle (hash) eşleşmeyen her içeriği reddeder (`HashMismatch`).
+- Çökme güvenliği: içerik ve salt mühürden *önce* diske yazılır; yeniden başlayınca ajan önce açık zarfı açar.
+- Dürüst sınır: açılmamış mühür için zincirde bir ceza (slashing) henüz yok. Bedeli itibar kaybı, ama bu kayıp herkese açık ve kalıcı.
+
+### 2. Mühürlü zarf (commit-reveal) neden şart, normal log yetmez mi?
+**Log düzenlenebilir ve sadece işine gelen kısmı gösterilebilir. Avalanche'taki mühür emirden önce zaman damgası alır ve sonradan değiştirilemez.**
+- Parmak izi, kararı piyasa cevap vermeden kilitler. Kötü bir karar sonradan "düzeltilemez".
+- Kararı işlemden önce açıkça yayınlamak başkalarının öne geçmesine (front-running) ya da kopyalamasına izin verir. Salt, mühürlü kararı işlem bitene kadar okunmaz tutar. 5 coin için sadece al/sat/bekle seçenekleri var; salt olmasa karar parmak izinden tahmin edilebilirdi.
+- Dürüst sınır: mühürlü zarf, *mühürlenen* kararların değişmediğini kanıtlar. Ajanın sicil dışında hiç işlem yapmadığını tek başına kanıtlayamaz. Her açılış OKX emir kimliğini taşıdığı için sicil borsa hesabıyla karşılaştırılabilir; bu karşılaştırmayı otomatik hale getirmedik.
+
+### 3. Neden ana ağ değil de Fuji?
+**Bu bir hackathon yapımı ve kontratlar denetlenmedi; test AVAX'ı organizatörler verdi. Tasarımda Fuji'ye özgü hiçbir şey yok.**
+- Aynı kontratlar ve aynı kurulum betiği C-Chain ana ağında da çalışır; sadece ağ ayarı değişir.
+- Önce bir güvenlik denetimi, sonra da ajanın gaz ücretini kimin ödeyeceğine dair bir karar isteriz.
+- İşlemler zaten gerçek: ilk canlı emir gerçek parayla OKX TR'ye gitti. Sadece *sicil* test ağında.
+
+### 4. Getiri al-tuttan düşük. Bu neden iyi?
+**Getiride daha iyi değil ve öyle olduğunu iddia etmiyoruz. GRAIL riski kontrol etmek ve doğrulanabilir olmak için yapıldı.**
+- 30 günlük tekrar oynatma (gerçek OKX saatlik fiyatları, 17 Eylül → 17 Ekim, 50 USDT, emir gönderilmeden): GRAIL getirisi +%2,0, en kötü düşüşü %4,3. Aynı 5 coinin eşit ağırlıklı al-tut stratejisi: getiri +%8,8, en kötü düşüş %14,5.
+- Akıllı giriş kapılarıyla işlem sayısı 382'den 220'ye indi. Acil durdurma (kill switch) bu 30 günde hiç tetiklenmedi.
+- Varsayımlar: emir bar kapanışında dolar, %0,1 ücret, kayma yok, yapay zekâ analisti yok. 30 gün bir stratejiyi yargılamak için çok kısa.
+- Ürünün özü *doğrulanabilir sicil*. Daha iyi ya da daha kötü her strateji aynı mühürle-işle-aç döngüsüne takılabilir.
+
+### 5. Yapay zekâ analisti ne zaman veto eder?
+**Sadece alımlara bakar. Bir alımı aynen bırakabilir, küçültebilir ya da beklemeye çevirebilir. Asla risk ekleyemez, satışlara hiç dokunmaz.**
+- Modelin ne dediğinden bağımsız olarak bunu kod zorlar: ters yön beklemeye döner, daha büyük tutar geri kırpılır, minimum emrin altına düşen her şey beklemeye döner.
+- Anahtar yoksa, zaman aşımı olursa (en fazla 8 sn) ya da cevap bozuksa karar değişmeden geçer ve `skipped` olarak işaretlenir.
+- Yapay zekânın notu ve kararı *parmak izinin içine* girer; görüşü de mühürlenir.
+- Dürüst: ilk canlı emirde (cycle 2) analist çalışmadı (`skipped: no_provider`); anahtar sonradan eklendi. Sonraki deneme döngüsünde (cycle 3) analist 5 alımı onayladı (kullanıcı bildirimi, STATE r31). Canlı bir alımı veto ettiği bir döngüyü henüz göstermedik.
+
+### 6. Zincirdeki kimlik kartı (ERC-8004) ne katıyor?
+**Ajana herkese açık, taşınabilir bir kimlik. Sicil anonim bir cüzdana değil, kayıtlı bir kimliğe (1 numaralı ajan) ait.**
+- GrailLedger mühür ve açılışları sadece kayıtlı ajanın sahibinden ya da onaylı operatöründen kabul eder; başka herkesin çağrısı reddedilir.
+- Ajan yeni bir cüzdana ya da bir ajan pazarına taşınırsa kimliği ve sicili onunla birlikte gider.
+- Dürüst: Reputation ve Validation kayıtları kurulu ama henüz onlara yazılmıyor. Sonraki adım, oraya doğrulama yazan ikinci bir "risk bekçisi" ajanı.
+
+### 7. Gerçek para riskini nasıl sınırladınız?
+**Dar yetki, kodda kontrol edilen kesin sınırlar, varsayılan deneme modu (dry run) ve canlıya geçişi açıkça başlatması gereken bir insan.**
+- OKX API anahtarında sadece Okuma + İşlem yetkisi var, para çekme yetkisi yok. Sadece spot, kaldıraç yok, sadece ayarlardaki coinler. Kodda para çekme, transfer, kaldıraç ya da hesap ayarı çağrısı yok.
+- Her emirden önce sınırlar kontrol edilir: emir başına en fazla, toplamda en fazla, düşüşte acil durdurma.
+- Canlı mod üç şeyi birlikte ister: `dry_run: false` olan bir ayar dosyası, `--live --confirm-live GRAIL-LIVE-SPOT` bayrakları ve gerçek Fuji zinciri.
+- İlk canlı emir bilerek çok küçüktü: tek coin (BTC), 2 USDT, tek döngü, bir insanın gözü önünde. Doldu (OKX emri 4017748393474314240).
+- Bu projeyi yazan yapay zekâ kod araçları sadece piyasa verisi okuyabiliyordu; emri sadece ajanın kendi kodu verebilir.
+
+### 8. Korelasyon farkındalığı somut olarak neyi değiştirdi?
+**Pozisyon büyüklüklerini. Birlikte hareket eden coinler her biri ayrı bütçe almak yerine tek bir risk bütçesini paylaşır.**
+- HRP benzer coinleri ailelere ayırır; riski önce aileler arasında, sonra aile içinde böler.
+- Volatilite hedefi, korelasyonu zaten içeren portföy volatilitesini kullanır. Coinler birlikte hareket ettiğinde portföy daha risklidir, bu yüzden toplam pozisyon küçültülür.
+- Kullanıcıya gerçeği de söyler: son 30 günde 5 coin ortalama 1,36 bağımsız bahis (n_eff) gibi davrandı.
+- Dürüst: korelasyonlu/korelasyonsuz bir karşılaştırma (ablation) yapmadık; getiriye etkisi için bir sayı iddia etmiyoruz.
+
+### 9. Gerçekten otonom mu?
+**Evet. Her döngü kendi kendine işler: piyasayı oku → karar ver → yapay zekâ kontrolü → mühürle → emri ver → aç → güncelle. Kimse "onayla"ya basmaz.**
+- İnsan kuralları (ayarları) koyar ve canlı modun açık olup olmadığına karar verir. Ajan ikisini de değiştirmez.
+- Dürüst: canlı modda bilerek, güvenlik için tam bir döngü çalıştırdık. Sürekli döngü deneme modunda gerçek piyasa verisi ve gerçek Fuji mühürleriyle çalıştı; zincirde 40'tan fazla döngü var.
+
+### 10. OKX ya da Avalanche döngünün ortasında çökerse?
+**Güvenle durur. Mühür başarısız olursa emir gönderilmez. Emir sonucu belirsizse emri kimliğiyle sorgular, asla iki kez göndermez.**
+- Başarısız her adım döngüyü atlatır, hatayı kaydeder; ajan bir sonraki döngüyle devam eder.
+- Fiyat verisi eksik ya da bozuksa o coinde bekler ve nedenini yazar.
+- Her emrin kalıcı bir günlükte istemci kimliği vardır; sonucu bilinmeyen bir emir çözülene kadar yeni canlı emirleri engeller.
+
+### 11. Ajan çok sayıda karar mühürleyip sadece iyisini açabilir mi?
+**Hayır. Kontrat bu ajan için döngü başına tam bir mühüre izin verir. Aynı döngüye ikinci mühür reddedilir (`AlreadyCommitted`).**
+- Döngü numaraları kalıcıdır ve sadece artar; yeniden başlatma onları tekrar kullanmaz.
+- Dürüst: kontrat döngü numaralarının ardışık olmasını zorlamaz. Atlanan bir numara sicilde görünür bir boşluk olarak kalır, ama zincirde onu engelleyen bir şey yok. `npm run audit` ardışıklık varsaymadan bütün döngüleri okur (arşiv destekli RPC ile).
+
+### 12. Size güvenmeden kendim nasıl doğrularım?
+**Üç yol: paneldeki "Verify yourself" (kendin doğrula) düğmesi, terminal komutu ve Snowtrace.**
+- Panel: tarayıcın `keccak256(içerik ‖ salt)` değerini yeniden hesaplar ve Fuji'deki mühür işlemiyle karşılaştırır.
+- Terminal: `cd chain && npm run verify:cycle:1`: içeriği ve salt'ı açılış işleminden çözer, parmak izini yeniden hesaplar, zincirdeki mühürle karşılaştırır → `MATCH`. Cüzdan ya da anahtar gerekmez.
+- Bütün sicil için `npm run audit` var ama arşiv destekli bir RPC ister. Varsayılan herkese açık Fuji uç noktası geçmiş blokları vermediği için sicil büyüdükçe hata verir; yanlış özet basmaz. Sorulursa böyle söyle; sahnede çalıştırma.
+- Paneldeki kontrol bağımsız incelemeden (R-010) geçti.
+- Snowtrace: 4 kontratın kaynak kodu doğrulanmış; örnek GrailLedger https://testnet.snowtrace.io/address/0x1B5fcf6DeFf2F9375338A2C35932224522118851#code
+
+### 13 (ek). Hurst piyasanın yatay olduğunu gerçekten tespit ediyor mu?
+**Hayır, tahmin ediyor. 48 saatlik veride bu tahmin gürültülü; biz onu kesin bir tespit değil, bir temkin sinyali olarak kullanıyoruz.**
+- Kapı sadece azaltır: yatay görünen bir piyasada momentum alımını bekletir; asla alım üretmez, asla satışa dokunmaz. Yanlış alarm en kötü ihtimalle bir alımı kaçırtır.
+- İnceleme (R-009-5) aynı şeyi söylüyor: kısa pencerede rastgele veride bile "yatay" etiketi sık çıkabiliyor. Daha uzun geçmiş ya da daha geniş ölü bant, freeze sonrası iş.
+
+---
+
+### Söyleme
+- "Piyasayı yeniyor" / "kârlı": tekrar oynatma daha düşük getiri gösteriyor.
+- "Canlı işlemi yapay zekâ onayladı": cycle 2'de `skipped` idi.
+- "Acil durdurma zararı %5'te keser": yeni emirleri durdurur, pozisyon kapatmaz. (30 günlük tekrar oynatmada hiç tetiklenmedi.)
+- "Hurst piyasa rejimini tespit ediyor": tahmin ediyor.
+- "Tamamen denetlendi" ya da "üretime hazır".

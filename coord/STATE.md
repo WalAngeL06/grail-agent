@@ -1,75 +1,67 @@
 # PROJECT STATE — tek yetkili durum (yazarı: integrator)
 
-- Durum revizyonu: r33 · 2026-10-17 16:30 (Europe/Istanbul)
-- Ürün: ilk CANLI 15:37 cycle2 BTC BUY2 filled kanıtı korunur. Sürekli agents döngüsünde cycle3 5 BUY / 5 approved ve planner Gemini HTTP200 kullanıcı tarafından bildirildi; bu chat yeni koşu başlatmaz.
-- Aktif sözleşme: VERSION 0.6.1 (belge/eklemeli metrik); config/payload/state contract_version=0.6, chain.json deploy=0.5. Config/adres/ABI/hash değişmedi (D-017).
-- Bu teslim: T-015 chain@5f9a1d5 → f90612b, R-009 review@8ef0449 → 746b47a, planner GO engine@87539f8 → 6729fbb sırayla ayrı merge/push doğrulandı. T-014 16:29’da push’landı; main agents tekrarı157 PASS. Web RAPOR’u bekleniyor.
-- Bu tur kontroller: chain typecheck/48 Hardhat PASS; birleşik engine pytest167 / agents pytest157 / web build PASS; merge/push sonrası main agents pytest157 PASS (18.71s). Agents import bu main/engine yolunda. Üç hedef içerikleri birebir; sınır/diff temiz; contracts/config/agents/web/analyst kaynakları değişmedi.
-- Public kapısı: R-005 PUBLIC GO yalnız taranan main9acec55/ref kümesi için; MINOR-1 kapandı. Yayınlanacak son HEAD değiştiği için farklar yeniden taranır; bu chat public ayarını değiştirmez.
-- Öncelik: web RAPOR’u gelince exact hedef/sınır/build kontrolü ve merge/push. T-015 bağımsız inceleme, R-009-5/6 docs-pitch uyumu ve R-005 son yayın SHA taraması açık.
-- Önceki ayrıntılı kanıtlar coord/archive/STATE-r26-20261017.md; daha eski kayıt r17 arşivinde.
+- Revizyon: r45 · 2026-10-17 17:30 Europe/Istanbul. Önceki ayrıntı: coord/archive/STATE-r40-20261017.md (daha eski r26/r17 arşivleri korunur).
+- İlk CANLI:15:37 cycle2 BUY BTC2USDT filled, OKX4017748393474314240. Sürekli döngü dry_run=true; gerçek Fuji commit/reveal. Integrator runner/emir/tx başlatmaz.
+- Sözleşme: VERSION0.6.2; yalnız opsiyonel/hash dışı metrics.signals[inst].ou eklendi. Config/payload/state contract_version0.6,chain deploy0.5/ABI/hash aynı. sleeve kullanıcının kesinleştirdiği momentum|mean_reversion|none metin enumudur; %25 tavan engine kodunda/testte, ek bütçe alanı yok.
+- Dört merge/push tamam: chain6f19510→main81356a1,docs9a0fb7f→mainb2c2ba0,engine4a83bd8→maina16044e,agentsaf4106d→maine1206b2. Her adım clean+HEAD=origin/main=uzak main doğrulandı. Başlangıç1f57076; daha yeni hedef alınmadı. T-017 kartı/v0.6.2 bu son koordinasyon teslimidir.
+- Verify R-010 GO yalnız webc1c2361/chain23a81aa. **R-011 KAPANDI, audit jüriye GO**: kullanıcı/planner public RPC48/48 MATCH,Unopened0,Mismatch0,LIVE1,exit0; integrator54 test/typecheck PASS. Kendi audit tekrarı61→62 yeni cycle nedeniyle INCOMPLETE/exit1; beklenen fail-closed, tam rapor yazılmadı. Bunlar ayrı snapshot/kanıtlardır.
+- 17:00 freeze yalnız T-017 için kullanıcı istisnası. Engine88f00f3 adayı kullanıcı tarafından bildirildi; bu tur alınmadı/incelenmedi. **Planner GO + kullanıcının merge veya varsayılan kapalı kararı beklenir.** Engine push17:50/chain inceleme/merge<=18:10; yetişmezse dışarıda. UI/docs ayrı sahip teslimi gerekir.
+- Public kapısı: R-005 GO yalnız taranmış main9acec55/ref kümesi; son yayın SHA fark taraması hâlâ açık. Public ayarı/yayın/form/slides/video yüklemesi yapılmadı.
 
 ## Zaman kapıları
-| Saat | Kapı | Ölçüt |
+| Saat | Kapı | Durum/ölçüt |
 |---|---|---|
-| 13:30 | Fuji deploy — GEÇ TAMAMLANDI | Kapı kaçtı; chain 13:48 başladı. fdd4bf0 push'lu; 14:36 dört deploy + kayıt RPC receipt/bytecode ile doğrulandı |
-| 14:00 | Engine testleri | `engine` test komutu geçer (golden değerler) |
-| 14:00 | ATK veri + dry_run emir | bakiye + ticker + simüle emir çalışıyor |
-| 15:00 | Uçtan uca dry_run — GEÇTİ (14:50) | agents@dcf68db; kullanıcı/planner tx doğrulaması; gerçek ATK okuma + Fuji commit/reveal + 5 simulated BUY. Canlı ayrı kullanıcı kapısı |
-| 15:00 | UI inşası başlar | proje %80 olmasa bile; tasarım ~14:00 Claude Design; Antigravity UI testi + yedek |
-| 16:30 | T-014 teslim kapısı — GEÇTİ | engine87539f8 uzak dalda; kullanıcı/planner GO, integrator167 test |
-| 16:40 | R-009 inceleme hedefi — GEÇTİ | 8ef0449 koşullu APPROVE/GO main746b47a; yeni düzeltme hedefi87539f8 kullanıcı/planner GO |
-| 16:50 | T-014 merge üst sınırı — GEÇTİ (16:29) | main6729fbb push doğrulandı; engine167/agents157/build; merge sonrası agents157 (18.71s) |
-| 17:00 | Feature freeze | sadece hata düzeltme + UI güncelleme |
-| 18:00 | Yedek demo videosu | kayıt hazır |
-| 18:45 | Teslim formu | `coord/SUBMISSION.md` kontrol listesi tamam, form gönderildi (zorunlu: Builder Hub e-postası, GitHub, sunum linki) |
+| 13:30 | Fuji deploy | GEÇ:14:36 dört deploy+kimlik doğrulandı |
+| 15:00 | Uçtan uca dry_run | GEÇTİ14:50; gerçek ATK+Fuji,5simulatedBUY |
+| 16:50 | T-014 merge üst sınırı | GEÇTİ16:29 main6729fbb; önceki167/157/build ve merge sonrası157 |
+| 17:00 | Feature freeze | yalnız T-017 kullanıcı istisnası; diğerleri hata düzeltme+UI |
+| 17:50 | T-017 engine push | test+handoff+exact commit+push; yetişmezse dışarıda |
+| 18:00 | Yedek demo videosu | kayıt hazır olmalı; kanıt/link açık |
+| 18:10 | T-017 merge üst sınırı | chain bağımsız GO+integrator kontrolleri; yetişmezse dışarıda |
+| 18:45 | Teslim formu | GitHub/sunum/BuilderHub e-postası ve gönderim kanıtı |
 | 19:00 | Teslim kapanır | |
 
 ## Görev panosu
-| Görev | Başlık | Sahip | Durum | Bağımlılık |
+| Görev | Başlık | Sahip | Durum | Kanıt/bağımlılık |
 |---|---|---|---|---|
-| T-001 | Quant engine çekirdeği + golden testler | engine (Claude Code · Max) | INTEGRATED | contracts 0.5 uyumu doğrulandı |
-| T-002 | ATK veri çekme + emir katmanı (dry_run; canlı öncesi R-002-1) | agents (Codex · hesap 1) | INTEGRATED | contracts 0.4; 0.5 ile 78 test |
-| T-003 | ERC-8004 kimlik + GrailLedger + Fuji deploy | chain (Codex · hesap 2) | INTEGRATED (R-003 koşulları işlendi) | deploy contracts 0.5; v0.6 ile ABI/hash uyumlu |
-| T-004 | UI brifi (ekranlar, palet, alan eşlemesi) | docs (Claude · Pro) | INTEGRATED | contracts 0.3 |
-| T-005 | UI v2: sade dil + How it works + Fuji doğrulama sheet | web · QA Antigravity | INTEGRATED | 57e2287; build geçti; gerçek runtime UI kontrolü açık |
-| T-006 | Agent döngüsü + sınırlı canlı kapı | agents | INTEGRATED; ilk CANLI GEÇTİ | 15:37 cycle2, BUY BTC 2 USDT, filled; OKX 4017748393474314240 |
-| T-007 | LLM analist (yalnız BUY azaltır; SELL exempt) | analyst | INTEGRATED; sağlayıcı doğrulandı | kullanıcı/planner Gemini HTTP200 + sürekli agents cycle3 5 BUY / 5 approved |
-| T-008 | Teslim metinleri ve README taslağı | docs | INTEGRATED (taslak güncellendi) | 5a84ed1 ile gerçek kanıtlar eklendi; kök README D-012 freeze kapısı aynı |
-| T-009 | Engine reason sade İngilizce | engine | INTEGRATED | b7e294b; pytest 104; main agents 78 |
-| T-010 | Explorer kaynak doğrulama + salt okunur cycle komutu | chain | INTEGRATED; R-006 APPROVE | kod f36a95d; kanıt 2e45f77 (4 VERIFIED, cycle1 MATCH) |
-| T-011 | PowerPoint sunumu | docs | INTEGRATED (güncel taslak) | 5a84ed1; 10 slayt/not/render geçti; kaynak README/video/sayaç son hazırlığı açık |
-| T-012 | 30-day replay: GRAIL vs eşit ağırlık | engine | INTEGRATED (kapanış-fill modeli) | T-014/87539f8 yeni snapshot: +2.03%, düşüş4.33%, 220 emir simülasyonu; docs/pitch eşlemesi açık |
-| T-013 | Plain English UI metinleri | docs | INTEGRATED (ilk kopya) | 1d411c0; 5 kart, 21 terim, ekran/boş/hata; web uygulaması ayrı |
-| T-014 | Hurst rejimi + setup BUY azaltma katmanı | engine; inceleme reviewer Claude Max (R-009) | INTEGRATED | 87539f8 → main6729fbb push16:29; R-009-1..4 + kullanıcı/planner GO; integrator167/157/build; sonrası agents157 |
-| T-015 | npm run audit: tüm GRAIL sicili salt okuma | chain (Codex-2) | INTEGRATED | 5f9a1d5; integrator48/typecheck; kullanıcı merge talimatıyla bağımsız inceleme sonraya alındı |
-| T-016 | Jüri FAQ + 3 dk canlı demo runbook | docs (Claude Max) | INTEGRATED | 5a84ed1; 12 soru, B planı, 10 slayt/not/render; son snapshot/prova notları kartta |
-| R-002 | T-002 incelemesi: APPROVE koşullu, BLOCKER yok | Claude Code · Max (Opus 5.5) | DONE | bad30c3; R-002-1/2 T-006 kabulünde |
-| R-003 | T-003 incelemesi: APPROVE koşullu, yeniden deploy yok | reviewer (Claude Code · Opus 5.5) | DONE | a6044d7; R-003-2 decision.md v0.6, R-003-3 T-006 kabulünde |
-| R-004 | İlk T-006 incelemesi (tarihsel) | reviewer (Claude Code · Opus 5.5) | DONE; güncel karar R-004b | 62ef3c3; üç MAJOR R-004b ile kapandı |
-| R-005 | Public öncesi sır/anahtar taraması | reviewer (Claude Opus) | DONE / PUBLIC GO (taranan kapsam) | 4927557; main9acec55 + ref kümesi; MINOR-1 kapandı, son HEAD tekrar taraması açık |
-| R-004b | T-006 düzeltmeleri + sınırlı canlı kapı | reviewer (Claude Opus) | DONE / APPROVE | ac96902; 2bf5668; kullanıcı ilk canlıyı 15:37 yaptı |
-| R-006 | T-010 bağımsız inceleme | docs/reviewer (Claude Opus) | DONE / APPROVE | e77eaed; gerçek rapor coord/reviews/T-010.md; 1 MINOR + 3 INFO |
-| R-007 | UI matematiği ve etiket/taban incelemesi | engine/reviewer; düzeltme web | DONE; düzeltme adayı bekliyor | kullanıcı: 4 MAJOR web@27cc6e8’de düzeldi; web RAPOR’u/merge kontrolü beklenir, main henüz eski |
-| R-009 | T-014 bağımsız inceleme | reviewer Claude Max | DONE / APPROVE koşullu | 8ef0449 raporu engine6e8abad için GO; engine87539f8 ek farkı için kullanıcı/planner GO |
-| R-* | Merge öncesi bağımsız inceleme (`coord/reviews/`) | reviewer (engine işini Codex · hesap 2; Codex işlerini Claude · Pro) | T-003 sonrası | READY_FOR_REVIEW dal |
+| T-001 | Quant engine+golden testler | engine | INTEGRATED | önceki sözleşme/test kanıtı r40 arşivi |
+| T-002 | ATK veri+guarded emir | agents | INTEGRATED | R-002/R-004b kapıları işlendi |
+| T-003 | ERC-8004+GrailLedger+Fuji deploy | chain | INTEGRATED | deploy0.5/ABI/hash aynı |
+| T-004 | UI brifi | docs | INTEGRATED | docs/ui-brief.md |
+| T-005 | UI+Verify | web/QA | INTEGRATED; GO | c1c2361; önceki22test/build/public PASS |
+| T-006 | Agent döngüsü+ilk canlı | agents | INTEGRATED | ilk canlıcycle2; sürekli çalışma dry_run |
+| T-007 | LLM BUY azaltma analisti | analyst/agents | INTEGRATED; Gemini3.7 kanıtı alındı | agentsaf4106d cycle45/46ETHapproved; PID48008 salt okunur kontrolle çalışıyor |
+| T-008 | README/form taslakları | docs | INTEGRATED9a0fb7f | link/team/ilk canlı cycle yönlendirmesi ve yeni R-011GO son hazırlık |
+| T-009 | Engine İngilizce reason | engine | INTEGRATED | b7e294b |
+| T-010 | Explorer kaynak+tek cycle doğrulama | chain | INTEGRATED; R-006 GO | dört verified/önceki gerçek MATCH |
+| T-011 | Türkçe11 slayt | docs | INTEGRATED9a0fb7f |11slayt/11not; yalnız6/10değişti,PowerPoint render/görsel PASS |
+| T-012 |30gün replay | engine | INTEGRATED | +2.03%,düşüş4.33%,220simulated; al-tut+8.81%/14.51% |
+| T-013 | Sade UI metinleri | docs/web | INTEGRATED | R-007 ile eşleşti |
+| T-014 | Hurst+entry gate | engine/agents | INTEGRATED; restart/sonuç kanıtı alındı |4a83bd8 rapor+af4106d cycle34/35/45/46; aynı barlarda5→1BUY/19.02→2.64USDT |
+| T-015 | Sicil audit | chain | INTEGRATED; R-011 GO |6f19510;54test/typecheck; kullanıcı bağımsız48MATCH |
+| T-016 | Türkçe FAQ+3dk runbook | docs | INTEGRATED9a0fb7f |12+1 soru; yeni R-011GO/video/link/prova son hazırlık |
+| T-017 | O-U ortalamaya dönüş kolu | engine; inceleme chain | KART/SÖZLEŞME HAZIR; aday kullanıcı bildirimi |88f00f3 merge edilmedi; plannerGO+kullanıcı kararı; push17:50/merge<=18:10 |
+| R-002/R-003 | İlk adapter/chain incelemeleri | bağımsız reviewer | DONE; koşullar işlendi | r40 arşivi/kararlar |
+| R-004/R-004b | Döngü/canlı kapı | bağımsız reviewer | DONE / APPROVE | ac96902; gerçek ilk canlı kullanıcı yaptı |
+| R-005 | Public sır taraması | reviewer | GO (taranan kapsam) | son yayın SHA tekrar taraması açık |
+| R-006 | T-010 inceleme | docs/reviewer | DONE / APPROVE | e77eaed; MINOR/INFO korunur |
+| R-007 | UI matematik | engine/reviewer | DONE / INTEGRATED | c2a731b |
+| R-009 | T-014 inceleme | reviewerClaudeMax | DONE / GO koşullu |8ef0449+87539f8 kullanıcıGO; Hurst tahmin sınırı korunur |
+| R-010 | Web Verify | chain/reviewer | DONE / GO | c1c2361/23a81aa |
+| R-011 | Audit RPC düzeltmesi | chain | DONE / GO; INTEGRATED |6f19510→main81356a1 push; planner48MATCH,integrator54test; moving-ledger fail-closed |
 
-## Kanıtlar / bu teslim
-- Bu tur başlangıç main@797092a temiz ve origin/main ile eşitti. Üç istenen hedef uzak dallarda doğrulandı; her merge sonrası push + clean/HEAD=origin/main=uzak main doğrulandı. Son kontrol: chain5f9a1d5, reviewT-0148ef0449, engine87539f8 içerikleri birebir; diff797092a..HEAD temiz.
-- R-005 raporu: 100 commit / 535 blob desen + 537 blob gerçek sır eşleştirmesi, 0 gerçek sır; PUBLIC GO. Bunlar reviewer kanıtı; integrator bu tur anahtar/.env okumadı veya taramayı tekrar etmedi. MINOR-2/3/4 ve raporun kapsam sınırları korunur.
-- Ignore kontrolü: 18 sentetik riskli yol engellendi; 8 örnek/fixture/çıktı yolu açık. İstenen sqlite/runtime/fuji/live-config/envrc/pem/key/.claude kuralları var; public JSON fixtures istisnalı, PEM/key gibi sır türleri fixtures içinde de kapalı. Mevcut tracked fixture’lar korundu.
-- R-007 sözleşme istekleri: corr_matrix 5 coin/5x5 simetrik, diag1/offdiag0.62; avg_corr0.62/n_eff1.44/SR0.60 ile tutarlı. target_weight_pct normalde deploy_base=min(equity,max_deploy), koruma HOLD’unda equity; normal HOLD tek başına tabanı ayırt ettirmez. Kod/hash değişikliği yok.
-- T-014 main'de: metrics.signals tüm config coinlerine sonlu hurst + rejim + setup. 0.45 ve0.55 dahil unclear; kapısız nakit/bütçe rezerviyle setup yalnız mevcut BUY’ı azaltır. R-009 eski hedefi6e8abad, düzeltme87539f8 için kullanıcı/planner GO; integrator ek fark/test kanıtı T-014 kartında.
-- R-007 2682d99: yalnız coord/reviews/R-007-ui-math.md + engine handoff; kullanıcı açık inceleme teslimi talimatıyla rol sınırı istisnası kabul edildi. Matematik formülleri doğru, 4 MAJOR metrik/etiket/taban bulgusu açık; integrator yalnız iki sözleşme isteğini uyguladı.
-- Güncel kontroller: birleşik main ağacında cd engine; uv run pytest -q → 167 passed (9.56s); cd agents; uv run pytest -q → 157 passed (16.96s); web npm run build PASS. Agents import main/engine/src/grail_engine/decision.py; engine ağacı87539f8 ile aynı, contracts/agents/web/analyst başlangıç797092a ile aynı.
-- T-016 5a84ed1: docs/ + docs handoff, 8 dosya; 12 FAQ ve 3:00 runbook okundu; PPTX ZIP/XML + PowerPoint 10 slayt/10 not/10 render, tek tek görsel kontrol geçti. İlk canlı/cycle1 ayrımı ve sınırlamalar belge kaynaklarında. Sayaç/LLM yeni durum ve cycle2 doğrulama yönlendirmesi docs son hazırlığıdır.
-- T-015@5f9a1d5 yalnız chain/ + chain handoff: integrator typecheck/48 test PASS. Sahip raporu 16:06:57 snapshot59599907: 16/16 MATCH, 0 açık, 1 LIVE ordId; integrator gerçek RPC audit’ini tekrarlamadı. Kullanıcı bağımsız incelemeyi merge sonrasına aldı (D-019).
-- İlk canlı OKX 4017748393474314240 filled; commit 0x16f2d1294cda0181cf94dd50f7cfccf90b449e2a7534b5eccb6aa5a1a96e9569 → reveal 0xae6537e9acc9e66accfe5d0fe61b2f9a858460d7c42cf3d25f0acafa378541f7. Planner Fuji doğrulaması kullanıcı kanıtı; bu tur yeni RPC/runner/emir/tx yok.
-- LLM sağlayıcısı DOĞRULANDI (kullanıcı/planner): Gemini testi HTTP200; agents sürekli döngü cycle3 5 BUY / 5 approved. Anahtar okunmadı ve integrator sağlayıcıyı çağırmadı; cycle3 mod/fill durumu ayrıca bildirilmedi. Cycle2 skipped/no_provider tarihsel bilgisi değişmez.
+## Bu tur kanıtları
+- Chain birleşik ağacı6f19510 ile birebir; staged fark yalnız chain/+kendi handoff'u.54test(6s)/typecheck PASS; diff --check temiz; diğer ürünler başlangıç1f57076 ile aynı. Yeni audit latest state ve fresh before/after sayaç kontrolüyle çalışır; canonical scan-head/event/hash/receipt kontrolleri korunur.
+- Audit RPC seçimi CLI>GRAIL_AUDIT_RPC_URL>FUJI_RPC_URL>PublicNode; .env/signer yüklenmez. Canlı rapor chain/runtime/audit-latest.md(ignore); tracked deployments raporu16:06/16cycle örnektir. okxOrderId hash dışı ve fill kanıtı olmadığı açık.
+- Kullanıcı bağımsız planner48/48MATCH/0açık/0mismatch/1LIVE/exit0 bildirdi. Integrator gerçek tekrarında before61/61→after62/62,scanned61/61; INCOMPLETE/exit1 ve rapor yok. Çalışan agent'ın yeni cycle'ı beklenen tamlık reddini tetikler; GO için başarılı snapshot ile karıştırılmaz.
+- Önceki R-010 gerçekcycle1/2/3 ve38history inceleyen kanıtıdır; web helper CLI canonical blockHash/event-data kapsamının tamamını taşımaz. Son web22test/iki build önceki turdadır. Bu tur tarayıcı/sır taraması yok.
+- Docs9a0fb7f actual merge farkı yalnız docs/+kendi handoff7dosya; çoklu merge-base nedeniyle üç-nokta diff'teki eski main kayıtları yeni yabancı yazım değil. Exact docs ağaç/diff--check PASS; diğer ürünlerchain81356a1 ile aynı. PPTX11slayt11not;8103126'ya göre yalnızslide6/10XML değişmiş; ikisi PowerPoint'te1280x720 render/görsel PASS.
+- Engine4a83bd8 actual farkı engine/out/live-gates-today.md+.json ve kendi handoff'u; ürün kaynakları/test/ayarlar aynı. JSON/cohort/tutar/toplam kontrolleri PASS:22eski/17yeni aynıbar döngüsü,110/17BUY,418.44/44.88USDT. Cycle3–50 toplam48commit+48reveal/240karar sahibin dosya kanıtıdır; yeni bağımsız RPC kanıtı değil. PID48008python17:22 salt okunur süreç kontrolünde çalışıyor.
+- Agentsaf4106d actual farkı3kanıtJSON+kendi handoff; kaynak/test/ayarlar değişmedi. ÜçJSON parse ve Gemini45/46koşul kontrolleri PASS; ikisinde4HOLD+1ETHsimulatedBUY/approved/errors0,modelgemini-3.7-flash,fallbackfalse. Anahtar okunmadı. Main'de uv run --frozen pytest -q --tb=short→157passed(15.45s). Receipt/hash doğrulaması sahip kanıtıdır, integrator RPC/fill tekrarı yapmadı.
+- T-017/0.6.2: half_life_h(float|null),z(float|null),significant(bool),sleeve(momentum|mean_reversion|none); fallback null/null/false/none. Son enum/null/geriye uyum JSON kontrolleri PASS; ou çıkarılınca eski örnek birebir/config/decision/chain.json aynı. Web22test PASS; son enum örneğiyle normal/public build PASS(54modül720/708ms). Dört exact hedef ancestor/ağaç PASS;88f00f3 main ancestor değil. Yeni O-U kodu alınmadı.
 
 ## Bekleyenler / sınırlar
-- R-007 dört web MAJOR’ı kullanıcı bildirimiyle role/web@27cc6e8’de düzeltildi. Web RAPOR’u gelmeden merge yok; daha ileri web commit’leri bu tur seçilmedi/incelenmedi. Main’de düzelmiş sayılmaz.
-- T-014@87539f8 R-009-1/2/3/4 düzeltmeleri alındı ve testler yeşil. R-009-5: 48 barlık Hurst etiketi kesin tespit gibi sunulmaz. R-009-6: yeni replay +2.03%/düşüş4.33%/220 simüle emir docs-pitch rakamlarıyla eşlenmeli; bu tur docs/web dosyasına yazılmadı.
-- Public öncesi son SHA fark taraması; R-006 RPC429 + 3 INFO ve dört Snowtrace #code görsel kontrolü açık. Repo görünürlüğü aynı.
-- T-016 final belge güncellemesi: sayaçlar snapshot etiketiyle yenilenecek; cycle3 AI kanıtı eklenebilir; submission’da ilk canlı için cycle1 komutu yerine cycle2 tx kimlikli doğrulama yönlendirmesi gerekir. Video/slides/yedek görüntüler ve gerçek UI provası açık. README D-012 freeze sonrası.
-- R-004/R-002 MINOR/NIT sınırları sürer. Sürekli agents çalışması kullanıcı bildirimi; bu chat runner başlatmaz/durdurmaz, emir/tx göndermez, runtime/journal/pending veya sırları değiştirmez.
+- Docs9a0fb7f R-011 NO-GO zamanındaki archive-RPC metnini içerir; exact hedef alınır, R-011 kapandıktan sonra README/FAQ/form/runbook metni docs sahibince güncellenmeli. İlk canlıcycle2; verify:cycle:1 simülasyoncycle1. Kök README D-012/link/doğrulama kapısında.
+- Engine4a83bd8 ve agentsaf4106d rapor/kanıt teslimleri alındı; yeni ürün kodu veya yeni canlı fill yok. Yeni modelde cycle48timeout raporlanmıştır;45/46başarılı kanıt tüm çağrılar başarılı demek değildir. Tarihli dosya kanıtı ile mevcut PID durumu ayrılır.
+- T-017 kart/v0.6.2 hazır; kullanıcı sleeve'i metin enum olarak kesinleştirdi, sayısal sözleşme taslağı push'lanmadan düzeltildi. Engine88f00f3 için plannerGO/kullanıcının etkinleştirme veya varsayılan kapalı kararı ve chain bağımsız incelemesi beklenir; yeni canlı yetki yok.
+- Runtime/journal/pending/.env/anahtarlar ve worker korunur; integrator yeni runner başlatmaz/durdurmaz, OKX/tx göndermez. R-004/R-002 MINOR/NIT ve R-006 INFO'lar korunur.

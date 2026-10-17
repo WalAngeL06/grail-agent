@@ -1,0 +1,241 @@
+{
+  "source": "agents/runtime/dryrun-5coin-20261017-1545 (state.json, fuji-transactions.json, restart-*-cycle-*.json) + agents/runtime/live/state.json; read-only copies taken 2026-10-17 14:00 UTC, frozen at cycle 50",
+  "mode": {
+    "dry_run": true,
+    "coins": [
+      "AVAX-USDT",
+      "BTC-USDT",
+      "ETH-USDT",
+      "OKB-USDT",
+      "SOL-USDT"
+    ],
+    "bar": "1H",
+    "lookback_bars": 48
+  },
+  "pre_t014": {
+    "cycles": "3-33",
+    "n_cycles": 31,
+    "first_utc": "12:46:48",
+    "last_utc": "13:31:46",
+    "buy_decisions": 155,
+    "buys_per_cycle": 5.0,
+    "sim_buy_usdt_total": "588.00",
+    "sim_buy_usdt_per_cycle": "18.97",
+    "sell_decisions": 0
+  },
+  "post_t014": {
+    "cycles": "34-50",
+    "n_cycles": 17,
+    "first_utc": "13:34:40",
+    "last_utc": "13:58:55",
+    "buy_decisions": 17,
+    "buys_per_cycle": 1.0,
+    "sim_buy_usdt_total": "44.88",
+    "sim_buy_usdt_per_cycle": "2.64",
+    "sell_decisions": 0
+  },
+  "pre_t014_same_bars": {
+    "cycles": "12-33",
+    "n_cycles": 22,
+    "first_utc": "13:00:15",
+    "last_utc": "13:31:46",
+    "buy_decisions": 110,
+    "buys_per_cycle": 5.0,
+    "sim_buy_usdt_total": "418.44",
+    "sim_buy_usdt_per_cycle": "19.02",
+    "sell_decisions": 0
+  },
+  "signals_snapshots": {
+    "cycles": [
+      34,
+      35,
+      45,
+      46,
+      50
+    ],
+    "identical": true
+  },
+  "post_t014_per_coin": {
+    "AVAX-USDT": {
+      "hurst_range": [
+        0.42,
+        0.42
+      ],
+      "regime_counts": {
+        "ranging": 17
+      },
+      "setup_counts": {
+        "none": 17
+      },
+      "outcome_counts": {
+        "HOLD - ranging": 17
+      },
+      "buy_size_usdt": [],
+      "hurst_seen_in_reason_cycles": 17,
+      "snapshot_signal": {
+        "hurst": 0.42,
+        "regime": "ranging",
+        "setup": "none"
+      }
+    },
+    "BTC-USDT": {
+      "hurst_range": [
+        0.32,
+        0.32
+      ],
+      "regime_counts": {
+        "ranging": 17
+      },
+      "setup_counts": {
+        "none": 17
+      },
+      "outcome_counts": {
+        "HOLD - ranging": 17
+      },
+      "buy_size_usdt": [],
+      "hurst_seen_in_reason_cycles": 17,
+      "snapshot_signal": {
+        "hurst": 0.32,
+        "regime": "ranging",
+        "setup": "none"
+      }
+    },
+    "ETH-USDT": {
+      "hurst_range": [
+        0.64,
+        0.64
+      ],
+      "regime_counts": {
+        "trending": 17
+      },
+      "setup_counts": {
+        "none": 17
+      },
+      "outcome_counts": {
+        "half size": 17
+      },
+      "buy_size_usdt": [
+        "2.64"
+      ],
+      "hurst_seen_in_reason_cycles": 0,
+      "snapshot_signal": {
+        "hurst": 0.64,
+        "regime": "trending",
+        "setup": "none"
+      }
+    },
+    "OKB-USDT": {
+      "hurst_range": [
+        0.39,
+        0.39
+      ],
+      "regime_counts": {
+        "ranging": 17
+      },
+      "setup_counts": {
+        "none": 17
+      },
+      "outcome_counts": {
+        "HOLD - ranging": 17
+      },
+      "buy_size_usdt": [],
+      "hurst_seen_in_reason_cycles": 17,
+      "snapshot_signal": {
+        "hurst": 0.39,
+        "regime": "ranging",
+        "setup": "none"
+      }
+    },
+    "SOL-USDT": {
+      "hurst_range": [
+        0.42,
+        0.42
+      ],
+      "regime_counts": {
+        "ranging": 17
+      },
+      "setup_counts": {
+        "none": 17
+      },
+      "outcome_counts": {
+        "HOLD - ranging": 17
+      },
+      "buy_size_usdt": [],
+      "hurst_seen_in_reason_cycles": 17,
+      "snapshot_signal": {
+        "hurst": 0.42,
+        "regime": "ranging",
+        "setup": "none"
+      }
+    }
+  },
+  "ai_analyst": {
+    "pre_3_23": {
+      "approved": 105,
+      "reduced": 0,
+      "vetoed": 0
+    },
+    "pre_24_33": {
+      "approved": 0,
+      "reduced": 0,
+      "skipped: provider_error": 50,
+      "vetoed": 0
+    },
+    "post_34_44": {
+      "approved": 0,
+      "reduced": 0,
+      "skipped: provider_error": 50,
+      "skipped: timeout": 5,
+      "vetoed": 0
+    },
+    "post_45_50": {
+      "approved": 5,
+      "reduced": 0,
+      "skipped: not sent (HOLD)": 20,
+      "skipped: timeout": 5,
+      "vetoed": 0
+    },
+    "post_buy_decisions_only": {
+      "skipped: provider_error": 10,
+      "skipped: timeout": 2,
+      "approved": 5
+    }
+  },
+  "errors": {
+    "state_errors_at_cycle_50": 0,
+    "engine_error_reasons": 0
+  },
+  "chain": {
+    "cycles": "3-50",
+    "decisions": 240,
+    "decisions_with_commit_and_reveal_tx": 240,
+    "decisions_verified": 240,
+    "unique_commit_tx": 48,
+    "unique_reveal_tx": 48,
+    "tx_log_commit": {
+      "confirmed": 48
+    },
+    "tx_log_reveal": {
+      "confirmed": 48
+    },
+    "network": "fuji",
+    "contract": "0x1B5fcf6DeFf2F9375338A2C35932224522118851"
+  },
+  "live_order_cycle": {
+    "cycle_id": 2,
+    "errors": 0,
+    "commits": 2,
+    "reveals": 2,
+    "decisions": [
+      {
+        "cycle_id": 2,
+        "inst_id": "BTC-USDT",
+        "action": "BUY",
+        "size_usdt": "2.00",
+        "order_status": "filled",
+        "fill_price": "81538.6"
+      }
+    ],
+    "note": "pre-T-014 engine (run 15:37 local); gates were not active in the live order cycle"
+  }
+}

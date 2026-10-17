@@ -1,0 +1,207 @@
+{
+  "task": "T-014 runtime refresh",
+  "verified_at_utc": "2026-10-17T13:36:39.761946+00:00",
+  "contracts_version_read": "0.6.1",
+  "runtime_contract_version": "0.6",
+  "source_commit": "48b101a7efc6539bebcf215531183b0ba00333ba",
+  "merged_origin_main": "975659083a531dde80003617b78a13d383b4803e",
+  "runtime": "C:\\Users\\Serdar Arif\\Desktop\\Agentic Hack-wt\\agents\\agents\\runtime\\dryrun-5coin-20261017-1545",
+  "state_path": "C:\\Users\\Serdar Arif\\Desktop\\Agentic Hack-wt\\agents\\agents\\runtime\\dryrun-5coin-20261017-1545\\state.json",
+  "launcher_pid": 22108,
+  "worker_pid": 33616,
+  "continuous": true,
+  "cycle_seconds": 90,
+  "dry_run": true,
+  "chain_simulated": false,
+  "chain_id": 43113,
+  "stop": {
+    "old_worker_pid": 42492,
+    "old_launcher_pid": 36936,
+    "stopped_at_cycle": 33,
+    "pending_count": 0,
+    "journal_all_confirmed": true
+  },
+  "prelaunch_chain_next_cycle_id": 34,
+  "original_journal_records_preserved": 62,
+  "historical_decision_rows_preserved": 155,
+  "protected_live_files_unchanged": true,
+  "protected_file_count": 8,
+  "stderr_bytes": 0,
+  "cycles": [
+    {
+      "cycle_id": 34,
+      "errors": 0,
+      "signals": {
+        "AVAX-USDT": {
+          "hurst": 0.42,
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "BTC-USDT": {
+          "hurst": 0.32,
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "ETH-USDT": {
+          "hurst": 0.64,
+          "regime": "trending",
+          "setup": "none"
+        },
+        "OKB-USDT": {
+          "hurst": 0.39,
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "SOL-USDT": {
+          "hurst": 0.42,
+          "regime": "ranging",
+          "setup": "none"
+        }
+      },
+      "decisions": [
+        {
+          "inst_id": "AVAX-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.42), momentum buys paused",
+          "order_status": "hold"
+        },
+        {
+          "inst_id": "BTC-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.32), momentum buys paused",
+          "order_status": "hold"
+        },
+        {
+          "inst_id": "ETH-USDT",
+          "action": "BUY",
+          "size_usdt": "2.64",
+          "reason": "Price trending up (+3.3%), target 5.3% of funds (1.2 independent bets); size cut to keep risk near 20% (was 48%); no breakout yet, half size",
+          "order_status": "simulated"
+        },
+        {
+          "inst_id": "OKB-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.39), momentum buys paused",
+          "order_status": "hold"
+        },
+        {
+          "inst_id": "SOL-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.42), momentum buys paused",
+          "order_status": "hold"
+        }
+      ],
+      "actions": {
+        "HOLD": 4,
+        "BUY": 1
+      },
+      "commit_tx": "0x75ea408712a5a7b59c3d9d7374580afe48de7a84957101d8c5f59906aff44a11",
+      "reveal_tx": "0xf89a2cb4e5dde4ac5e2f9813bbeb1770113ec60ee851fa8264030bbad02e401e",
+      "commit_block": 59601078,
+      "reveal_block": 59601082,
+      "receipt_statuses": [
+        1,
+        1
+      ],
+      "payload_salt_hash_and_events_verified": true,
+      "historical_decisions_unchanged": true,
+      "signals_outside_payload": true
+    },
+    {
+      "cycle_id": 35,
+      "errors": 0,
+      "signals": {
+        "AVAX-USDT": {
+          "hurst": 0.42,
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "BTC-USDT": {
+          "hurst": 0.32,
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "ETH-USDT": {
+          "hurst": 0.64,
+          "regime": "trending",
+          "setup": "none"
+        },
+        "OKB-USDT": {
+          "hurst": 0.39,
+          "regime": "ranging",
+          "setup": "none"
+        },
+        "SOL-USDT": {
+          "hurst": 0.42,
+          "regime": "ranging",
+          "setup": "none"
+        }
+      },
+      "decisions": [
+        {
+          "inst_id": "AVAX-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.42), momentum buys paused",
+          "order_status": "hold"
+        },
+        {
+          "inst_id": "BTC-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.32), momentum buys paused",
+          "order_status": "hold"
+        },
+        {
+          "inst_id": "ETH-USDT",
+          "action": "BUY",
+          "size_usdt": "2.64",
+          "reason": "Price trending up (+3.3%), target 5.3% of funds (1.2 independent bets); size cut to keep risk near 20% (was 48%); no breakout yet, half size",
+          "order_status": "simulated"
+        },
+        {
+          "inst_id": "OKB-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.39), momentum buys paused",
+          "order_status": "hold"
+        },
+        {
+          "inst_id": "SOL-USDT",
+          "action": "HOLD",
+          "size_usdt": "0",
+          "reason": "Market is ranging (Hurst 0.42), momentum buys paused",
+          "order_status": "hold"
+        }
+      ],
+      "actions": {
+        "HOLD": 4,
+        "BUY": 1
+      },
+      "commit_tx": "0x074199126471f5960e72fcbe8b5922a126ebe9bc6114d942dbf32f739b88a86f",
+      "reveal_tx": "0x128df76ed4fdb8f722c7caed9c47caea3078ad05cdd021bfe0dc1fdf73dde4fd",
+      "commit_block": 59601154,
+      "reveal_block": 59601159,
+      "receipt_statuses": [
+        1,
+        1
+      ],
+      "payload_salt_hash_and_events_verified": true,
+      "historical_decisions_unchanged": true,
+      "signals_outside_payload": true
+    }
+  ],
+  "tests": [
+    {
+      "command": "cd agents; uv run pytest -q",
+      "passed": 157,
+      "seconds": 20.57
+    }
+  ],
+  "receipt_rpc": "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+  "verification_block": 59601175
+}

@@ -1,18 +1,18 @@
 # Handoff — docs (sadece bu rol yazar)
 
-- Güncelleme zamanı: 17.10 16:35
-- Aktif görev / durum: T-016 (jüri FAQ + canlı demo runbook) / READY_FOR_REVIEW — kart integrator'da
+- Güncelleme zamanı: 17.10 17:20
+- Aktif görev / durum: teslim hazırlığı — form cevapları + kök README son hâli / READY_FOR_REVIEW (18:30'da integrator köke taşır)
 - Oturum: Claude Code · Max (Opus 5.5), durdu
-- Worktree / branch / son commit: `Agentic Hack-wt/docs` / `role/docs` / bu handoff'u içeren commit; origin/main merge edildi (a050a9a)
-- contracts okunan sürüm: v0.6
+- Worktree / branch / son commit: `Agentic Hack-wt/docs` / `role/docs` / bu handoff'u içeren commit; origin/main (r34) merge edildi
+- contracts okunan sürüm: v0.6.1
 - Tamamlanan:
-  - `docs/jury-faq.md` (EN): 12 soru + kalın tek cümle cevap + yedek maddeler + "Don't say" listesi. Dürüst sınırlar açık:
-    reveal etmemenin cezası yok; ledger dışı işlem kanıtlanamaz (OKX id ile uzlaştırma otomatik değil); getiri al-tuttan düşük;
-    canlı emirde analist `skipped: no_provider`; Reputation/Validation registry'lerine yazılmıyor; ablation yok; cycle id ardışıklığı zincirde zorlanmıyor.
-  - `docs/live-demo-runbook.md` (TR talimat + EN konuşma): T-30 kontrol listesi, 3:00 akış (Dashboard → Ledger → Decisions cycle 2 → Verify → Snowtrace → terminal → Settings),
-    B planı tablosu, R-006'da gerçekten alınmış verify:cycle:1 çıktısı, 8 yedek ekran görüntüsü listesi.
-- Kaynaklar: STATE r26, D-013/015/016, reviews T-003/T-006/T-010, GrailLedger.sol (AlreadyCommitted/HashMismatch/commitCount), agents README,
-  agents runtime/live/state.json (salt okunur: llm_flag skipped, errors 0), engine/out/replay.json; UI etiketleri web/src ile eşlendi.
-- Çalıştırılmayan: cycle 2 verify-cycle komutu (runbook'ta "provada dene" notu var); web'i gerçek state ile açıp tıklamadım.
-- Kalan <TBD>: yedek video linki. `docs/demo-backup/` ekran görüntülerini kullanıcı alır.
-- SIRADAKİ İLK ADIM: video/slides linki gelince deck + runbook + submission'ı doldur; demo-script'i cycle 2'ye göre güncelle.
+  - `docs/submission-form-answers.md`: SUBMISSION.md'deki 7 alan (+ video) için kopyala-yapıştır kutuları; ek sorular için teknolojiler,
+    Avalanche kullanımı, OKX ATK kullanımı, agent kimliği. Açıklama = submission-description.md birebir. E-posta yazılmadı (kullanıcı yazar).
+  - `docs/README-draft.md` kök README'ye hazır (EN): en üstte 3 link yer tutucusu; "Verify it yourself in 60 seconds"
+    (verify:cycle:1, audit, web Verify); ilk canlı emir kanıt tablosu (cycle 2, tam tx linkleri + yeniden kontrol komutu); entry gates;
+    sonuç tablosu (replay main'deki out/replay.json: 4.33/14.51, +2.03/+8.81, 220 vs 382, kill switch 0); testler 167/157/48; Honest limitations (9 madde).
+- Yer tutucular (18:30'dan önce doldurulacak): `<PAGES_URL>`, `<VIDEO_URL>`, `<SLIDES_URL>` (README + form), `<AUDIT_TOTAL>` (R-011 audit sonucu),
+  `<R-010 status>` (web Verify düzeltmesi GO aldıysa "the browser check passed review R-010" gibi; almadıysa "the in-browser check is still under review (R-010)"), Team `<TBD>`.
+- Kontroller: sayılar main'deki replay.json, chain.json, audit-latest.md, STATE r34 ile eşleşti; komutlar chain/package.json, agents/engine/web README'lerle eşleşti; git diff --check.
+- Çalıştırılmayan: README komutlarını temiz bir klonda uçtan uca denemedim (verify:cycle:1 ve audit .env olmadan R-006/T-015'te çalışmıştı).
+- SIRADAKİ İLK ADIM: R-011 audit sayısı + R-010 durumu + 3 link gelince yer tutucuları doldur, commit + push; integrator köke taşır.

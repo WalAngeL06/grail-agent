@@ -27,3 +27,25 @@ GRAIL_STATE_PATH="../../../Agentic Hack/runtime/state.json" npm run dev
   Public Fuji RPC rate-limits; Routescan (Snowtrace backend) proxy API is the automatic fallback.
 - Plain words first, technical names small and gray underneath (`Term` in `src/components/Bits.tsx`); formulas and raw payload sit under "Show the math".
 - The first-visit tour is remembered in localStorage (`grail.intro.dismissed`), wrapped in try/catch.
+
+## Public demo build (static, for the jury link)
+
+No server, no local files, no secrets: the agent state is a frozen snapshot of the real practice-mode run;
+the Ledger and every "Verify yourself" still read Avalanche Fuji live from the visitor's browser
+(public RPC, Routescan fallback). The top bar shows "Snapshot of <time> · live chain checks"; countdowns are hidden.
+
+```bash
+# 1) refresh the snapshot from a real runtime state.json (whitelisted fields only; salts of unrevealed check-ins are dropped)
+npm run snapshot -- "<path to agents runtime>/state.json"
+# 2) build (base path defaults to /grail-agent/ for GitHub Pages; override: GRAIL_BASE=/ npm run build:public)
+npm run build:public          # → web/dist-public/ (gitignored)
+# 3) check locally
+npm run preview:public        # → http://localhost:4173/grail-agent/
+```
+
+Publish (done by the integrator/user once the repo is public; not done from this branch):
+- GitHub Pages: push the contents of `web/dist-public/` to a `gh-pages` branch (e.g. `npx gh-pages -d web/dist-public`, or a
+  Pages workflow that runs `npm ci && npm run build:public` in `web/` and uploads `web/dist-public`). Repo Settings → Pages → source `gh-pages`.
+  URL: `https://<owner>.github.io/grail-agent/`.
+- Any other static host: upload `web/dist-public/` as-is; if it is served from the domain root, build with `GRAIL_BASE=/`.
+- Routing is hash-based (`#/ledger`), so no server rewrites are needed.

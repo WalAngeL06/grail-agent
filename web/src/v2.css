@@ -205,3 +205,56 @@ details.math[open] summary { margin-bottom: 8px; }
 .topbar { flex-wrap: wrap; height: auto; min-height: 56px; padding: 10px 24px; row-gap: 6px; column-gap: 14px; overflow: visible; white-space: normal; }
 .topbar > * { white-space: nowrap; }
 @media (max-width: 760px) { .topbar { padding: 8px 16px; } }
+
+/* ---- v3: eyebrow, Last 30 days, smart entry ---- */
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 6px; }
+.gold { color: var(--grail); }
+.replay-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 32px; margin-bottom: 12px; }
+.replay-head > div:first-child { flex: 1 1 420px; }
+.replay-head h2 { margin: 0 0 8px; font-size: 26px; font-weight: 650; letter-spacing: -0.01em; }
+.replay-head p { margin: 0; max-width: 72ch; }
+.replay-head p b { color: var(--text); }
+.replay-stats { display: grid; grid-template-columns: repeat(2, auto); gap: 8px 28px; margin: 0; align-content: start; }
+.replay-stats dt { font-size: 12px; color: var(--muted); }
+.replay-stats dd { margin: 2px 0 0; font-size: 22px; font-weight: 650; }
+.replay-stats dd .muted { font-size: 15px; font-weight: 500; }
+.signal { display: inline-flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.sig { display: inline-flex; align-items: center; gap: 5px; min-height: 20px; padding: 0 7px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid var(--border-strong); color: var(--muted); }
+.sig.trending, .sig.retest { color: var(--buy); border-color: rgba(34, 197, 94, 0.4); }
+.sig.ranging { color: var(--warn); border-color: rgba(245, 165, 36, 0.45); }
+.sig.breakout { color: var(--proof); border-color: rgba(139, 156, 255, 0.45); }
+
+.chip.snap { color: var(--proof); border-color: rgba(139, 156, 255, 0.45); background: rgba(139, 156, 255, 0.1); }
+
+/* ---- UI-QA fixes ---- */
+.card[id], section[id] { scroll-margin-top: 72px; }
+@media (max-width: 600px) {
+  /* P0-1: the what-if slider got squeezed to 0 px; stack it */
+  .slider { grid-template-columns: 1fr; gap: 6px; }
+  .slider .val { text-align: left; min-width: 0; }
+}
+
+@media (max-width: 760px) {
+  /* P1: top bar = one horizontally scrollable row; secondary items hidden */
+  .topbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; min-height: 48px; padding: 6px 12px; column-gap: 10px; }
+  .topbar::-webkit-scrollbar { display: none; }
+  .topbar .tb-opt, .topbar .sep { display: none; }
+  /* P1: ledger rows become cards, Verify full width at the bottom */
+  .ledger-table thead { display: none; }
+  .ledger-table, .ledger-table tbody { display: block; }
+  .ledger-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .ledger-table td { display: block; padding: 0; border: none; }
+  .ledger-table td[data-label]::before { content: attr(data-label); display: block; font-size: 11px; color: var(--dim); }
+  .ledger-table td.verify-cell { grid-column: 1 / -1; text-align: left; }
+  .ledger-table td.verify-cell .btn { width: 100%; height: 36px; }
+  .ledger-table tbody tr:hover td { background: none; }
+}
+
+/* P2: stepper labels never wrap */
+.stepper .step-l, .stepper .step-s { white-space: nowrap; }
+
+/* R-010: unverified result + reasons */
+.result.warn { border-color: rgba(245, 165, 36, 0.5); }
+.result.warn .result-mark, .mark.warn { background: var(--warn-wash); color: var(--warn); }
+.result.warn b { color: var(--warn); }
+.result .reasons { margin: 6px 0 0; padding-left: 18px; font-size: 13px; color: var(--sell); }

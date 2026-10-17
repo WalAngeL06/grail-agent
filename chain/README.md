@@ -1,4 +1,46 @@
-# GRAIL chain — T-003
+# GRAIL chain
+
+## Full ledger audit (T-015)
+
+```powershell
+cd chain
+npm run audit
+```
+
+This reads every agent #1 commit/reveal from the ledger deployment block through
+one fixed Fuji block, using the public
+[PublicNode Fuji RPC](https://avalanche.publicnode.com/?fuji). It prints terminal
+tables and saves [`deployments/audit-latest.md`](deployments/audit-latest.md).
+The standalone command does not load Hardhat configuration or `.env`, request a
+signer, send transactions, or call OKX. No key or RPC setup is required.
+
+The scan uses contiguous windows of at most 1,000 blocks, with a 150 ms pause
+between windows. Rate limits (including HTTP 429) have four retries with
+500/1,000/2,000/4,000 ms backoff. The deployment block comes from the verified
+deployment receipt. Event counts must equal `commitCount` and `revealCount` at
+the snapshot block; missing/duplicate events or RPC failures stop the audit.
+The snapshot block hash is checked again at the end. Newer cycles are included
+on the next run.
+
+Each row includes commit/reveal tx hashes, block times in UTC, elapsed seconds,
+`dry_run (SIMULATED)`/`LIVE`, hash verification and the exact `okxOrderId` string.
+Salt and payload come from reveal calldata. The existing cycle verifier checks
+canonical receipts/blocks, event/storage consistency, calldata identities,
+payload agent/cycle and v0.6 order results. The proof table compares the stored
+commitHash with `keccak(payload || salt)` for each revealed cycle.
+
+Summary counts are total cycles, revealed, unopened, MATCH, mismatch and LIVE
+order IDs. Unopened commitments are `PENDING`; their mode/order result and
+preimage cannot be known yet. LIVE order IDs count only MATCH rows with
+`dry_run=false`, excluding `simulated` and `unknown`. The ledger records the
+agent's reported order IDs; it does not prove exchange execution or fills.
+
+Exit 0 means a complete scan with no mismatches; valid pending commitments are
+allowed. Mismatches are reported per row and exit 1. RPC/completeness failures
+exit 1 and leave the last completed report unchanged. The output is replaced
+only after the scan and its checks complete.
+
+## Deployment package (T-003)
 
 Fuji (43113), contracts v0.5. Public deployment data, full ABIs and the
 cross-language hash fixture are in [`../contracts/chain.json`](../contracts/chain.json).
